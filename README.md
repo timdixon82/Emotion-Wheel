@@ -10,6 +10,8 @@ Emotion entries are stored only in the browser on the current device using local
 
 ## Change in this version
 
+The emotion list now uses the manually verified 72-path dataset. The full emotion table is generated from the same dataset as the selector, so the table and buttons stay in sync.
+
 The review, record, and reset controls now appear after the three emotion selection steps. This gives a cleaner flow:
 
 1. Choose inner-circle emotion.
@@ -36,7 +38,9 @@ The review, record, and reset controls now appear after the three emotion select
 
 ## Screen reader notes
 
+- A skip link lets keyboard and screen reader users move directly to the main content.
 - Native buttons are used for all selections.
+- Selection button groups are labelled by step and include helper text where choices depend on an earlier step.
 - Headings separate each step.
 - A live region announces the current selection and recording actions.
 - Tables use captions and column headers.

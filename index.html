@@ -14,6 +14,12 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5; margin: 0; background: var(--bg); color: var(--text);
     }
+    .skip-link {
+      position: absolute; left: 1rem; top: 1rem; transform: translateY(-150%);
+      background: var(--bg); color: var(--text); border: 2px solid var(--focus);
+      padding: .75rem 1rem; z-index: 10;
+    }
+    .skip-link:focus { transform: translateY(0); outline: 4px solid var(--focus); outline-offset: 2px; }
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; }
     .intro, .help { color: var(--muted); }
@@ -50,25 +56,26 @@
   </style>
 </head>
 <body>
-<main>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<main id="main-content" tabindex="-1">
   <h1>Emotion Wheel Selector and Local Log</h1>
   <p class="intro">Choose one emotion at a time. Start with the inner circle, then choose the matching middle-circle emotion, then the outer-circle emotion. You can then record the selected emotion locally on this device.</p>
 
   <section class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading">Step 1: Inner circle</h2>
-    <div id="innerButtons" class="button-grid"></div>
+    <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
   </section>
 
   <section class="step" aria-labelledby="middle-heading">
     <h2 id="middle-heading">Step 2: Middle circle</h2>
     <p id="middleHelp">Choose an inner-circle emotion first.</p>
-    <div id="middleButtons" class="button-grid"></div>
+    <div id="middleButtons" class="button-grid" role="group" aria-labelledby="middle-heading" aria-describedby="middleHelp"></div>
   </section>
 
   <section class="step" aria-labelledby="outer-heading">
     <h2 id="outer-heading">Step 3: Outer circle</h2>
     <p id="outerHelp">Choose a middle-circle emotion first.</p>
-    <div id="outerButtons" class="button-grid"></div>
+    <div id="outerButtons" class="button-grid" role="group" aria-labelledby="outer-heading" aria-describedby="outerHelp"></div>
   </section>
 
   <section class="status" aria-labelledby="current-selection-heading">
@@ -136,16 +143,14 @@
       <table>
         <caption>All available emotion paths</caption>
         <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
-        <tbody>
-          <tr><td>Anger</td><td>Hurt</td><td>Humiliated</td></tr><tr><td>Anger</td><td>Hurt</td><td>Rejected</td></tr><tr><td>Anger</td><td>Threatened</td><td>Devastated</td></tr><tr><td>Anger</td><td>Threatened</td><td>Insecure</td></tr><tr><td>Anger</td><td>Hateful</td><td>Jealous</td></tr><tr><td>Anger</td><td>Hateful</td><td>Resentful</td></tr><tr><td>Anger</td><td>Mad</td><td>Violated</td></tr><tr><td>Anger</td><td>Mad</td><td>Furious</td></tr><tr><td>Anger</td><td>Aggressive</td><td>Enraged</td></tr><tr><td>Anger</td><td>Aggressive</td><td>Provoked</td></tr><tr><td>Anger</td><td>Frustrated</td><td>Hostile</td></tr><tr><td>Anger</td><td>Frustrated</td><td>Infuriated</td></tr><tr><td>Anger</td><td>Distant</td><td>Irritated</td></tr><tr><td>Anger</td><td>Distant</td><td>Withdrawn</td></tr><tr><td>Anger</td><td>Critical</td><td>Suspicious</td></tr><tr><td>Anger</td><td>Critical</td><td>Skeptical</td></tr><tr><td>Disgust</td><td>Disapproval</td><td>Sarcastic</td></tr><tr><td>Disgust</td><td>Disapproval</td><td>Judgmental</td></tr><tr><td>Disgust</td><td>Disappointed</td><td>Loathing</td></tr><tr><td>Disgust</td><td>Disappointed</td><td>Repugnant</td></tr><tr><td>Disgust</td><td>Awful</td><td>Revolted</td></tr><tr><td>Disgust</td><td>Awful</td><td>Revulsion</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Detestable</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Aversion</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Hesitant</td></tr><tr><td>Sad</td><td>Guilty</td><td>Remorseful</td></tr><tr><td>Sad</td><td>Guilty</td><td>Ashamed</td></tr><tr><td>Sad</td><td>Abandoned</td><td>Ignored</td></tr><tr><td>Sad</td><td>Abandoned</td><td>Victimized</td></tr><tr><td>Sad</td><td>Despair</td><td>Powerless</td></tr><tr><td>Sad</td><td>Despair</td><td>Vulnerable</td></tr><tr><td>Sad</td><td>Depressed</td><td>Inferior</td></tr><tr><td>Sad</td><td>Depressed</td><td>Empty</td></tr><tr><td>Sad</td><td>Lonely</td><td>Abandoned</td></tr><tr><td>Sad</td><td>Lonely</td><td>Isolated</td></tr><tr><td>Sad</td><td>Bored</td><td>Apathetic</td></tr><tr><td>Sad</td><td>Bored</td><td>Indifferent</td></tr><tr><td>Happy</td><td>Joyful</td><td>Inquisitive</td></tr><tr><td>Happy</td><td>Joyful</td><td>Amused</td></tr><tr><td>Happy</td><td>Joyful</td><td>Ecstatic</td></tr><tr><td>Happy</td><td>Interested</td><td>Liberated</td></tr><tr><td>Happy</td><td>Interested</td><td>Energetic</td></tr><tr><td>Happy</td><td>Proud</td><td>Eager</td></tr><tr><td>Happy</td><td>Proud</td><td>Awe</td></tr><tr><td>Happy</td><td>Accepted</td><td>Confident</td></tr><tr><td>Happy</td><td>Accepted</td><td>Important</td></tr><tr><td>Happy</td><td>Powerful</td><td>Respected</td></tr><tr><td>Happy</td><td>Powerful</td><td>Fulfilled</td></tr><tr><td>Happy</td><td>Peaceful</td><td>Courageous</td></tr><tr><td>Happy</td><td>Peaceful</td><td>Provocative</td></tr><tr><td>Happy</td><td>Intimate</td><td>Loving</td></tr><tr><td>Happy</td><td>Intimate</td><td>Hopeful</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Sensitive</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Playful</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Open</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Inspired</td></tr><tr><td>Surprise</td><td>Startled</td><td>Shocked</td></tr><tr><td>Surprise</td><td>Startled</td><td>Dismayed</td></tr><tr><td>Surprise</td><td>Confused</td><td>Disillusioned</td></tr><tr><td>Surprise</td><td>Confused</td><td>Perplexed</td></tr><tr><td>Surprise</td><td>Amazed</td><td>Astonished</td></tr><tr><td>Surprise</td><td>Amazed</td><td>Awe</td></tr><tr><td>Surprise</td><td>Excited</td><td>Eager</td></tr><tr><td>Surprise</td><td>Excited</td><td>Energetic</td></tr><tr><td>Surprise</td><td>Excited</td><td>Liberated</td></tr><tr><td>Fear</td><td>Scared</td><td>Terrified</td></tr><tr><td>Fear</td><td>Scared</td><td>Frightened</td></tr><tr><td>Fear</td><td>Anxious</td><td>Overwhelmed</td></tr><tr><td>Fear</td><td>Anxious</td><td>Worried</td></tr><tr><td>Fear</td><td>Insecure</td><td>Inadequate</td></tr><tr><td>Fear</td><td>Insecure</td><td>Inferior</td></tr><tr><td>Fear</td><td>Submissive</td><td>Worthless</td></tr><tr><td>Fear</td><td>Submissive</td><td>Insignificant</td></tr><tr><td>Fear</td><td>Rejected</td><td>Inadequate</td></tr><tr><td>Fear</td><td>Rejected</td><td>Alienated</td></tr><tr><td>Fear</td><td>Humiliated</td><td>Disrespected</td></tr><tr><td>Fear</td><td>Humiliated</td><td>Ridiculed</td></tr><tr><td>Fear</td><td>Hurt</td><td>Embarrassed</td></tr>
-        </tbody>
+        <tbody id="wheelTableBody"></tbody>
       </table>
     </div>
   </section>
 </main>
 
 <script>
-const emotions = [["Anger", "Hurt", "Humiliated"], ["Anger", "Hurt", "Rejected"], ["Anger", "Threatened", "Devastated"], ["Anger", "Threatened", "Insecure"], ["Anger", "Hateful", "Jealous"], ["Anger", "Hateful", "Resentful"], ["Anger", "Mad", "Violated"], ["Anger", "Mad", "Furious"], ["Anger", "Aggressive", "Enraged"], ["Anger", "Aggressive", "Provoked"], ["Anger", "Frustrated", "Hostile"], ["Anger", "Frustrated", "Infuriated"], ["Anger", "Distant", "Irritated"], ["Anger", "Distant", "Withdrawn"], ["Anger", "Critical", "Suspicious"], ["Anger", "Critical", "Skeptical"], ["Disgust", "Disapproval", "Sarcastic"], ["Disgust", "Disapproval", "Judgmental"], ["Disgust", "Disappointed", "Loathing"], ["Disgust", "Disappointed", "Repugnant"], ["Disgust", "Awful", "Revolted"], ["Disgust", "Awful", "Revulsion"], ["Disgust", "Avoidance", "Detestable"], ["Disgust", "Avoidance", "Aversion"], ["Disgust", "Avoidance", "Hesitant"], ["Sad", "Guilty", "Remorseful"], ["Sad", "Guilty", "Ashamed"], ["Sad", "Abandoned", "Ignored"], ["Sad", "Abandoned", "Victimized"], ["Sad", "Despair", "Powerless"], ["Sad", "Despair", "Vulnerable"], ["Sad", "Depressed", "Inferior"], ["Sad", "Depressed", "Empty"], ["Sad", "Lonely", "Abandoned"], ["Sad", "Lonely", "Isolated"], ["Sad", "Bored", "Apathetic"], ["Sad", "Bored", "Indifferent"], ["Happy", "Joyful", "Inquisitive"], ["Happy", "Joyful", "Amused"], ["Happy", "Joyful", "Ecstatic"], ["Happy", "Interested", "Liberated"], ["Happy", "Interested", "Energetic"], ["Happy", "Proud", "Eager"], ["Happy", "Proud", "Awe"], ["Happy", "Accepted", "Confident"], ["Happy", "Accepted", "Important"], ["Happy", "Powerful", "Respected"], ["Happy", "Powerful", "Fulfilled"], ["Happy", "Peaceful", "Courageous"], ["Happy", "Peaceful", "Provocative"], ["Happy", "Intimate", "Loving"], ["Happy", "Intimate", "Hopeful"], ["Happy", "Optimistic", "Sensitive"], ["Happy", "Optimistic", "Playful"], ["Happy", "Optimistic", "Open"], ["Happy", "Optimistic", "Inspired"], ["Surprise", "Startled", "Shocked"], ["Surprise", "Startled", "Dismayed"], ["Surprise", "Confused", "Disillusioned"], ["Surprise", "Confused", "Perplexed"], ["Surprise", "Amazed", "Astonished"], ["Surprise", "Amazed", "Awe"], ["Surprise", "Excited", "Eager"], ["Surprise", "Excited", "Energetic"], ["Surprise", "Excited", "Liberated"], ["Fear", "Scared", "Terrified"], ["Fear", "Scared", "Frightened"], ["Fear", "Anxious", "Overwhelmed"], ["Fear", "Anxious", "Worried"], ["Fear", "Insecure", "Inadequate"], ["Fear", "Insecure", "Inferior"], ["Fear", "Submissive", "Worthless"], ["Fear", "Submissive", "Insignificant"], ["Fear", "Rejected", "Inadequate"], ["Fear", "Rejected", "Alienated"], ["Fear", "Humiliated", "Disrespected"], ["Fear", "Humiliated", "Ridiculed"], ["Fear", "Hurt", "Embarrassed"]];
+const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
 
 const innerButtons = document.getElementById('innerButtons');
@@ -163,6 +168,7 @@ const clearLogButton = document.getElementById('clearLogButton');
 const tallyBody = document.getElementById('tallyBody');
 const logBody = document.getElementById('logBody');
 const logSummary = document.getElementById('logSummary');
+const wheelTableBody = document.getElementById('wheelTableBody');
 
 let selectedInner = null;
 let selectedMiddle = null;
@@ -341,6 +347,19 @@ function renderLog() {
   }
 }
 
+function renderFullEmotionTable() {
+  clearNode(wheelTableBody);
+  for (const row of emotions) {
+    const tr = document.createElement('tr');
+    row.forEach(value => {
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.appendChild(td);
+    });
+    wheelTableBody.appendChild(tr);
+  }
+}
+
 function renderAll() {
   renderInner();
   renderMiddle();
@@ -419,6 +438,7 @@ clearLogButton.addEventListener('click', () => {
   liveStatus.textContent = 'Local emotion log cleared.';
 });
 
+renderFullEmotionTable();
 renderAll();
 </script>
 </body>
