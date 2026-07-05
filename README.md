@@ -21,6 +21,7 @@ The review, record, and reset controls now appear after the three emotion select
 
 ## Features
 
+- View a visual emotion wheel before using the selector.
 - Select emotions one layer at a time.
 - Record the selected emotion locally with date and time.
 - Store entries only in the browser on the current device using local storage.
@@ -39,6 +40,7 @@ The review, record, and reset controls now appear after the three emotion select
 ## Screen reader notes
 
 - A skip link lets keyboard and screen reader users move directly to the main content.
+- The wheel image is introduced as a visual reference; the selector and full table provide text access to the same workflow.
 - Native buttons are used for all selections.
 - Selection button groups are labelled by step and include helper text where choices depend on an earlier step.
 - Headings separate each step.

@@ -27,6 +27,12 @@
       border: 2px solid var(--border); background: var(--panel); padding: 1rem;
       margin: 1rem 0; border-radius: .5rem;
     }
+    .wheel-figure { margin: 1.25rem 0; }
+    .wheel-image {
+      display: block; width: min(100%, 42rem); height: auto; margin: 0 auto;
+      border: 1px solid var(--border); border-radius: .5rem;
+    }
+    .wheel-figure figcaption { color: var(--muted); margin-top: .75rem; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0; }
@@ -60,6 +66,17 @@
 <main id="main-content" tabindex="-1">
   <h1>Emotion Wheel Selector and Local Log</h1>
   <p class="intro">Choose one emotion at a time. Start with the inner circle, then choose the matching middle-circle emotion, then the outer-circle emotion. You can then record the selected emotion locally on this device.</p>
+
+  <figure class="wheel-figure" aria-labelledby="wheel-image-caption">
+    <img
+      class="wheel-image"
+      src="assets/emotion-wheel.png"
+      alt="Visual emotion wheel with inner, middle, and outer emotion labels arranged in coloured segments."
+      width="1002"
+      height="1018"
+    >
+    <figcaption id="wheel-image-caption">Visual reference for people who prefer to scan the wheel before using the step-by-step selector. The selector and full table below provide the text version of the emotion paths.</figcaption>
+  </figure>
 
   <section class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading">Step 1: Inner circle</h2>
