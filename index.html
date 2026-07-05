@@ -23,9 +23,19 @@
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; }
     .intro, .help { color: var(--muted); }
+    .page-nav {
+      border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
+      border-radius: .5rem;
+    }
+    .page-nav h2 { font-size: 1rem; margin: 0 0 .75rem; }
+    .page-nav ul { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; margin: 0; padding: 0; }
     .status, .log-panel {
       border: 2px solid var(--border); background: var(--panel); padding: 1rem;
       margin: 1rem 0; border-radius: .5rem;
+    }
+    .export-panel {
+      border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
+      border-radius: .5rem;
     }
     .wheel-figure { margin: 1.25rem 0; }
     .wheel-image {
@@ -36,6 +46,11 @@
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0; }
+    .section-heading {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+      gap: .75rem; margin-top: 1rem;
+    }
+    .section-heading h3 { margin: 0; }
     button, a.button {
       font: inherit; min-height: 3rem; padding: .75rem 1rem; border: 2px solid var(--border);
       border-radius: .5rem; background: var(--button); color: var(--text); cursor: pointer; text-align: left;
@@ -67,7 +82,18 @@
   <h1>Emotion Wheel Selector and Local Log</h1>
   <p class="intro">Choose one emotion at a time. Start with the inner circle, then choose the matching middle-circle emotion, then the outer-circle emotion. You can then record the selected emotion locally on this device.</p>
 
-  <figure class="wheel-figure" aria-labelledby="wheel-image-caption">
+  <nav class="page-nav" aria-labelledby="page-nav-heading">
+    <h2 id="page-nav-heading">Page sections</h2>
+    <ul>
+      <li><a class="button" href="#visual-wheel">Visual wheel</a></li>
+      <li><a class="button" href="#emotion-selector">Selector</a></li>
+      <li><a class="button" href="#local-log">Local log</a></li>
+      <li><a class="button" href="#full-table">Full table</a></li>
+      <li><a class="button" href="#export-data">Export data</a></li>
+    </ul>
+  </nav>
+
+  <figure id="visual-wheel" class="wheel-figure" aria-labelledby="wheel-image-caption">
     <img
       class="wheel-image"
       src="assets/emotion-wheel.png"
@@ -78,7 +104,7 @@
     <figcaption id="wheel-image-caption">Visual reference for people who prefer to scan the wheel before using the step-by-step selector. The selector and full table below provide the text version of the emotion paths.</figcaption>
   </figure>
 
-  <section class="step" aria-labelledby="inner-heading">
+  <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading">Step 1: Inner circle</h2>
     <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
   </section>
@@ -106,17 +132,15 @@
   </section>
 
 
-  <section class="log-panel" aria-labelledby="log-heading">
+  <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
     <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
     <p id="logSummary" aria-live="polite">No emotions recorded yet.</p>
-    <div class="actions">
-      <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
-      <button type="button" id="exportLogButton" disabled>Export full log as CSV</button>
-      <button type="button" id="clearLogButton" class="danger" disabled>Clear local log</button>
-    </div>
 
-    <h3>Emotion tally</h3>
+    <div class="section-heading">
+      <h3>Emotion tally</h3>
+      <button type="button" id="shareTallyButton" disabled>Share tally data</button>
+    </div>
     <div class="scroll-table">
       <table>
         <caption>Number of times each emotion path has been recorded</caption>
@@ -135,7 +159,10 @@
       </table>
     </div>
 
-    <h3>Recent entries</h3>
+    <div class="section-heading">
+      <h3>Recent entries</h3>
+      <button type="button" id="shareLogButton" disabled>Share recent entries</button>
+    </div>
     <div class="scroll-table">
       <table>
         <caption>Most recent recorded emotions</caption>
@@ -154,14 +181,27 @@
     </div>
   </section>
 
-  <section aria-labelledby="table-heading">
-    <h2 id="table-heading">Full emotion wheel table</h2>
+  <section id="full-table" aria-labelledby="table-heading">
+    <div class="section-heading">
+      <h2 id="table-heading">Full emotion wheel table</h2>
+      <button type="button" id="shareWheelButton">Share full table</button>
+    </div>
     <div class="scroll-table">
       <table>
         <caption>All available emotion paths</caption>
         <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
         <tbody id="wheelTableBody"></tbody>
       </table>
+    </div>
+  </section>
+
+  <section id="export-data" class="export-panel" aria-labelledby="export-heading">
+    <h2 id="export-heading">Export and manage data</h2>
+    <p class="help">CSV files are downloaded to this device. Clearing the local log only affects this browser.</p>
+    <div class="actions">
+      <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
+      <button type="button" id="exportLogButton" disabled>Export full log as CSV</button>
+      <button type="button" id="clearLogButton" class="danger" disabled>Clear local log</button>
     </div>
   </section>
 </main>
@@ -179,6 +219,9 @@ const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
 const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
+const shareTallyButton = document.getElementById('shareTallyButton');
+const shareLogButton = document.getElementById('shareLogButton');
+const shareWheelButton = document.getElementById('shareWheelButton');
 const exportTallyButton = document.getElementById('exportTallyButton');
 const exportLogButton = document.getElementById('exportLogButton');
 const clearLogButton = document.getElementById('clearLogButton');
@@ -321,8 +364,41 @@ function getTally() {
   });
 }
 
+function getTallyRows() {
+  const rows = [
+    ['Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
+  ];
+  for (const item of getTally()) {
+    rows.push([item.inner, item.middle, item.outer, item.count, formatDateTime(item.lastRecorded)]);
+  }
+  return rows;
+}
+
+function getLogRows(entries = logEntries) {
+  const rows = [
+    ['Date and time', 'Inner circle', 'Middle circle', 'Outer circle']
+  ];
+  for (const entry of entries) {
+    rows.push([formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer]);
+  }
+  return rows;
+}
+
+function getWheelRows() {
+  return [
+    ['Inner circle', 'Middle circle', 'Outer circle'],
+    ...emotions
+  ];
+}
+
+function formatRowsAsText(rows) {
+  return rows.map(row => row.join('\t')).join('\n');
+}
+
 function renderLog() {
   const hasEntries = logEntries.length > 0;
+  shareTallyButton.disabled = !hasEntries;
+  shareLogButton.disabled = !hasEntries;
   exportTallyButton.disabled = !hasEntries;
   exportLogButton.disabled = !hasEntries;
   clearLogButton.disabled = !hasEntries;
@@ -390,6 +466,33 @@ function csvEscape(value) {
   return `"${stringValue.replace(/"/g, '""')}"`;
 }
 
+async function shareRows(title, rows) {
+  const text = formatRowsAsText(rows);
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, text });
+      liveStatus.textContent = `${title} shared.`;
+      return;
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+    }
+  }
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      liveStatus.textContent = `${title} copied to the clipboard.`;
+      return;
+    } catch (error) {
+      liveStatus.textContent = 'Sharing and clipboard copy are not available in this browser.';
+      return;
+    }
+  }
+
+  liveStatus.textContent = 'Sharing is not available in this browser.';
+}
+
 function downloadCsv(filename, rows) {
   const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -426,24 +529,25 @@ resetButton.addEventListener('click', () => {
   innerButtons.querySelector('button')?.focus();
 });
 
+shareTallyButton.addEventListener('click', () => {
+  shareRows('Emotion tally', getTallyRows());
+});
+
+shareLogButton.addEventListener('click', () => {
+  const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+  shareRows('Recent emotion entries', getLogRows(recent));
+});
+
+shareWheelButton.addEventListener('click', () => {
+  shareRows('Emotion wheel table', getWheelRows());
+});
+
 exportTallyButton.addEventListener('click', () => {
-  const rows = [
-    ['Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
-  ];
-  for (const item of getTally()) {
-    rows.push([item.inner, item.middle, item.outer, item.count, formatDateTime(item.lastRecorded)]);
-  }
-  downloadCsv('emotion-tally.csv', rows);
+  downloadCsv('emotion-tally.csv', getTallyRows());
 });
 
 exportLogButton.addEventListener('click', () => {
-  const rows = [
-    ['Date and time', 'Inner circle', 'Middle circle', 'Outer circle']
-  ];
-  for (const entry of logEntries) {
-    rows.push([formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer]);
-  }
-  downloadCsv('emotion-log.csv', rows);
+  downloadCsv('emotion-log.csv', getLogRows());
 });
 
 clearLogButton.addEventListener('click', () => {

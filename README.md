@@ -21,12 +21,14 @@ The review, record, and reset controls now appear after the three emotion select
 
 ## Features
 
+- Jump between the main page sections from the top menu.
 - View a visual emotion wheel before using the selector.
 - Select emotions one layer at a time.
 - Record the selected emotion locally with date and time.
 - Store entries only in the browser on the current device using local storage.
 - Display a live tally table showing each emotion path and number of times felt.
 - Display recent logged entries.
+- Share table data from the tally, recent entries, and full emotion table using the native share sheet where the browser supports it.
 - Export the tally as CSV.
 - Export the full dated log as CSV.
 - Clear the local log.
