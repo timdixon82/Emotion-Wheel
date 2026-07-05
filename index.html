@@ -139,7 +139,10 @@
 
     <div class="section-heading">
       <h3>Emotion tally</h3>
-      <button type="button" id="shareTallyButton" disabled>Share tally data</button>
+      <div class="actions">
+        <button type="button" id="shareTallyButton" disabled>Share tally data</button>
+        <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
+      </div>
     </div>
     <div class="scroll-table">
       <table>
@@ -161,7 +164,10 @@
 
     <div class="section-heading">
       <h3>Recent entries</h3>
-      <button type="button" id="shareLogButton" disabled>Share recent entries</button>
+      <div class="actions">
+        <button type="button" id="shareLogButton" disabled>Share recent entries</button>
+        <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
+      </div>
     </div>
     <div class="scroll-table">
       <table>
@@ -184,7 +190,10 @@
   <section id="full-table" aria-labelledby="table-heading">
     <div class="section-heading">
       <h2 id="table-heading">Full emotion wheel table</h2>
-      <button type="button" id="shareWheelButton">Share full table</button>
+      <div class="actions">
+        <button type="button" id="shareWheelButton">Share full table</button>
+        <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
+      </div>
     </div>
     <div class="scroll-table">
       <table>
@@ -222,6 +231,9 @@ const resetButton = document.getElementById('resetButton');
 const shareTallyButton = document.getElementById('shareTallyButton');
 const shareLogButton = document.getElementById('shareLogButton');
 const shareWheelButton = document.getElementById('shareWheelButton');
+const copyTallyHtmlButton = document.getElementById('copyTallyHtmlButton');
+const copyLogHtmlButton = document.getElementById('copyLogHtmlButton');
+const copyWheelHtmlButton = document.getElementById('copyWheelHtmlButton');
 const exportTallyButton = document.getElementById('exportTallyButton');
 const exportLogButton = document.getElementById('exportLogButton');
 const clearLogButton = document.getElementById('clearLogButton');
@@ -395,10 +407,28 @@ function formatRowsAsText(rows) {
   return rows.map(row => row.join('\t')).join('\n');
 }
 
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatRowsAsHtmlTable(caption, rows) {
+  const [headings, ...bodyRows] = rows;
+  const thead = `<thead><tr>${headings.map(heading => `<th scope="col">${escapeHtml(heading)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${bodyRows.map(row => `<tr>${row.map(value => `<td>${escapeHtml(value)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  return `<table><caption>${escapeHtml(caption)}</caption>${thead}${tbody}</table>`;
+}
+
 function renderLog() {
   const hasEntries = logEntries.length > 0;
   shareTallyButton.disabled = !hasEntries;
   shareLogButton.disabled = !hasEntries;
+  copyTallyHtmlButton.disabled = !hasEntries;
+  copyLogHtmlButton.disabled = !hasEntries;
   exportTallyButton.disabled = !hasEntries;
   exportLogButton.disabled = !hasEntries;
   clearLogButton.disabled = !hasEntries;
@@ -493,6 +523,34 @@ async function shareRows(title, rows) {
   liveStatus.textContent = 'Sharing is not available in this browser.';
 }
 
+async function copyRowsAsHtmlTable(title, caption, rows) {
+  const html = formatRowsAsHtmlTable(caption, rows);
+  const text = formatRowsAsText(rows);
+
+  try {
+    if (navigator.clipboard?.write && window.ClipboardItem) {
+      const item = new ClipboardItem({
+        'text/html': new Blob([html], { type: 'text/html' }),
+        'text/plain': new Blob([text], { type: 'text/plain' })
+      });
+      await navigator.clipboard.write([item]);
+      liveStatus.textContent = `${title} copied as an HTML table.`;
+      return;
+    }
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(html);
+      liveStatus.textContent = `${title} copied as HTML markup.`;
+      return;
+    }
+  } catch (error) {
+    liveStatus.textContent = 'HTML table copy is not available in this browser.';
+    return;
+  }
+
+  liveStatus.textContent = 'HTML table copy is not available in this browser.';
+}
+
 function downloadCsv(filename, rows) {
   const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -540,6 +598,19 @@ shareLogButton.addEventListener('click', () => {
 
 shareWheelButton.addEventListener('click', () => {
   shareRows('Emotion wheel table', getWheelRows());
+});
+
+copyTallyHtmlButton.addEventListener('click', () => {
+  copyRowsAsHtmlTable('Emotion tally', 'Number of times each emotion path has been recorded', getTallyRows());
+});
+
+copyLogHtmlButton.addEventListener('click', () => {
+  const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+  copyRowsAsHtmlTable('Recent emotion entries', 'Most recent recorded emotions', getLogRows(recent));
+});
+
+copyWheelHtmlButton.addEventListener('click', () => {
+  copyRowsAsHtmlTable('Emotion wheel table', 'All available emotion paths', getWheelRows());
 });
 
 exportTallyButton.addEventListener('click', () => {

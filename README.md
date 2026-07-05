@@ -29,6 +29,7 @@ The review, record, and reset controls now appear after the three emotion select
 - Display a live tally table showing each emotion path and number of times felt.
 - Display recent logged entries.
 - Share table data from the tally, recent entries, and full emotion table using the native share sheet where the browser supports it.
+- Copy table data as HTML tables for pasting into rich text editors.
 - Export the tally as CSV.
 - Export the full dated log as CSV.
 - Clear the local log.
