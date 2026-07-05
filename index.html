@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Emotion Wheel Selector and Local Log</title>
+  <style>
+    :root {
+      --bg: #ffffff; --text: #111111; --muted: #555555; --border: #757575;
+      --focus: #0047ff; --panel: #f7f7f7; --button: #ffffff; --selected: #e8f0ff;
+      --danger: #8b0000;
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.5; margin: 0; background: var(--bg); color: var(--text);
+    }
+    main { max-width: 980px; margin: 0 auto; padding: 1rem; }
+    h1, h2, h3 { line-height: 1.2; }
+    .intro, .help { color: var(--muted); }
+    .status, .log-panel {
+      border: 2px solid var(--border); background: var(--panel); padding: 1rem;
+      margin: 1rem 0; border-radius: .5rem;
+    }
+    .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
+    .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0; }
+    button, a.button {
+      font: inherit; min-height: 3rem; padding: .75rem 1rem; border: 2px solid var(--border);
+      border-radius: .5rem; background: var(--button); color: var(--text); cursor: pointer; text-align: left;
+      text-decoration: none; display: inline-flex; align-items: center;
+    }
+    button:hover, a.button:hover { background: var(--panel); }
+    button:focus, a.button:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    button[aria-pressed="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
+    button.danger { border-color: var(--danger); }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .result { font-size: 1.1rem; font-weight: 700; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
+    th { background: var(--panel); }
+    caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
+    .scroll-table { overflow-x: auto; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111111; --text: #f4f4f4; --muted: #c7c7c7; --border: #b9b9b9;
+        --focus: #8ab4ff; --panel: #1e1e1e; --button: #111111; --selected: #17345f;
+        --danger: #ff9a9a;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Emotion Wheel Selector and Local Log</h1>
+  <p class="intro">Choose one emotion at a time. Start with the inner circle, then choose the matching middle-circle emotion, then the outer-circle emotion. You can then record the selected emotion locally on this device.</p>
+
+  <section class="step" aria-labelledby="inner-heading">
+    <h2 id="inner-heading">Step 1: Inner circle</h2>
+    <div id="innerButtons" class="button-grid"></div>
+  </section>
+
+  <section class="step" aria-labelledby="middle-heading">
+    <h2 id="middle-heading">Step 2: Middle circle</h2>
+    <p id="middleHelp">Choose an inner-circle emotion first.</p>
+    <div id="middleButtons" class="button-grid"></div>
+  </section>
+
+  <section class="step" aria-labelledby="outer-heading">
+    <h2 id="outer-heading">Step 3: Outer circle</h2>
+    <p id="outerHelp">Choose a middle-circle emotion first.</p>
+    <div id="outerButtons" class="button-grid"></div>
+  </section>
+
+  <section class="status" aria-labelledby="current-selection-heading">
+    <h2 id="current-selection-heading">Review and record</h2>
+    <p id="selectionText" class="result">No emotion selected yet.</p>
+    <p id="liveStatus" aria-live="polite" aria-atomic="true">Start by choosing an inner-circle emotion.</p>
+    <div class="actions">
+      <button type="button" id="recordButton" disabled>Record this emotion</button>
+      <button type="button" id="resetButton">Reset selection</button>
+    </div>
+  </section>
+
+
+  <section class="log-panel" aria-labelledby="log-heading">
+    <h2 id="log-heading">Local emotion log</h2>
+    <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
+    <p id="logSummary" aria-live="polite">No emotions recorded yet.</p>
+    <div class="actions">
+      <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
+      <button type="button" id="exportLogButton" disabled>Export full log as CSV</button>
+      <button type="button" id="clearLogButton" class="danger" disabled>Clear local log</button>
+    </div>
+
+    <h3>Emotion tally</h3>
+    <div class="scroll-table">
+      <table>
+        <caption>Number of times each emotion path has been recorded</caption>
+        <thead>
+          <tr>
+            <th scope="col">Inner circle</th>
+            <th scope="col">Middle circle</th>
+            <th scope="col">Outer circle</th>
+            <th scope="col">Times felt</th>
+            <th scope="col">Last recorded</th>
+          </tr>
+        </thead>
+        <tbody id="tallyBody">
+          <tr><td colspan="5">No emotions recorded yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>Recent entries</h3>
+    <div class="scroll-table">
+      <table>
+        <caption>Most recent recorded emotions</caption>
+        <thead>
+          <tr>
+            <th scope="col">Date and time</th>
+            <th scope="col">Inner circle</th>
+            <th scope="col">Middle circle</th>
+            <th scope="col">Outer circle</th>
+          </tr>
+        </thead>
+        <tbody id="logBody">
+          <tr><td colspan="4">No emotions recorded yet.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="table-heading">
+    <h2 id="table-heading">Full emotion wheel table</h2>
+    <div class="scroll-table">
+      <table>
+        <caption>All available emotion paths</caption>
+        <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
+        <tbody>
+          <tr><td>Anger</td><td>Hurt</td><td>Humiliated</td></tr><tr><td>Anger</td><td>Hurt</td><td>Rejected</td></tr><tr><td>Anger</td><td>Threatened</td><td>Devastated</td></tr><tr><td>Anger</td><td>Threatened</td><td>Insecure</td></tr><tr><td>Anger</td><td>Hateful</td><td>Jealous</td></tr><tr><td>Anger</td><td>Hateful</td><td>Resentful</td></tr><tr><td>Anger</td><td>Mad</td><td>Violated</td></tr><tr><td>Anger</td><td>Mad</td><td>Furious</td></tr><tr><td>Anger</td><td>Aggressive</td><td>Enraged</td></tr><tr><td>Anger</td><td>Aggressive</td><td>Provoked</td></tr><tr><td>Anger</td><td>Frustrated</td><td>Hostile</td></tr><tr><td>Anger</td><td>Frustrated</td><td>Infuriated</td></tr><tr><td>Anger</td><td>Distant</td><td>Irritated</td></tr><tr><td>Anger</td><td>Distant</td><td>Withdrawn</td></tr><tr><td>Anger</td><td>Critical</td><td>Suspicious</td></tr><tr><td>Anger</td><td>Critical</td><td>Skeptical</td></tr><tr><td>Disgust</td><td>Disapproval</td><td>Sarcastic</td></tr><tr><td>Disgust</td><td>Disapproval</td><td>Judgmental</td></tr><tr><td>Disgust</td><td>Disappointed</td><td>Loathing</td></tr><tr><td>Disgust</td><td>Disappointed</td><td>Repugnant</td></tr><tr><td>Disgust</td><td>Awful</td><td>Revolted</td></tr><tr><td>Disgust</td><td>Awful</td><td>Revulsion</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Detestable</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Aversion</td></tr><tr><td>Disgust</td><td>Avoidance</td><td>Hesitant</td></tr><tr><td>Sad</td><td>Guilty</td><td>Remorseful</td></tr><tr><td>Sad</td><td>Guilty</td><td>Ashamed</td></tr><tr><td>Sad</td><td>Abandoned</td><td>Ignored</td></tr><tr><td>Sad</td><td>Abandoned</td><td>Victimized</td></tr><tr><td>Sad</td><td>Despair</td><td>Powerless</td></tr><tr><td>Sad</td><td>Despair</td><td>Vulnerable</td></tr><tr><td>Sad</td><td>Depressed</td><td>Inferior</td></tr><tr><td>Sad</td><td>Depressed</td><td>Empty</td></tr><tr><td>Sad</td><td>Lonely</td><td>Abandoned</td></tr><tr><td>Sad</td><td>Lonely</td><td>Isolated</td></tr><tr><td>Sad</td><td>Bored</td><td>Apathetic</td></tr><tr><td>Sad</td><td>Bored</td><td>Indifferent</td></tr><tr><td>Happy</td><td>Joyful</td><td>Inquisitive</td></tr><tr><td>Happy</td><td>Joyful</td><td>Amused</td></tr><tr><td>Happy</td><td>Joyful</td><td>Ecstatic</td></tr><tr><td>Happy</td><td>Interested</td><td>Liberated</td></tr><tr><td>Happy</td><td>Interested</td><td>Energetic</td></tr><tr><td>Happy</td><td>Proud</td><td>Eager</td></tr><tr><td>Happy</td><td>Proud</td><td>Awe</td></tr><tr><td>Happy</td><td>Accepted</td><td>Confident</td></tr><tr><td>Happy</td><td>Accepted</td><td>Important</td></tr><tr><td>Happy</td><td>Powerful</td><td>Respected</td></tr><tr><td>Happy</td><td>Powerful</td><td>Fulfilled</td></tr><tr><td>Happy</td><td>Peaceful</td><td>Courageous</td></tr><tr><td>Happy</td><td>Peaceful</td><td>Provocative</td></tr><tr><td>Happy</td><td>Intimate</td><td>Loving</td></tr><tr><td>Happy</td><td>Intimate</td><td>Hopeful</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Sensitive</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Playful</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Open</td></tr><tr><td>Happy</td><td>Optimistic</td><td>Inspired</td></tr><tr><td>Surprise</td><td>Startled</td><td>Shocked</td></tr><tr><td>Surprise</td><td>Startled</td><td>Dismayed</td></tr><tr><td>Surprise</td><td>Confused</td><td>Disillusioned</td></tr><tr><td>Surprise</td><td>Confused</td><td>Perplexed</td></tr><tr><td>Surprise</td><td>Amazed</td><td>Astonished</td></tr><tr><td>Surprise</td><td>Amazed</td><td>Awe</td></tr><tr><td>Surprise</td><td>Excited</td><td>Eager</td></tr><tr><td>Surprise</td><td>Excited</td><td>Energetic</td></tr><tr><td>Surprise</td><td>Excited</td><td>Liberated</td></tr><tr><td>Fear</td><td>Scared</td><td>Terrified</td></tr><tr><td>Fear</td><td>Scared</td><td>Frightened</td></tr><tr><td>Fear</td><td>Anxious</td><td>Overwhelmed</td></tr><tr><td>Fear</td><td>Anxious</td><td>Worried</td></tr><tr><td>Fear</td><td>Insecure</td><td>Inadequate</td></tr><tr><td>Fear</td><td>Insecure</td><td>Inferior</td></tr><tr><td>Fear</td><td>Submissive</td><td>Worthless</td></tr><tr><td>Fear</td><td>Submissive</td><td>Insignificant</td></tr><tr><td>Fear</td><td>Rejected</td><td>Inadequate</td></tr><tr><td>Fear</td><td>Rejected</td><td>Alienated</td></tr><tr><td>Fear</td><td>Humiliated</td><td>Disrespected</td></tr><tr><td>Fear</td><td>Humiliated</td><td>Ridiculed</td></tr><tr><td>Fear</td><td>Hurt</td><td>Embarrassed</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<script>
+const emotions = [["Anger", "Hurt", "Humiliated"], ["Anger", "Hurt", "Rejected"], ["Anger", "Threatened", "Devastated"], ["Anger", "Threatened", "Insecure"], ["Anger", "Hateful", "Jealous"], ["Anger", "Hateful", "Resentful"], ["Anger", "Mad", "Violated"], ["Anger", "Mad", "Furious"], ["Anger", "Aggressive", "Enraged"], ["Anger", "Aggressive", "Provoked"], ["Anger", "Frustrated", "Hostile"], ["Anger", "Frustrated", "Infuriated"], ["Anger", "Distant", "Irritated"], ["Anger", "Distant", "Withdrawn"], ["Anger", "Critical", "Suspicious"], ["Anger", "Critical", "Skeptical"], ["Disgust", "Disapproval", "Sarcastic"], ["Disgust", "Disapproval", "Judgmental"], ["Disgust", "Disappointed", "Loathing"], ["Disgust", "Disappointed", "Repugnant"], ["Disgust", "Awful", "Revolted"], ["Disgust", "Awful", "Revulsion"], ["Disgust", "Avoidance", "Detestable"], ["Disgust", "Avoidance", "Aversion"], ["Disgust", "Avoidance", "Hesitant"], ["Sad", "Guilty", "Remorseful"], ["Sad", "Guilty", "Ashamed"], ["Sad", "Abandoned", "Ignored"], ["Sad", "Abandoned", "Victimized"], ["Sad", "Despair", "Powerless"], ["Sad", "Despair", "Vulnerable"], ["Sad", "Depressed", "Inferior"], ["Sad", "Depressed", "Empty"], ["Sad", "Lonely", "Abandoned"], ["Sad", "Lonely", "Isolated"], ["Sad", "Bored", "Apathetic"], ["Sad", "Bored", "Indifferent"], ["Happy", "Joyful", "Inquisitive"], ["Happy", "Joyful", "Amused"], ["Happy", "Joyful", "Ecstatic"], ["Happy", "Interested", "Liberated"], ["Happy", "Interested", "Energetic"], ["Happy", "Proud", "Eager"], ["Happy", "Proud", "Awe"], ["Happy", "Accepted", "Confident"], ["Happy", "Accepted", "Important"], ["Happy", "Powerful", "Respected"], ["Happy", "Powerful", "Fulfilled"], ["Happy", "Peaceful", "Courageous"], ["Happy", "Peaceful", "Provocative"], ["Happy", "Intimate", "Loving"], ["Happy", "Intimate", "Hopeful"], ["Happy", "Optimistic", "Sensitive"], ["Happy", "Optimistic", "Playful"], ["Happy", "Optimistic", "Open"], ["Happy", "Optimistic", "Inspired"], ["Surprise", "Startled", "Shocked"], ["Surprise", "Startled", "Dismayed"], ["Surprise", "Confused", "Disillusioned"], ["Surprise", "Confused", "Perplexed"], ["Surprise", "Amazed", "Astonished"], ["Surprise", "Amazed", "Awe"], ["Surprise", "Excited", "Eager"], ["Surprise", "Excited", "Energetic"], ["Surprise", "Excited", "Liberated"], ["Fear", "Scared", "Terrified"], ["Fear", "Scared", "Frightened"], ["Fear", "Anxious", "Overwhelmed"], ["Fear", "Anxious", "Worried"], ["Fear", "Insecure", "Inadequate"], ["Fear", "Insecure", "Inferior"], ["Fear", "Submissive", "Worthless"], ["Fear", "Submissive", "Insignificant"], ["Fear", "Rejected", "Inadequate"], ["Fear", "Rejected", "Alienated"], ["Fear", "Humiliated", "Disrespected"], ["Fear", "Humiliated", "Ridiculed"], ["Fear", "Hurt", "Embarrassed"]];
+const storageKey = 'emotionWheelLocalLogV1';
+
+const innerButtons = document.getElementById('innerButtons');
+const middleButtons = document.getElementById('middleButtons');
+const outerButtons = document.getElementById('outerButtons');
+const selectionText = document.getElementById('selectionText');
+const liveStatus = document.getElementById('liveStatus');
+const middleHelp = document.getElementById('middleHelp');
+const outerHelp = document.getElementById('outerHelp');
+const recordButton = document.getElementById('recordButton');
+const resetButton = document.getElementById('resetButton');
+const exportTallyButton = document.getElementById('exportTallyButton');
+const exportLogButton = document.getElementById('exportLogButton');
+const clearLogButton = document.getElementById('clearLogButton');
+const tallyBody = document.getElementById('tallyBody');
+const logBody = document.getElementById('logBody');
+const logSummary = document.getElementById('logSummary');
+
+let selectedInner = null;
+let selectedMiddle = null;
+let selectedOuter = null;
+let logEntries = loadLog();
+
+function unique(values) {
+  return [...new Set(values)];
+}
+
+function makeButton(label, onClick, selected) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+function clearNode(node) {
+  while (node.firstChild) node.removeChild(node.firstChild);
+}
+
+function loadLog() {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveLog() {
+  localStorage.setItem(storageKey, JSON.stringify(logEntries));
+}
+
+function formatDateTime(isoString) {
+  const date = new Date(isoString);
+  return new Intl.DateTimeFormat('en-GB', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+}
+
+function renderInner() {
+  clearNode(innerButtons);
+  unique(emotions.map(row => row[0])).forEach(label => {
+    innerButtons.appendChild(makeButton(label, () => {
+      selectedInner = label;
+      selectedMiddle = null;
+      selectedOuter = null;
+      renderAll();
+      middleButtons.querySelector('button')?.focus();
+    }, selectedInner === label));
+  });
+}
+
+function renderMiddle() {
+  clearNode(middleButtons);
+  if (!selectedInner) {
+    middleHelp.textContent = 'Choose an inner-circle emotion first.';
+    return;
+  }
+  const options = unique(emotions.filter(row => row[0] === selectedInner).map(row => row[1]));
+  middleHelp.textContent = `${options.length} middle-circle emotions available for ${selectedInner}.`;
+  options.forEach(label => {
+    middleButtons.appendChild(makeButton(label, () => {
+      selectedMiddle = label;
+      selectedOuter = null;
+      renderAll();
+      outerButtons.querySelector('button')?.focus();
+    }, selectedMiddle === label));
+  });
+}
+
+function renderOuter() {
+  clearNode(outerButtons);
+  if (!selectedInner || !selectedMiddle) {
+    outerHelp.textContent = 'Choose a middle-circle emotion first.';
+    return;
+  }
+  const options = emotions
+    .filter(row => row[0] === selectedInner && row[1] === selectedMiddle)
+    .map(row => row[2]);
+  outerHelp.textContent = `${options.length} outer-circle emotions available for ${selectedInner} then ${selectedMiddle}.`;
+  options.forEach(label => {
+    outerButtons.appendChild(makeButton(label, () => {
+      selectedOuter = label;
+      renderAll();
+      recordButton.focus();
+    }, selectedOuter === label));
+  });
+}
+
+function renderSelection() {
+  recordButton.disabled = !selectedOuter;
+
+  if (!selectedInner) {
+    selectionText.textContent = 'No emotion selected yet.';
+    liveStatus.textContent = 'Start by choosing an inner-circle emotion.';
+  } else if (!selectedMiddle) {
+    selectionText.textContent = selectedInner;
+    liveStatus.textContent = `Selected ${selectedInner}. Now choose a middle-circle emotion.`;
+  } else if (!selectedOuter) {
+    selectionText.textContent = `${selectedInner} → ${selectedMiddle}`;
+    liveStatus.textContent = `Selected ${selectedInner}, then ${selectedMiddle}. Now choose an outer-circle emotion.`;
+  } else {
+    selectionText.textContent = `${selectedInner} → ${selectedMiddle} → ${selectedOuter}`;
+    liveStatus.textContent = `Selected emotion path: ${selectedInner}, ${selectedMiddle}, ${selectedOuter}. You can now record this emotion.`;
+  }
+}
+
+function getTally() {
+  const tallyMap = new Map();
+  for (const entry of logEntries) {
+    const key = `${entry.inner}|||${entry.middle}|||${entry.outer}`;
+    const existing = tallyMap.get(key) || {
+      inner: entry.inner,
+      middle: entry.middle,
+      outer: entry.outer,
+      count: 0,
+      lastRecorded: entry.timestamp
+    };
+    existing.count += 1;
+    if (new Date(entry.timestamp) > new Date(existing.lastRecorded)) {
+      existing.lastRecorded = entry.timestamp;
+    }
+    tallyMap.set(key, existing);
+  }
+  return [...tallyMap.values()].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return new Date(b.lastRecorded) - new Date(a.lastRecorded);
+  });
+}
+
+function renderLog() {
+  const hasEntries = logEntries.length > 0;
+  exportTallyButton.disabled = !hasEntries;
+  exportLogButton.disabled = !hasEntries;
+  clearLogButton.disabled = !hasEntries;
+
+  logSummary.textContent = hasEntries
+    ? `${logEntries.length} emotion record${logEntries.length === 1 ? '' : 's'} stored locally.`
+    : 'No emotions recorded yet.';
+
+  clearNode(tallyBody);
+  const tally = getTally();
+  if (!hasEntries) {
+    tallyBody.innerHTML = '<tr><td colspan="5">No emotions recorded yet.</td></tr>';
+  } else {
+    for (const item of tally) {
+      const tr = document.createElement('tr');
+      [item.inner, item.middle, item.outer, String(item.count), formatDateTime(item.lastRecorded)].forEach(value => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+      tallyBody.appendChild(tr);
+    }
+  }
+
+  clearNode(logBody);
+  if (!hasEntries) {
+    logBody.innerHTML = '<tr><td colspan="4">No emotions recorded yet.</td></tr>';
+  } else {
+    const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+    for (const entry of recent) {
+      const tr = document.createElement('tr');
+      [formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer].forEach(value => {
+        const td = document.createElement('td');
+        td.textContent = value;
+        tr.appendChild(td);
+      });
+      logBody.appendChild(tr);
+    }
+  }
+}
+
+function renderAll() {
+  renderInner();
+  renderMiddle();
+  renderOuter();
+  renderSelection();
+  renderLog();
+}
+
+function csvEscape(value) {
+  const stringValue = String(value ?? '');
+  return `"${stringValue.replace(/"/g, '""')}"`;
+}
+
+function downloadCsv(filename, rows) {
+  const csv = rows.map(row => row.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+recordButton.addEventListener('click', () => {
+  if (!selectedOuter) return;
+
+  const entry = {
+    timestamp: new Date().toISOString(),
+    inner: selectedInner,
+    middle: selectedMiddle,
+    outer: selectedOuter
+  };
+  logEntries.push(entry);
+  saveLog();
+  renderAll();
+  liveStatus.textContent = `Recorded: ${selectedInner}, ${selectedMiddle}, ${selectedOuter}.`;
+});
+
+resetButton.addEventListener('click', () => {
+  selectedInner = null;
+  selectedMiddle = null;
+  selectedOuter = null;
+  renderAll();
+  innerButtons.querySelector('button')?.focus();
+});
+
+exportTallyButton.addEventListener('click', () => {
+  const rows = [
+    ['Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
+  ];
+  for (const item of getTally()) {
+    rows.push([item.inner, item.middle, item.outer, item.count, formatDateTime(item.lastRecorded)]);
+  }
+  downloadCsv('emotion-tally.csv', rows);
+});
+
+exportLogButton.addEventListener('click', () => {
+  const rows = [
+    ['Date and time', 'Inner circle', 'Middle circle', 'Outer circle']
+  ];
+  for (const entry of logEntries) {
+    rows.push([formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer]);
+  }
+  downloadCsv('emotion-log.csv', rows);
+});
+
+clearLogButton.addEventListener('click', () => {
+  const confirmed = window.confirm('Clear all locally stored emotion records from this browser?');
+  if (!confirmed) return;
+  logEntries = [];
+  saveLog();
+  renderAll();
+  liveStatus.textContent = 'Local emotion log cleared.';
+});
+
+renderAll();
+</script>
+</body>
+</html>
