@@ -10,26 +10,37 @@ Emotion entries are stored only in the browser on the current device using local
 
 ## Change in this version
 
-The emotion list now uses the manually verified 72-path dataset. The full emotion table is generated from the same dataset as the selector, so the table and buttons stay in sync.
+The selector now supports configurable capture stages.
 
-The review, record, and reset controls now appear after the three emotion selection steps. This gives a cleaner flow:
+Phase 1 records the selected emotion at any level: inner circle, middle circle, or outer circle. The person does not need to complete all three steps before recording.
 
-1. Choose inner-circle emotion.
-2. Choose middle-circle emotion.
-3. Choose outer-circle emotion.
-4. Review and record, or reset.
+Phase 2 adds optional reflection fields:
+
+1. Whether the emotion feels appropriate.
+2. Expected intensity from 1 to 10.
+3. Actual intensity from 1 to 10.
+4. An alignment result comparing expected and actual intensity.
+5. Optional physical sensation checkboxes suggested from the selected emotion type.
+
+The fields can also be turned on and off individually from the capture settings at the top of the page.
 
 ## Features
 
 - Jump between the main page sections from the top menu.
 - View a visual emotion wheel before using the selector.
 - Select emotions one layer at a time.
-- Record the selected emotion locally with date and time.
+- Record the selected emotion locally with date and time after any selected layer.
+- Choose Phase 1, Phase 2, or a custom set of capture fields.
+- Capture whether the emotion is appropriate.
+- Capture expected and actual intensity, with an alignment result.
+- Select optional physical sensations suggested by emotion type.
 - Store entries only in the browser on the current device using local storage.
 - Display a live tally table showing each emotion path and number of times felt.
 - Display recent logged entries.
 - Share table data from the tally, recent entries, and full emotion table using the native share sheet where the browser supports it.
-- Copy table data as HTML tables for pasting into rich text editors.
+- Fall back to automatic clipboard copy when native sharing is not available.
+- Copy table data as HTML tables for pasting into rich text editors, with a second browser selection-copy method for browsers that block rich clipboard writes.
+- Show a manual copy panel only when the browser blocks every automatic share and copy method.
 - Export the tally as CSV.
 - Export the full dated log as CSV.
 - Clear the local log.
@@ -38,14 +49,15 @@ The review, record, and reset controls now appear after the three emotion select
 
 - Tab and Shift+Tab move between controls.
 - Enter or Space selects an emotion or activates a button.
-- After choosing an outer-circle emotion, focus moves to the Record button.
+- After choosing an emotion at any level, focus moves to the Record button.
 
 ## Screen reader notes
 
 - A skip link lets keyboard and screen reader users move directly to the main content.
 - The wheel image is introduced as a visual reference; the selector and full table provide text access to the same workflow.
 - Native buttons are used for all selections.
+- Native checkboxes, radio buttons, and range inputs are used for optional capture fields.
 - Selection button groups are labelled by step and include helper text where choices depend on an earlier step.
 - Headings separate each step.
-- A live region announces the current selection and recording actions.
+- Live regions announce the current selection, intensity alignment, and recording actions.
 - Tables use captions and column headers.

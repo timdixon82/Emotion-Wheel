@@ -6,10 +6,11 @@
   <title>Emotion Wheel Selector and Local Log</title>
   <style>
     :root {
-      --bg: #ffffff; --text: #111111; --muted: #555555; --border: #757575;
+      --bg: #ffffff; --text: #111111; --muted: #4a4a4a; --border: #6b6b6b;
       --focus: #0047ff; --panel: #f7f7f7; --button: #ffffff; --selected: #e8f0ff;
-      --danger: #8b0000;
+      --danger: #8b0000; --good: #045d24; --warn: #6b4500;
     }
+    * { box-sizing: border-box; }
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       line-height: 1.5; margin: 0; background: var(--bg); color: var(--text);
@@ -23,20 +24,13 @@
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; }
     .intro, .help { color: var(--muted); }
-    .page-nav {
+    .page-nav, .settings-panel, .status, .log-panel, .export-panel {
       border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
       border-radius: .5rem;
     }
+    .settings-panel, .status, .log-panel { background: var(--panel); }
     .page-nav h2 { font-size: 1rem; margin: 0 0 .75rem; }
     .page-nav ul { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; margin: 0; padding: 0; }
-    .status, .log-panel {
-      border: 2px solid var(--border); background: var(--panel); padding: 1rem;
-      margin: 1rem 0; border-radius: .5rem;
-    }
-    .export-panel {
-      border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
-      border-radius: .5rem;
-    }
     .wheel-figure { margin: 1.25rem 0; }
     .wheel-image {
       display: block; width: min(100%, 42rem); height: auto; margin: 0 auto;
@@ -45,7 +39,9 @@
     .wheel-figure figcaption { color: var(--muted); margin-top: .75rem; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
-    .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0; }
+    .actions, .field-row, .checkbox-grid, .radio-row {
+      display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0;
+    }
     .section-heading {
       display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
       gap: .75rem; margin-top: 1rem;
@@ -57,11 +53,29 @@
       text-decoration: none; display: inline-flex; align-items: center;
     }
     button:hover, a.button:hover { background: var(--panel); }
-    button:focus, a.button:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    button:focus, a.button:focus, input:focus, select:focus {
+      outline: 4px solid var(--focus); outline-offset: 2px;
+    }
     button[aria-pressed="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
     button.danger { border-color: var(--danger); }
     button:disabled { opacity: .55; cursor: not-allowed; }
+    fieldset { border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
+    legend { font-weight: 700; padding: 0 .25rem; }
+    label { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; }
+    .stacked-label { align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
+    input[type="checkbox"], input[type="radio"] { width: 1.4rem; height: 1.4rem; flex: 0 0 auto; }
+    input[type="range"] { width: min(100%, 16rem); }
+    textarea {
+      width: 100%; min-height: 12rem; padding: .75rem; border: 2px solid var(--border);
+      border-radius: .5rem; background: var(--bg); color: var(--text); font: inherit;
+    }
+    .range-value { font-weight: 700; min-width: 2ch; }
+    .optional-panel[hidden] { display: none; }
+    .copy-panel[hidden] { display: none; }
     .result { font-size: 1.1rem; font-weight: 700; }
+    .alignment { font-weight: 700; }
+    .alignment.good { color: var(--good); }
+    .alignment.warn { color: var(--warn); }
     table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
     th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
     th { background: var(--panel); }
@@ -71,7 +85,7 @@
       :root {
         --bg: #111111; --text: #f4f4f4; --muted: #c7c7c7; --border: #b9b9b9;
         --focus: #8ab4ff; --panel: #1e1e1e; --button: #111111; --selected: #17345f;
-        --danger: #ff9a9a;
+        --danger: #ff9a9a; --good: #8ff0ae; --warn: #ffd27d;
       }
     }
   </style>
@@ -80,11 +94,12 @@
 <a class="skip-link" href="#main-content">Skip to main content</a>
 <main id="main-content" tabindex="-1">
   <h1>Emotion Wheel Selector and Local Log</h1>
-  <p class="intro">Choose one emotion at a time. Start with the inner circle, then choose the matching middle-circle emotion, then the outer-circle emotion. You can then record the selected emotion locally on this device.</p>
+  <p class="intro">Choose one emotion at a time. You can record after the inner, middle, or outer circle, and choose which extra details to collect for each entry.</p>
 
   <nav class="page-nav" aria-labelledby="page-nav-heading">
     <h2 id="page-nav-heading">Page sections</h2>
     <ul>
+      <li><a class="button" href="#capture-settings">Capture settings</a></li>
       <li><a class="button" href="#visual-wheel">Visual wheel</a></li>
       <li><a class="button" href="#emotion-selector">Selector</a></li>
       <li><a class="button" href="#local-log">Local log</a></li>
@@ -92,6 +107,23 @@
       <li><a class="button" href="#export-data">Export data</a></li>
     </ul>
   </nav>
+
+  <section id="capture-settings" class="settings-panel" aria-labelledby="settings-heading">
+    <h2 id="settings-heading">Capture settings</h2>
+    <p class="help">Use a preset, or choose exactly which fields appear when recording an emotion.</p>
+    <div class="actions" role="group" aria-label="Capture presets">
+      <button type="button" id="phaseOneButton">Phase 1</button>
+      <button type="button" id="phaseTwoButton">Phase 2</button>
+    </div>
+    <fieldset>
+      <legend>Fields to collect</legend>
+      <div class="checkbox-grid">
+        <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
+        <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
+        <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
+      </div>
+    </fieldset>
+  </section>
 
   <figure id="visual-wheel" class="wheel-figure" aria-labelledby="wheel-image-caption">
     <img
@@ -125,12 +157,60 @@
     <h2 id="current-selection-heading">Review and record</h2>
     <p id="selectionText" class="result">No emotion selected yet.</p>
     <p id="liveStatus" aria-live="polite" aria-atomic="true">Start by choosing an inner-circle emotion.</p>
+
+    <div id="appropriatePanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Is this emotion appropriate?</legend>
+        <div class="radio-row">
+          <label><input type="radio" name="appropriate" value="Yes"> Yes</label>
+          <label><input type="radio" name="appropriate" value="No"> No</label>
+        </div>
+      </fieldset>
+    </div>
+
+    <div id="intensityPanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Intensity</legend>
+        <div class="field-row">
+          <label class="stacked-label" for="expectedIntensity">
+            Expected intensity
+            <span><input type="range" id="expectedIntensity" min="1" max="10" value="5"> <span id="expectedIntensityValue" class="range-value">5</span></span>
+          </label>
+          <label class="stacked-label" for="actualIntensity">
+            Actual intensity
+            <span><input type="range" id="actualIntensity" min="1" max="10" value="5"> <span id="actualIntensityValue" class="range-value">5</span></span>
+          </label>
+        </div>
+        <p id="intensityAlignment" class="alignment" aria-live="polite">Aligned</p>
+      </fieldset>
+    </div>
+
+    <div id="sensationsPanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Physical sensations</legend>
+        <p id="sensationsHelp" class="help">Choose an emotion to see suggested sensations. This field is optional.</p>
+        <div id="sensationsButtons" class="checkbox-grid" aria-describedby="sensationsHelp"></div>
+      </fieldset>
+    </div>
+
     <div class="actions">
       <button type="button" id="recordButton" disabled>Record this emotion</button>
       <button type="button" id="resetButton">Reset selection</button>
     </div>
   </section>
 
+  <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copy-fallback-heading" hidden tabindex="-1">
+    <h2 id="copyFallbackHeading">Copy data</h2>
+    <p id="copyFallbackHelp" class="help">If automatic sharing or copying is not available, select the text below and use the browser copy command.</p>
+    <label class="stacked-label" for="copyFallbackText">
+      Data ready to copy
+      <textarea id="copyFallbackText" readonly aria-describedby="copyFallbackHelp"></textarea>
+    </label>
+    <div class="actions">
+      <button type="button" id="selectFallbackTextButton">Select text</button>
+      <button type="button" id="closeFallbackButton">Close</button>
+    </div>
+  </section>
 
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
@@ -146,9 +226,10 @@
     </div>
     <div class="scroll-table">
       <table>
-        <caption>Number of times each emotion path has been recorded</caption>
+        <caption>Number of times each emotion selection has been recorded</caption>
         <thead>
           <tr>
+            <th scope="col">Recorded level</th>
             <th scope="col">Inner circle</th>
             <th scope="col">Middle circle</th>
             <th scope="col">Outer circle</th>
@@ -157,7 +238,7 @@
           </tr>
         </thead>
         <tbody id="tallyBody">
-          <tr><td colspan="5">No emotions recorded yet.</td></tr>
+          <tr><td colspan="6">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -175,13 +256,19 @@
         <thead>
           <tr>
             <th scope="col">Date and time</th>
+            <th scope="col">Recorded level</th>
             <th scope="col">Inner circle</th>
             <th scope="col">Middle circle</th>
             <th scope="col">Outer circle</th>
+            <th scope="col">Appropriate</th>
+            <th scope="col">Expected intensity</th>
+            <th scope="col">Actual intensity</th>
+            <th scope="col">Alignment</th>
+            <th scope="col">Physical sensations</th>
           </tr>
         </thead>
         <tbody id="logBody">
-          <tr><td colspan="4">No emotions recorded yet.</td></tr>
+          <tr><td colspan="10">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
     </div>
@@ -218,6 +305,38 @@
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
+const settingsKey = 'emotionWheelCaptureSettingsV1';
+
+const sensationGuides = {
+  Fear: ['Cold', 'Frozen posture', 'Eyes staring or tight shut', 'Urge to curl up or freeze', 'Hard to talk'],
+  Anxiety: ['Hot', 'Eyes wide', 'Breathing fast and shallow', 'Mouth open', 'Muscles tense', 'Voice tone high', 'Urge to run away'],
+  Anger: ['Hot', 'Frowning', 'Clenched jaw', 'Tense muscles', 'Jagged breathing', 'Finger jabbing', 'Voice loud', 'Shouting', 'Urge to attack'],
+  Shame: ['Hot', 'Head down', 'Eyes averted', 'Muscles weak', 'Shrinking posture', 'Covering face', 'Voice tone quiet', 'Urge to hide'],
+  Sadness: ['Cold', 'Muscles floppy', 'Face droopy', 'Jaw loose', 'Halting breath', 'Long sighs', 'Voice higher or lower than normal', 'Slow movements', 'Slumped posture', 'Lump in the throat', 'Pricking behind the eyes', 'Urge to withdraw'],
+  Guilt: ['Temperature rising', 'Shoulders up', 'Palms open', 'Looking down or away', 'Lift in the centre of the brow', 'Voice tone pleading', 'Snappy defensiveness', 'Urge to repair', 'Urge to punish yourself'],
+  Disgust: ['Upper body warm', 'Curled upper lip', 'Voice tone sneering', 'Recoiling or turning away', 'Eyes narrow']
+};
+
+const sensationAliases = {
+  Sad: 'Sadness',
+  Guilty: 'Guilt',
+  Remorseful: 'Guilt',
+  Ashamed: 'Shame',
+  Humiliated: 'Shame',
+  Embarrassed: 'Shame',
+  Anxious: 'Anxiety',
+  Overwhelmed: 'Anxiety',
+  Worried: 'Anxiety',
+  Scared: 'Fear',
+  Frightened: 'Fear',
+  Terrified: 'Fear'
+};
+
+const defaultSettings = {
+  collectAppropriate: false,
+  collectIntensity: false,
+  collectSensations: false
+};
 
 const innerButtons = document.getElementById('innerButtons');
 const middleButtons = document.getElementById('middleButtons');
@@ -228,6 +347,27 @@ const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
 const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
+const phaseOneButton = document.getElementById('phaseOneButton');
+const phaseTwoButton = document.getElementById('phaseTwoButton');
+const collectAppropriate = document.getElementById('collectAppropriate');
+const collectIntensity = document.getElementById('collectIntensity');
+const collectSensations = document.getElementById('collectSensations');
+const appropriatePanel = document.getElementById('appropriatePanel');
+const intensityPanel = document.getElementById('intensityPanel');
+const sensationsPanel = document.getElementById('sensationsPanel');
+const sensationsHelp = document.getElementById('sensationsHelp');
+const sensationsButtons = document.getElementById('sensationsButtons');
+const expectedIntensity = document.getElementById('expectedIntensity');
+const actualIntensity = document.getElementById('actualIntensity');
+const expectedIntensityValue = document.getElementById('expectedIntensityValue');
+const actualIntensityValue = document.getElementById('actualIntensityValue');
+const intensityAlignment = document.getElementById('intensityAlignment');
+const copyFallbackPanel = document.getElementById('copyFallbackPanel');
+const copyFallbackHeading = document.getElementById('copyFallbackHeading');
+const copyFallbackHelp = document.getElementById('copyFallbackHelp');
+const copyFallbackText = document.getElementById('copyFallbackText');
+const selectFallbackTextButton = document.getElementById('selectFallbackTextButton');
+const closeFallbackButton = document.getElementById('closeFallbackButton');
 const shareTallyButton = document.getElementById('shareTallyButton');
 const shareLogButton = document.getElementById('shareLogButton');
 const shareWheelButton = document.getElementById('shareWheelButton');
@@ -245,19 +385,11 @@ const wheelTableBody = document.getElementById('wheelTableBody');
 let selectedInner = null;
 let selectedMiddle = null;
 let selectedOuter = null;
+let captureSettings = loadSettings();
 let logEntries = loadLog();
 
 function unique(values) {
   return [...new Set(values)];
-}
-
-function makeButton(label, onClick, selected) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.textContent = label;
-  button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-  button.addEventListener('click', onClick);
-  return button;
 }
 
 function clearNode(node) {
@@ -277,12 +409,83 @@ function saveLog() {
   localStorage.setItem(storageKey, JSON.stringify(logEntries));
 }
 
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(settingsKey);
+    return raw ? { ...defaultSettings, ...JSON.parse(raw) } : { ...defaultSettings };
+  } catch (error) {
+    return { ...defaultSettings };
+  }
+}
+
+function saveSettings() {
+  localStorage.setItem(settingsKey, JSON.stringify(captureSettings));
+}
+
 function formatDateTime(isoString) {
   const date = new Date(isoString);
   return new Intl.DateTimeFormat('en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(date);
+}
+
+function displayValue(value) {
+  return value === null || value === undefined || value === '' ? 'Not recorded' : String(value);
+}
+
+function getRecordedLevel(entry) {
+  if (entry.level) return entry.level;
+  if (entry.outer) return 'Outer circle';
+  if (entry.middle) return 'Middle circle';
+  return 'Inner circle';
+}
+
+function getSelectionLevel() {
+  if (selectedOuter) return 'Outer circle';
+  if (selectedMiddle) return 'Middle circle';
+  if (selectedInner) return 'Inner circle';
+  return '';
+}
+
+function getSelectionPath() {
+  return [selectedInner, selectedMiddle, selectedOuter].filter(Boolean);
+}
+
+function makeButton(label, onClick, selected) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+function renderSettings() {
+  collectAppropriate.checked = captureSettings.collectAppropriate;
+  collectIntensity.checked = captureSettings.collectIntensity;
+  collectSensations.checked = captureSettings.collectSensations;
+  appropriatePanel.hidden = !captureSettings.collectAppropriate;
+  intensityPanel.hidden = !captureSettings.collectIntensity;
+  sensationsPanel.hidden = !captureSettings.collectSensations;
+  phaseOneButton.setAttribute('aria-pressed', isPhaseOne() ? 'true' : 'false');
+  phaseTwoButton.setAttribute('aria-pressed', isPhaseTwo() ? 'true' : 'false');
+  renderIntensityAlignment();
+  renderSensations();
+}
+
+function isPhaseOne() {
+  return !captureSettings.collectAppropriate && !captureSettings.collectIntensity && !captureSettings.collectSensations;
+}
+
+function isPhaseTwo() {
+  return captureSettings.collectAppropriate && captureSettings.collectIntensity && captureSettings.collectSensations;
+}
+
+function setSettings(settings) {
+  captureSettings = { ...captureSettings, ...settings };
+  saveSettings();
+  renderAll();
 }
 
 function renderInner() {
@@ -293,7 +496,7 @@ function renderInner() {
       selectedMiddle = null;
       selectedOuter = null;
       renderAll();
-      middleButtons.querySelector('button')?.focus();
+      recordButton.focus();
     }, selectedInner === label));
   });
 }
@@ -305,13 +508,13 @@ function renderMiddle() {
     return;
   }
   const options = unique(emotions.filter(row => row[0] === selectedInner).map(row => row[1]));
-  middleHelp.textContent = `${options.length} middle-circle emotions available for ${selectedInner}.`;
+  middleHelp.textContent = `${options.length} middle-circle emotions available for ${selectedInner}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     middleButtons.appendChild(makeButton(label, () => {
       selectedMiddle = label;
       selectedOuter = null;
       renderAll();
-      outerButtons.querySelector('button')?.focus();
+      recordButton.focus();
     }, selectedMiddle === label));
   });
 }
@@ -319,13 +522,13 @@ function renderMiddle() {
 function renderOuter() {
   clearNode(outerButtons);
   if (!selectedInner || !selectedMiddle) {
-    outerHelp.textContent = 'Choose a middle-circle emotion first.';
+    outerHelp.textContent = 'Choose a middle-circle emotion first, or record the current selection.';
     return;
   }
   const options = emotions
     .filter(row => row[0] === selectedInner && row[1] === selectedMiddle)
     .map(row => row[2]);
-  outerHelp.textContent = `${options.length} outer-circle emotions available for ${selectedInner} then ${selectedMiddle}.`;
+  outerHelp.textContent = `${options.length} outer-circle emotions available for ${selectedInner} then ${selectedMiddle}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     outerButtons.appendChild(makeButton(label, () => {
       selectedOuter = label;
@@ -336,31 +539,77 @@ function renderOuter() {
 }
 
 function renderSelection() {
-  recordButton.disabled = !selectedOuter;
+  recordButton.disabled = !selectedInner;
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
     liveStatus.textContent = 'Start by choosing an inner-circle emotion.';
-  } else if (!selectedMiddle) {
-    selectionText.textContent = selectedInner;
-    liveStatus.textContent = `Selected ${selectedInner}. Now choose a middle-circle emotion.`;
-  } else if (!selectedOuter) {
-    selectionText.textContent = `${selectedInner} → ${selectedMiddle}`;
-    liveStatus.textContent = `Selected ${selectedInner}, then ${selectedMiddle}. Now choose an outer-circle emotion.`;
   } else {
-    selectionText.textContent = `${selectedInner} → ${selectedMiddle} → ${selectedOuter}`;
-    liveStatus.textContent = `Selected emotion path: ${selectedInner}, ${selectedMiddle}, ${selectedOuter}. You can now record this emotion.`;
+    const path = getSelectionPath().join(' then ');
+    selectionText.textContent = `${path} (${getSelectionLevel()})`;
+    liveStatus.textContent = `Selected ${path}. You can record this emotion now or continue refining it.`;
   }
+}
+
+function getActiveSensationType() {
+  const path = [selectedOuter, selectedMiddle, selectedInner].filter(Boolean);
+  for (const label of path) {
+    const type = sensationAliases[label] || label;
+    if (sensationGuides[type]) return type;
+  }
+  return null;
+}
+
+function renderSensations() {
+  clearNode(sensationsButtons);
+  if (!captureSettings.collectSensations) return;
+
+  const sensationType = getActiveSensationType();
+  if (!sensationType) {
+    sensationsHelp.textContent = 'Choose an emotion to see suggested sensations. This field is optional.';
+    return;
+  }
+
+  const options = sensationGuides[sensationType];
+  sensationsHelp.textContent = `${options.length} optional physical sensations suggested for ${sensationType}.`;
+  options.forEach((sensation, index) => {
+    const id = `sensation-${index}`;
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = id;
+    checkbox.value = sensation;
+    label.appendChild(checkbox);
+    label.appendChild(document.createTextNode(sensation));
+    sensationsButtons.appendChild(label);
+  });
+}
+
+function getSelectedSensations() {
+  return [...sensationsButtons.querySelectorAll('input[type="checkbox"]:checked')].map(input => input.value);
+}
+
+function renderIntensityAlignment() {
+  expectedIntensityValue.textContent = expectedIntensity.value;
+  actualIntensityValue.textContent = actualIntensity.value;
+  const comparison = getIntensityComparison(Number(expectedIntensity.value), Number(actualIntensity.value));
+  intensityAlignment.textContent = comparison;
+  intensityAlignment.className = `alignment ${comparison === 'Aligned' ? 'good' : 'warn'}`;
+}
+
+function getIntensityComparison(expected, actual) {
+  return Math.abs(expected - actual) <= 1 ? 'Aligned' : 'Not aligned';
 }
 
 function getTally() {
   const tallyMap = new Map();
   for (const entry of logEntries) {
-    const key = `${entry.inner}|||${entry.middle}|||${entry.outer}`;
+    const key = `${getRecordedLevel(entry)}|||${entry.inner}|||${entry.middle || ''}|||${entry.outer || ''}`;
     const existing = tallyMap.get(key) || {
+      level: getRecordedLevel(entry),
       inner: entry.inner,
-      middle: entry.middle,
-      outer: entry.outer,
+      middle: entry.middle || '',
+      outer: entry.outer || '',
       count: 0,
       lastRecorded: entry.timestamp
     };
@@ -378,20 +627,31 @@ function getTally() {
 
 function getTallyRows() {
   const rows = [
-    ['Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
+    ['Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
   ];
   for (const item of getTally()) {
-    rows.push([item.inner, item.middle, item.outer, item.count, formatDateTime(item.lastRecorded)]);
+    rows.push([item.level, item.inner, displayValue(item.middle), displayValue(item.outer), item.count, formatDateTime(item.lastRecorded)]);
   }
   return rows;
 }
 
 function getLogRows(entries = logEntries) {
   const rows = [
-    ['Date and time', 'Inner circle', 'Middle circle', 'Outer circle']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations']
   ];
   for (const entry of entries) {
-    rows.push([formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer]);
+    rows.push([
+      formatDateTime(entry.timestamp),
+      getRecordedLevel(entry),
+      entry.inner,
+      displayValue(entry.middle),
+      displayValue(entry.outer),
+      displayValue(entry.appropriate),
+      displayValue(entry.expectedIntensity),
+      displayValue(entry.actualIntensity),
+      displayValue(entry.intensityAlignment),
+      entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded'
+    ]);
   }
   return rows;
 }
@@ -440,11 +700,11 @@ function renderLog() {
   clearNode(tallyBody);
   const tally = getTally();
   if (!hasEntries) {
-    tallyBody.innerHTML = '<tr><td colspan="5">No emotions recorded yet.</td></tr>';
+    tallyBody.innerHTML = '<tr><td colspan="6">No emotions recorded yet.</td></tr>';
   } else {
     for (const item of tally) {
       const tr = document.createElement('tr');
-      [item.inner, item.middle, item.outer, String(item.count), formatDateTime(item.lastRecorded)].forEach(value => {
+      [item.level, item.inner, displayValue(item.middle), displayValue(item.outer), String(item.count), formatDateTime(item.lastRecorded)].forEach(value => {
         const td = document.createElement('td');
         td.textContent = value;
         tr.appendChild(td);
@@ -455,12 +715,23 @@ function renderLog() {
 
   clearNode(logBody);
   if (!hasEntries) {
-    logBody.innerHTML = '<tr><td colspan="4">No emotions recorded yet.</td></tr>';
+    logBody.innerHTML = '<tr><td colspan="10">No emotions recorded yet.</td></tr>';
   } else {
     const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
       const tr = document.createElement('tr');
-      [formatDateTime(entry.timestamp), entry.inner, entry.middle, entry.outer].forEach(value => {
+      [
+        formatDateTime(entry.timestamp),
+        getRecordedLevel(entry),
+        entry.inner,
+        displayValue(entry.middle),
+        displayValue(entry.outer),
+        displayValue(entry.appropriate),
+        displayValue(entry.expectedIntensity),
+        displayValue(entry.actualIntensity),
+        displayValue(entry.intensityAlignment),
+        entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded'
+      ].forEach(value => {
         const td = document.createElement('td');
         td.textContent = value;
         tr.appendChild(td);
@@ -484,6 +755,7 @@ function renderFullEmotionTable() {
 }
 
 function renderAll() {
+  renderSettings();
   renderInner();
   renderMiddle();
   renderOuter();
@@ -513,19 +785,29 @@ async function shareRows(title, rows) {
     try {
       await navigator.clipboard.writeText(text);
       liveStatus.textContent = `${title} copied to the clipboard.`;
+      copyFallbackPanel.hidden = true;
       return;
     } catch (error) {
-      liveStatus.textContent = 'Sharing and clipboard copy are not available in this browser.';
-      return;
     }
   }
 
-  liveStatus.textContent = 'Sharing is not available in this browser.';
+  if (copyTextWithSelection(text)) {
+    liveStatus.textContent = `${title} copied to the clipboard.`;
+    copyFallbackPanel.hidden = true;
+    return;
+  }
+
+  showCopyFallback(title, text, 'This browser blocked both sharing and automatic clipboard copy. The same data is ready below so you can copy it manually.');
 }
 
 async function copyRowsAsHtmlTable(title, caption, rows) {
   const html = formatRowsAsHtmlTable(caption, rows);
   const text = formatRowsAsText(rows);
+
+  if (copyHtmlWithSelection(html, text)) {
+    liveStatus.textContent = `${title} copied as an HTML table.`;
+    return;
+  }
 
   try {
     if (navigator.clipboard?.write && window.ClipboardItem) {
@@ -544,11 +826,9 @@ async function copyRowsAsHtmlTable(title, caption, rows) {
       return;
     }
   } catch (error) {
-    liveStatus.textContent = 'HTML table copy is not available in this browser.';
-    return;
   }
 
-  liveStatus.textContent = 'HTML table copy is not available in this browser.';
+  showCopyFallback(title, html, 'This browser blocked automatic table copy. The HTML table markup is ready below so you can copy it manually.');
 }
 
 function downloadCsv(filename, rows) {
@@ -564,25 +844,131 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(url);
 }
 
-recordButton.addEventListener('click', () => {
-  if (!selectedOuter) return;
+function selectFallbackText() {
+  copyFallbackText.focus();
+  copyFallbackText.select();
+  copyFallbackText.setSelectionRange(0, copyFallbackText.value.length);
+}
 
+function showCopyFallback(title, text, helpText) {
+  copyFallbackHeading.textContent = title;
+  copyFallbackHelp.textContent = helpText;
+  copyFallbackText.value = text;
+  copyFallbackPanel.hidden = false;
+  liveStatus.textContent = `${title} is ready to copy manually.`;
+  copyFallbackPanel.focus();
+  window.setTimeout(selectFallbackText, 0);
+}
+
+function copyTextWithSelection(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  textarea.style.top = '0';
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  const copied = document.execCommand('copy');
+  document.body.removeChild(textarea);
+  return copied;
+}
+
+function copyHtmlWithSelection(html, text) {
+  const container = document.createElement('div');
+  container.contentEditable = 'true';
+  container.innerHTML = html;
+  container.style.position = 'fixed';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '1px';
+  container.style.height = '1px';
+  container.style.overflow = 'hidden';
+  document.body.appendChild(container);
+
+  const range = document.createRange();
+  range.selectNodeContents(container);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+  const copied = document.execCommand('copy');
+  selection.removeAllRanges();
+  document.body.removeChild(container);
+
+  return copied || copyTextWithSelection(text);
+}
+
+phaseOneButton.addEventListener('click', () => {
+  setSettings(defaultSettings);
+  liveStatus.textContent = 'Phase 1 selected. Only the emotion selection will be recorded.';
+});
+
+phaseTwoButton.addEventListener('click', () => {
+  setSettings({ collectAppropriate: true, collectIntensity: true, collectSensations: true });
+  liveStatus.textContent = 'Phase 2 selected. Extra reflection fields are available.';
+});
+
+[collectAppropriate, collectIntensity, collectSensations].forEach(input => {
+  input.addEventListener('change', () => {
+    setSettings({
+      collectAppropriate: collectAppropriate.checked,
+      collectIntensity: collectIntensity.checked,
+      collectSensations: collectSensations.checked
+    });
+  });
+});
+
+[expectedIntensity, actualIntensity].forEach(input => {
+  input.addEventListener('input', renderIntensityAlignment);
+});
+
+selectFallbackTextButton.addEventListener('click', selectFallbackText);
+
+closeFallbackButton.addEventListener('click', () => {
+  copyFallbackPanel.hidden = true;
+});
+
+recordButton.addEventListener('click', () => {
+  if (!selectedInner) return;
+
+  const expected = Number(expectedIntensity.value);
+  const actual = Number(actualIntensity.value);
   const entry = {
     timestamp: new Date().toISOString(),
+    level: getSelectionLevel(),
     inner: selectedInner,
     middle: selectedMiddle,
     outer: selectedOuter
   };
+
+  if (captureSettings.collectAppropriate) {
+    entry.appropriate = document.querySelector('input[name="appropriate"]:checked')?.value || '';
+  }
+  if (captureSettings.collectIntensity) {
+    entry.expectedIntensity = expected;
+    entry.actualIntensity = actual;
+    entry.intensityAlignment = getIntensityComparison(expected, actual);
+  }
+  if (captureSettings.collectSensations) {
+    entry.physicalSensations = getSelectedSensations();
+    entry.sensationGuide = getActiveSensationType();
+  }
+
   logEntries.push(entry);
   saveLog();
   renderAll();
-  liveStatus.textContent = `Recorded: ${selectedInner}, ${selectedMiddle}, ${selectedOuter}.`;
+  liveStatus.textContent = `Recorded: ${getSelectionPath().join(', ')}.`;
 });
 
 resetButton.addEventListener('click', () => {
   selectedInner = null;
   selectedMiddle = null;
   selectedOuter = null;
+  document.querySelectorAll('input[name="appropriate"]').forEach(input => {
+    input.checked = false;
+  });
   renderAll();
   innerButtons.querySelector('button')?.focus();
 });
@@ -601,7 +987,7 @@ shareWheelButton.addEventListener('click', () => {
 });
 
 copyTallyHtmlButton.addEventListener('click', () => {
-  copyRowsAsHtmlTable('Emotion tally', 'Number of times each emotion path has been recorded', getTallyRows());
+  copyRowsAsHtmlTable('Emotion tally', 'Number of times each emotion selection has been recorded', getTallyRows());
 });
 
 copyLogHtmlButton.addEventListener('click', () => {
