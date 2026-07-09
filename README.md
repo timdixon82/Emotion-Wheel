@@ -22,7 +22,7 @@ Phase 2 adds optional reflection fields:
 4. An alignment result comparing expected and actual intensity.
 5. Optional physical sensation checkboxes suggested from the selected emotion type.
 
-The fields can also be turned on and off individually from the capture settings at the top of the page.
+Use Phase 1 or Phase 2 for the common journeys, or choose Custom to turn individual fields on and off.
 
 ## Features
 
@@ -30,10 +30,10 @@ The fields can also be turned on and off individually from the capture settings 
 - View a visual emotion wheel before using the selector.
 - Select emotions one layer at a time.
 - Record the selected emotion locally with date and time after any selected layer.
-- Choose Phase 1, Phase 2, or a custom set of capture fields.
+- Choose Phase 1, Phase 2, or Custom capture fields.
 - Capture whether the emotion is appropriate.
 - Capture expected and actual intensity, with an alignment result.
-- Select optional physical sensations suggested by emotion type.
+- Select optional physical sensations suggested by emotion type, or show more sensations when a broader list would help.
 - Store entries only in the browser on the current device using local storage.
 - Display a live tally table showing each emotion path and number of times felt.
 - Display recent logged entries.

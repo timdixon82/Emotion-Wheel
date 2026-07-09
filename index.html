@@ -69,6 +69,10 @@
       width: 100%; min-height: 12rem; padding: .75rem; border: 2px solid var(--border);
       border-radius: .5rem; background: var(--bg); color: var(--text); font: inherit;
     }
+    .visually-hidden {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
     .range-value { font-weight: 700; min-width: 2ch; }
     .optional-panel[hidden] { display: none; }
     .copy-panel[hidden] { display: none; }
@@ -114,15 +118,18 @@
     <div class="actions" role="group" aria-label="Capture presets">
       <button type="button" id="phaseOneButton">Phase 1</button>
       <button type="button" id="phaseTwoButton">Phase 2</button>
+      <button type="button" id="customButton">Custom</button>
     </div>
-    <fieldset>
-      <legend>Fields to collect</legend>
-      <div class="checkbox-grid">
-        <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
-        <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
-        <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
-      </div>
-    </fieldset>
+    <div id="customSettingsPanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Fields to collect</legend>
+        <div class="checkbox-grid">
+          <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
+          <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
+          <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
+        </div>
+      </fieldset>
+    </div>
   </section>
 
   <figure id="visual-wheel" class="wheel-figure" aria-labelledby="wheel-image-caption">
@@ -171,14 +178,15 @@
     <div id="intensityPanel" class="optional-panel" hidden>
       <fieldset>
         <legend>Intensity</legend>
+        <p id="intensityScaleHelp" class="visually-hidden">Intensity is measured from 1 out of 10 to 10 out of 10.</p>
         <div class="field-row">
           <label class="stacked-label" for="expectedIntensity">
             Expected intensity
-            <span><input type="range" id="expectedIntensity" min="1" max="10" value="5"> <span id="expectedIntensityValue" class="range-value">5</span></span>
+            <span><input type="range" id="expectedIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="expectedIntensityValue" class="range-value" for="expectedIntensity">5</output></span>
           </label>
           <label class="stacked-label" for="actualIntensity">
             Actual intensity
-            <span><input type="range" id="actualIntensity" min="1" max="10" value="5"> <span id="actualIntensityValue" class="range-value">5</span></span>
+            <span><input type="range" id="actualIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="actualIntensityValue" class="range-value" for="actualIntensity">5</output></span>
           </label>
         </div>
         <p id="intensityAlignment" class="alignment" aria-live="polite">Aligned</p>
@@ -188,6 +196,7 @@
     <div id="sensationsPanel" class="optional-panel" hidden>
       <fieldset>
         <legend>Physical sensations</legend>
+        <label><input type="checkbox" id="includeAllSensations"> Show more sensations</label>
         <p id="sensationsHelp" class="help">Choose an emotion to see suggested sensations. This field is optional.</p>
         <div id="sensationsButtons" class="checkbox-grid" aria-describedby="sensationsHelp"></div>
       </fieldset>
@@ -199,7 +208,7 @@
     </div>
   </section>
 
-  <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copy-fallback-heading" hidden tabindex="-1">
+  <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copyFallbackHeading" hidden tabindex="-1">
     <h2 id="copyFallbackHeading">Copy data</h2>
     <p id="copyFallbackHelp" class="help">If automatic sharing or copying is not available, select the text below and use the browser copy command.</p>
     <label class="stacked-label" for="copyFallbackText">
@@ -309,7 +318,7 @@ const settingsKey = 'emotionWheelCaptureSettingsV1';
 
 const sensationGuides = {
   Fear: ['Cold', 'Frozen posture', 'Eyes staring or tight shut', 'Urge to curl up or freeze', 'Hard to talk'],
-  Anxiety: ['Hot', 'Eyes wide', 'Breathing fast and shallow', 'Mouth open', 'Muscles tense', 'Voice tone high', 'Urge to run away'],
+  Anxiety: ['Hot', 'Eyes wide', 'Breathing fast and shallow', 'Mouth open', 'Muscles tense', 'Butterflies or a feeling in the gut', 'Voice tone high', 'Urge to run away'],
   Anger: ['Hot', 'Frowning', 'Clenched jaw', 'Tense muscles', 'Jagged breathing', 'Finger jabbing', 'Voice loud', 'Shouting', 'Urge to attack'],
   Shame: ['Hot', 'Head down', 'Eyes averted', 'Muscles weak', 'Shrinking posture', 'Covering face', 'Voice tone quiet', 'Urge to hide'],
   Sadness: ['Cold', 'Muscles floppy', 'Face droopy', 'Jaw loose', 'Halting breath', 'Long sighs', 'Voice higher or lower than normal', 'Slow movements', 'Slumped posture', 'Lump in the throat', 'Pricking behind the eyes', 'Urge to withdraw'],
@@ -333,9 +342,11 @@ const sensationAliases = {
 };
 
 const defaultSettings = {
+  captureMode: 'phase1',
   collectAppropriate: false,
   collectIntensity: false,
-  collectSensations: false
+  collectSensations: false,
+  includeAllSensations: false
 };
 
 const innerButtons = document.getElementById('innerButtons');
@@ -349,9 +360,12 @@ const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
 const phaseOneButton = document.getElementById('phaseOneButton');
 const phaseTwoButton = document.getElementById('phaseTwoButton');
+const customButton = document.getElementById('customButton');
+const customSettingsPanel = document.getElementById('customSettingsPanel');
 const collectAppropriate = document.getElementById('collectAppropriate');
 const collectIntensity = document.getElementById('collectIntensity');
 const collectSensations = document.getElementById('collectSensations');
+const includeAllSensations = document.getElementById('includeAllSensations');
 const appropriatePanel = document.getElementById('appropriatePanel');
 const intensityPanel = document.getElementById('intensityPanel');
 const sensationsPanel = document.getElementById('sensationsPanel');
@@ -412,7 +426,7 @@ function saveLog() {
 function loadSettings() {
   try {
     const raw = localStorage.getItem(settingsKey);
-    return raw ? { ...defaultSettings, ...JSON.parse(raw) } : { ...defaultSettings };
+    return raw ? normalizeSettings(JSON.parse(raw)) : { ...defaultSettings };
   } catch (error) {
     return { ...defaultSettings };
   }
@@ -420,6 +434,20 @@ function loadSettings() {
 
 function saveSettings() {
   localStorage.setItem(settingsKey, JSON.stringify(captureSettings));
+}
+
+function normalizeSettings(settings) {
+  const normalized = { ...defaultSettings, ...settings };
+  if (!settings.captureMode) {
+    if (isPhaseOneSettings(normalized)) {
+      normalized.captureMode = 'phase1';
+    } else if (isPhaseTwoSettings(normalized)) {
+      normalized.captureMode = 'phase2';
+    } else {
+      normalized.captureMode = 'custom';
+    }
+  }
+  return normalized;
 }
 
 function formatDateTime(isoString) {
@@ -465,21 +493,24 @@ function renderSettings() {
   collectAppropriate.checked = captureSettings.collectAppropriate;
   collectIntensity.checked = captureSettings.collectIntensity;
   collectSensations.checked = captureSettings.collectSensations;
+  includeAllSensations.checked = captureSettings.includeAllSensations;
   appropriatePanel.hidden = !captureSettings.collectAppropriate;
   intensityPanel.hidden = !captureSettings.collectIntensity;
   sensationsPanel.hidden = !captureSettings.collectSensations;
-  phaseOneButton.setAttribute('aria-pressed', isPhaseOne() ? 'true' : 'false');
-  phaseTwoButton.setAttribute('aria-pressed', isPhaseTwo() ? 'true' : 'false');
+  customSettingsPanel.hidden = captureSettings.captureMode !== 'custom';
+  phaseOneButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase1' ? 'true' : 'false');
+  phaseTwoButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase2' ? 'true' : 'false');
+  customButton.setAttribute('aria-pressed', captureSettings.captureMode === 'custom' ? 'true' : 'false');
   renderIntensityAlignment();
   renderSensations();
 }
 
-function isPhaseOne() {
-  return !captureSettings.collectAppropriate && !captureSettings.collectIntensity && !captureSettings.collectSensations;
+function isPhaseOneSettings(settings) {
+  return !settings.collectAppropriate && !settings.collectIntensity && !settings.collectSensations;
 }
 
-function isPhaseTwo() {
-  return captureSettings.collectAppropriate && captureSettings.collectIntensity && captureSettings.collectSensations;
+function isPhaseTwoSettings(settings) {
+  return settings.collectAppropriate && settings.collectIntensity && settings.collectSensations;
 }
 
 function setSettings(settings) {
@@ -564,6 +595,15 @@ function renderSensations() {
   clearNode(sensationsButtons);
   if (!captureSettings.collectSensations) return;
 
+  if (captureSettings.includeAllSensations) {
+    const options = getAllSensations();
+    sensationsHelp.textContent = `${options.length} optional physical sensations are available. Choose any that apply.`;
+    options.forEach(sensation => {
+      sensationsButtons.appendChild(makeSensationCheckbox(sensation, sensation));
+    });
+    return;
+  }
+
   const sensationType = getActiveSensationType();
   if (!sensationType) {
     sensationsHelp.textContent = 'Choose an emotion to see suggested sensations. This field is optional.';
@@ -572,17 +612,23 @@ function renderSensations() {
 
   const options = sensationGuides[sensationType];
   sensationsHelp.textContent = `${options.length} optional physical sensations suggested for ${sensationType}.`;
-  options.forEach((sensation, index) => {
-    const id = `sensation-${index}`;
-    const label = document.createElement('label');
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = id;
-    checkbox.value = sensation;
-    label.appendChild(checkbox);
-    label.appendChild(document.createTextNode(sensation));
-    sensationsButtons.appendChild(label);
+  options.forEach(sensation => {
+    sensationsButtons.appendChild(makeSensationCheckbox(sensation, sensation));
   });
+}
+
+function makeSensationCheckbox(labelText, value) {
+  const label = document.createElement('label');
+  const checkbox = document.createElement('input');
+  checkbox.type = 'checkbox';
+  checkbox.value = value;
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode(labelText));
+  return label;
+}
+
+function getAllSensations() {
+  return unique(Object.values(sensationGuides).flat());
 }
 
 function getSelectedSensations() {
@@ -592,6 +638,8 @@ function getSelectedSensations() {
 function renderIntensityAlignment() {
   expectedIntensityValue.textContent = expectedIntensity.value;
   actualIntensityValue.textContent = actualIntensity.value;
+  expectedIntensity.setAttribute('aria-valuetext', `${expectedIntensity.value} out of 10`);
+  actualIntensity.setAttribute('aria-valuetext', `${actualIntensity.value} out of 10`);
   const comparison = getIntensityComparison(Number(expectedIntensity.value), Number(actualIntensity.value));
   intensityAlignment.textContent = comparison;
   intensityAlignment.className = `alignment ${comparison === 'Aligned' ? 'good' : 'warn'}`;
@@ -901,23 +949,45 @@ function copyHtmlWithSelection(html, text) {
 }
 
 phaseOneButton.addEventListener('click', () => {
-  setSettings(defaultSettings);
+  setSettings({
+    captureMode: 'phase1',
+    collectAppropriate: false,
+    collectIntensity: false,
+    collectSensations: false,
+    includeAllSensations: false
+  });
   liveStatus.textContent = 'Phase 1 selected. Only the emotion selection will be recorded.';
 });
 
 phaseTwoButton.addEventListener('click', () => {
-  setSettings({ collectAppropriate: true, collectIntensity: true, collectSensations: true });
+  setSettings({
+    captureMode: 'phase2',
+    collectAppropriate: true,
+    collectIntensity: true,
+    collectSensations: true,
+    includeAllSensations: false
+  });
   liveStatus.textContent = 'Phase 2 selected. Extra reflection fields are available.';
+});
+
+customButton.addEventListener('click', () => {
+  setSettings({ captureMode: 'custom' });
+  liveStatus.textContent = 'Custom capture selected. Choose which fields to collect.';
 });
 
 [collectAppropriate, collectIntensity, collectSensations].forEach(input => {
   input.addEventListener('change', () => {
     setSettings({
+      captureMode: 'custom',
       collectAppropriate: collectAppropriate.checked,
       collectIntensity: collectIntensity.checked,
       collectSensations: collectSensations.checked
     });
   });
+});
+
+includeAllSensations.addEventListener('change', () => {
+  setSettings({ includeAllSensations: includeAllSensations.checked });
 });
 
 [expectedIntensity, actualIntensity].forEach(input => {
@@ -953,7 +1023,7 @@ recordButton.addEventListener('click', () => {
   }
   if (captureSettings.collectSensations) {
     entry.physicalSensations = getSelectedSensations();
-    entry.sensationGuide = getActiveSensationType();
+    entry.sensationGuide = captureSettings.includeAllSensations ? 'All sensations' : getActiveSensationType();
   }
 
   logEntries.push(entry);
