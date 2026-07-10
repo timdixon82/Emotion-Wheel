@@ -677,8 +677,23 @@ function focusFirstButton(container, fallback) {
   if (firstButton) {
     firstButton.focus();
   } else {
-    fallback.focus();
+    focusNextRecordingControl(fallback);
   }
+}
+
+function focusFirstVisibleControl(panel) {
+  if (panel.hidden) return false;
+  const control = panel.querySelector('input, button, textarea, select');
+  if (!control) return false;
+  control.focus();
+  return true;
+}
+
+function focusNextRecordingControl(fallback = recordButton) {
+  if (focusFirstVisibleControl(appropriatePanel)) return;
+  if (focusFirstVisibleControl(intensityPanel)) return;
+  if (focusFirstVisibleControl(sensationsPanel)) return;
+  fallback.focus();
 }
 
 function renderInner() {
@@ -726,7 +741,7 @@ function renderOuter() {
     outerButtons.appendChild(makeButton(label, () => {
       selectedOuter = label;
       renderAll();
-      recordButton.focus();
+      focusNextRecordingControl();
     }, selectedOuter === label));
   });
 }
