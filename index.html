@@ -1039,6 +1039,11 @@ resetButton.addEventListener('click', () => {
   document.querySelectorAll('input[name="appropriate"]').forEach(input => {
     input.checked = false;
   });
+  expectedIntensity.value = expectedIntensity.defaultValue;
+  actualIntensity.value = actualIntensity.defaultValue;
+  sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = false;
+  });
   renderAll();
   innerButtons.querySelector('button')?.focus();
 });
