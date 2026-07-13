@@ -1,0 +1,10 @@
+{
+  "name": "lint-tools",
+  "description": "CI markup and style validation tools for the static-content archetype (no project package.json). Kept here so Dependabot can track and propose version bumps. Installed in the lint workflow via npm ci.",
+  "private": true,
+  "devDependencies": {
+    "html-validate": "11.5.6",
+    "stylelint": "17.14.0",
+    "stylelint-config-standard": "40.0.0"
+  }
+}

@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
@@ -62,7 +62,7 @@
     fieldset { border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
     legend { font-weight: 700; padding: 0 .25rem; }
     label { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; }
-    .stacked-label { align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
+    .stacked-label { display: inline-flex; align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
     input[type="checkbox"], input[type="radio"] { width: 1.4rem; height: 1.4rem; flex: 0 0 auto; }
     input[type="range"] { width: min(100%, 16rem); }
     textarea {
@@ -85,7 +85,7 @@
       background: var(--bg);
     }
     .chart-card h3, .chart-card h4 { margin-top: 0; }
-    .bar-list { display: grid; gap: .75rem; margin: 1rem 0; }
+    .bar-list { display: grid; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
     .bar-row {
       display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 2fr) auto;
       gap: .75rem; align-items: center;
@@ -197,14 +197,14 @@
         <legend>Intensity</legend>
         <p id="intensityScaleHelp" class="visually-hidden">Intensity is measured from 1 out of 10 to 10 out of 10.</p>
         <div class="field-row">
-          <label class="stacked-label" for="expectedIntensity">
-            Expected intensity
+          <span class="stacked-label">
+            <label for="expectedIntensity">Expected intensity</label>
             <span><input type="range" id="expectedIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="expectedIntensityValue" class="range-value" for="expectedIntensity">5</output></span>
-          </label>
-          <label class="stacked-label" for="actualIntensity">
-            Actual intensity
+          </span>
+          <span class="stacked-label">
+            <label for="actualIntensity">Actual intensity</label>
             <span><input type="range" id="actualIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="actualIntensityValue" class="range-value" for="actualIntensity">5</output></span>
-          </label>
+          </span>
         </div>
         <p id="intensityAlignment" class="alignment" aria-live="polite">Aligned</p>
       </fieldset>
@@ -228,7 +228,7 @@
   <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copyFallbackHeading" hidden tabindex="-1">
     <h2 id="copyFallbackHeading">Copy data</h2>
     <p id="copyFallbackHelp" class="help">If automatic sharing or copying is not available, select the text below and use the browser copy command.</p>
-    <label class="stacked-label" for="copyFallbackText">
+    <label class="stacked-label">
       Data ready to copy
       <textarea id="copyFallbackText" readonly aria-describedby="copyFallbackHelp"></textarea>
     </label>
@@ -310,7 +310,7 @@
         <button type="button" id="shareEmotionChartButton">Share chart image</button>
       </div>
       <p id="emotionChartSummary" class="help">No emotion records available yet.</p>
-      <div id="emotionChart" class="bar-list" role="list" aria-labelledby="emotion-chart-heading" aria-describedby="emotionChartSummary"></div>
+      <ul id="emotionChart" class="bar-list" aria-labelledby="emotion-chart-heading" aria-describedby="emotionChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Most recorded emotion paths</caption>
@@ -326,7 +326,7 @@
         <button type="button" id="shareLevelChartButton">Share chart image</button>
       </div>
       <p id="levelChartSummary" class="help">No recorded levels available yet.</p>
-      <div id="levelChart" class="bar-list" role="list" aria-labelledby="level-chart-heading" aria-describedby="levelChartSummary"></div>
+      <ul id="levelChart" class="bar-list" aria-labelledby="level-chart-heading" aria-describedby="levelChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Recorded level counts</caption>
@@ -342,7 +342,7 @@
         <button type="button" id="shareTimeChartButton">Share chart image</button>
       </div>
       <p id="timeChartSummary" class="help">No dates available yet.</p>
-      <div id="timeChart" class="bar-list" role="list" aria-labelledby="time-chart-heading" aria-describedby="timeChartSummary"></div>
+      <ul id="timeChart" class="bar-list" aria-labelledby="time-chart-heading" aria-describedby="timeChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Emotion records grouped by date</caption>
@@ -360,7 +360,7 @@
       <p id="reflectionChartSummary" class="help">No reflection data available yet.</p>
 
       <h4>Appropriate responses</h4>
-      <div id="appropriateChart" class="bar-list" role="list" aria-label="Appropriate response counts" aria-describedby="reflectionChartSummary"></div>
+      <ul id="appropriateChart" class="bar-list" aria-label="Appropriate response counts" aria-describedby="reflectionChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Appropriate response counts</caption>
@@ -370,7 +370,7 @@
       </div>
 
       <h4>Intensity alignment</h4>
-      <div id="alignmentChart" class="bar-list" role="list" aria-label="Intensity alignment counts" aria-describedby="reflectionChartSummary"></div>
+      <ul id="alignmentChart" class="bar-list" aria-label="Intensity alignment counts" aria-describedby="reflectionChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Intensity alignment counts</caption>
@@ -380,7 +380,7 @@
       </div>
 
       <h4>Intensity averages</h4>
-      <div id="intensityMetrics" class="metric-grid" aria-label="Intensity averages"></div>
+      <div id="intensityMetrics" class="metric-grid" role="group" aria-label="Intensity averages"></div>
       <div class="scroll-table">
         <table>
           <caption>Expected and actual intensity averages</caption>
@@ -390,7 +390,7 @@
       </div>
 
       <h4>Most common physical sensations</h4>
-      <div id="sensationsChart" class="bar-list" role="list" aria-label="Physical sensation counts" aria-describedby="reflectionChartSummary"></div>
+      <ul id="sensationsChart" class="bar-list" aria-label="Physical sensation counts" aria-describedby="reflectionChartSummary"></ul>
       <div class="scroll-table">
         <table>
           <caption>Most common physical sensations</caption>

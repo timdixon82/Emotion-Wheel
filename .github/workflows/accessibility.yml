@@ -1,0 +1,95 @@
+# Accessibility checks at WCAG 2.2 AAA using Pa11y and axe-core.
+#
+# Two complementary patterns keep the checks green across projects:
+#
+#   Tool pinning (template pattern). Pa11y, @axe-core/cli, and wait-on are
+#   pinned in .github/accessibility-tools/package.json so Dependabot can
+#   track and propose version bumps automatically. They are installed via
+#   npm ci against that manifest, never with npm install -g.
+#
+#   Chrome and ChromeDriver matching (action-based). browser-actions/setup-chrome
+#   installs a matched Chrome and ChromeDriver pair and exposes their paths as
+#   step outputs (steps.chrome.outputs.chrome-path and
+#   steps.chrome.outputs.chromedriver-path). This avoids the fragile find-based
+#   path detection of browser-driver-manager and the hardcoded CDN-URL coupling
+#   of the Chrome for Testing CDN approach. PUPPETEER_EXECUTABLE_PATH is scoped
+#   to the Pa11y step only, so Puppeteer-using tools downstream are not affected.
+#
+#   Binary path for axe-core. --chromedriver-path tells axe which ChromeDriver
+#   binary to use, but ChromeDriver also needs to know which Chrome binary to
+#   launch. On Linux, ChromeDriver uses a hardcoded lookup list (not PATH) and
+#   finds the system Chrome, which may be a different version. The --chrome-path
+#   flag in axe-cli calls setChromeBinaryPath() in selenium-webdriver, directing
+#   ChromeDriver to the action-installed Chrome binary explicitly and bypassing
+#   the hardcoded lookup entirely. Both --chromedriver-path and --chrome-path
+#   use the env: pattern so no ${{ }} expression appears in a run: command.
+#
+# Known limitation: the app may require JavaScript execution to render.
+# Pa11y and axe-core run against the served HTML; full rendered-interface
+# testing is Carol's responsibility in her manual test pass.
+#
+# Adapt the "Serve the site" step and URLs to this project's stack.
+
+name: Accessibility
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  accessibility:
+    name: Pa11y and axe at WCAG 2.2 AAA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: .github/accessibility-tools/package-lock.json
+
+      - name: Install accessibility tools
+        # Tools are managed in .github/accessibility-tools/package.json so
+        # Dependabot can track and propose version bumps automatically.
+        run: npm ci
+        working-directory: .github/accessibility-tools
+
+      - name: Add accessibility tools to PATH
+        run: echo "$GITHUB_WORKSPACE/.github/accessibility-tools/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Set up Chrome and ChromeDriver
+        id: chrome
+        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd  # v2.1.2
+        with:
+          install-chromedriver: true
+
+      - name: Serve the site in the background
+        # Adapt this step to the project's stack.
+        # For a static site: python3 -m http.server 8080 &
+        # For a Node project: npm start & or npm run dev &
+        run: python3 -m http.server 8080 &
+
+      - name: Wait for the server to be ready
+        run: wait-on http://localhost:8080 --timeout 15000
+
+      - name: Pa11y at WCAG 2.2 AAA
+        # Adapt the URL to match the project's entry point.
+        env:
+          PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: pa11y --standard WCAG2AAA http://localhost:8080/index.html
+
+      - name: axe-core at WCAG 2.2 AAA
+        # Adapt the URL to match the project's entry point.
+        # --chrome-path overrides ChromeDriver's hardcoded binary lookup with the
+        # action-installed Chrome, ensuring version parity with --chromedriver-path.
+        # env: pattern used so no ${{ }} expression appears in a run: command.
+        env:
+          CHROMEDRIVER_PATH: ${{ steps.chrome.outputs.chromedriver-path }}
+          CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
+        run: axe http://localhost:8080/index.html --tags wcag2a,wcag2aa,wcag2aaa,wcag22aa,wcag22aaa --chrome-options="no-sandbox" --chromedriver-path "$CHROMEDRIVER_PATH" --chrome-path "$CHROME_PATH"
