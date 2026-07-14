@@ -1,0 +1,10 @@
+{
+  "name": "accessibility-tools",
+  "description": "CI accessibility tools. Kept here so Dependabot can track and propose version bumps. Installed in the accessibility workflow via npm ci.",
+  "private": true,
+  "devDependencies": {
+    "@axe-core/cli": "4.11.3",
+    "pa11y": "9.1.1",
+    "wait-on": "9.0.10"
+  }
+}

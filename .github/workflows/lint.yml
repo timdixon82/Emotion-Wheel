@@ -1,0 +1,85 @@
+# Team standard lint gate for pull requests.
+#
+# Runs on every pull request. Stops bad code before it lands rather than
+# blocking a deploy of already-merged code (see Jacob's decision to move
+# linting out of deploy.yml and onto pull_request).
+#
+# Reference implementation: Image Colour Contrast Checker deploy.yml lint job,
+# which runs npm run lint:html, npm run lint:css, and npm run lint:js.
+#
+# Replace the npm run lint placeholder in the "Lint" step below with the
+# actual lint commands for this project. Common examples:
+#   npm run lint:html
+#   npm run lint:css
+#   npm run lint:js
+#
+# The npm steps are gated on a root package.json, so a static-content
+# project (no manifest, no build) does not fail this workflow for lacking
+# one. That archetype instead gets an HTML/CSS-validation-only path, using
+# a pinned tool manifest at .github/lint-tools/package.json — the same
+# pattern accessibility.yml uses for its accessibility tools — so
+# Dependabot can still track and bump the validators' versions.
+#
+# Action versions are pinned to commit SHAs verified on 2026-05-21. The
+# version tag is shown in the trailing comment. Update the SHA and the
+# comment together when upgrading an action.
+
+name: Lint
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: lts/*
+          cache: npm
+          cache-dependency-path: .github/lint-tools/package-lock.json
+
+      - name: Install dependencies
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Lint
+        # Replace with your project's lint command(s). Common examples:
+        # npm run lint:html, npm run lint:css, npm run lint:js.
+        if: hashFiles('package.json') != ''
+        run: npm run lint
+
+      # --- static-content archetype: no package.json, so validate markup
+      # and styles directly, using the pinned tool manifest below instead
+      # of an application manifest that does not otherwise exist. ---
+      - name: Install HTML/CSS validation tools (static-content)
+        if: hashFiles('package.json') == ''
+        run: npm ci
+        working-directory: .github/lint-tools
+
+      - name: Add validation tools to PATH
+        if: hashFiles('package.json') == ''
+        run: echo "$GITHUB_WORKSPACE/.github/lint-tools/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Validate HTML (static-content)
+        if: hashFiles('package.json') == ''
+        run: |
+          find . -name '*.html' -not -path './.git/*' -not -path './.github/*' -not -path './node_modules/*' -print0 \
+            | xargs -0 --no-run-if-empty html-validate --config .github/lint-tools/.htmlvalidate.json
+
+      - name: Validate CSS (static-content)
+        if: hashFiles('package.json') == ''
+        run: |
+          find . -name '*.css' -not -path './.git/*' -not -path './.github/*' -not -path './node_modules/*' -print0 \
+            | xargs -0 --no-run-if-empty stylelint --config .github/lint-tools/.stylelintrc.json
