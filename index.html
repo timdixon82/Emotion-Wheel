@@ -250,7 +250,7 @@
         <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table" tabindex="0" role="region" aria-label="Number of times each emotion selection has been recorded">
+    <section class="scroll-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded">
       <table>
         <caption>Number of times each emotion selection has been recorded</caption>
         <thead>
@@ -267,7 +267,7 @@
           <tr><td colspan="6">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
-    </div>
+    </section>
 
     <div class="section-heading">
       <h3>Recent entries</h3>
@@ -276,7 +276,7 @@
         <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table" tabindex="0" role="region" aria-label="Most recent recorded emotions">
+    <section class="scroll-table" tabindex="0" aria-label="Most recent recorded emotions">
       <table>
         <caption>Most recent recorded emotions</caption>
         <thead>
@@ -297,7 +297,7 @@
           <tr><td colspan="10">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
-    </div>
+    </section>
   </section>
 
   <section id="charts" class="log-panel" aria-labelledby="charts-heading">
@@ -311,13 +311,13 @@
       </div>
       <p id="emotionChartSummary" class="help" aria-live="polite">No emotion records available yet.</p>
       <ul id="emotionChart" class="bar-list" aria-labelledby="emotion-chart-heading" aria-describedby="emotionChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Most recorded emotion paths">
+      <section class="scroll-table" tabindex="0" aria-label="Most recorded emotion paths">
         <table>
           <caption>Most recorded emotion paths</caption>
           <thead><tr><th scope="col">Emotion path</th><th scope="col">Times felt</th><th scope="col">Last recorded</th></tr></thead>
           <tbody id="emotionChartBody"><tr><td colspan="3">No emotions recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
     </article>
 
     <article class="chart-card" aria-labelledby="level-chart-heading">
@@ -327,13 +327,13 @@
       </div>
       <p id="levelChartSummary" class="help" aria-live="polite">No recorded levels available yet.</p>
       <ul id="levelChart" class="bar-list" aria-labelledby="level-chart-heading" aria-describedby="levelChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Recorded level counts">
+      <section class="scroll-table" tabindex="0" aria-label="Recorded level counts">
         <table>
           <caption>Recorded level counts</caption>
           <thead><tr><th scope="col">Recorded level</th><th scope="col">Records</th></tr></thead>
           <tbody id="levelChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
     </article>
 
     <article class="chart-card" aria-labelledby="time-chart-heading">
@@ -343,13 +343,13 @@
       </div>
       <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
       <ul id="timeChart" class="bar-list" aria-labelledby="time-chart-heading" aria-describedby="timeChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Emotion records grouped by date">
+      <section class="scroll-table" tabindex="0" aria-label="Emotion records grouped by date">
         <table>
           <caption>Emotion records grouped by date</caption>
           <thead><tr><th scope="col">Date</th><th scope="col">Records</th></tr></thead>
           <tbody id="timeChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
     </article>
 
     <article class="chart-card" aria-labelledby="reflection-chart-heading">
@@ -362,45 +362,45 @@
       <h4>Appropriate responses</h4>
       <p id="appropriateChartSummary" class="help" aria-live="polite">No appropriate response data recorded yet.</p>
       <ul id="appropriateChart" class="bar-list" aria-label="Appropriate response counts" aria-describedby="appropriateChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Appropriate response counts">
+      <section class="scroll-table" tabindex="0" aria-label="Appropriate response counts">
         <table>
           <caption>Appropriate response counts</caption>
           <thead><tr><th scope="col">Response</th><th scope="col">Records</th></tr></thead>
           <tbody id="appropriateChartBody"><tr><td colspan="2">No appropriate response data recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
 
       <h4>Intensity alignment</h4>
       <p id="alignmentChartSummary" class="help" aria-live="polite">No intensity alignment data recorded yet.</p>
       <ul id="alignmentChart" class="bar-list" aria-label="Intensity alignment counts" aria-describedby="alignmentChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Intensity alignment counts">
+      <section class="scroll-table" tabindex="0" aria-label="Intensity alignment counts">
         <table>
           <caption>Intensity alignment counts</caption>
           <thead><tr><th scope="col">Alignment</th><th scope="col">Records</th></tr></thead>
           <tbody id="alignmentChartBody"><tr><td colspan="2">No intensity alignment data recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
 
       <h4>Intensity averages</h4>
       <div id="intensityMetrics" class="metric-grid" role="group" aria-label="Intensity averages"></div>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Expected and actual intensity averages">
+      <section class="scroll-table" tabindex="0" aria-label="Expected and actual intensity averages">
         <table>
           <caption>Expected and actual intensity averages</caption>
           <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
           <tbody id="intensityMetricsBody"><tr><td colspan="2">No intensity values recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
 
       <h4>Most common physical sensations</h4>
       <p id="sensationsChartSummary" class="help" aria-live="polite">No physical sensations recorded yet.</p>
       <ul id="sensationsChart" class="bar-list" aria-label="Physical sensation counts" aria-describedby="sensationsChartSummary"></ul>
-      <div class="scroll-table" tabindex="0" role="region" aria-label="Most common physical sensations">
+      <section class="scroll-table" tabindex="0" aria-label="Most common physical sensations">
         <table>
           <caption>Most common physical sensations</caption>
           <thead><tr><th scope="col">Physical sensation</th><th scope="col">Records</th></tr></thead>
           <tbody id="sensationsChartBody"><tr><td colspan="2">No physical sensations recorded yet.</td></tr></tbody>
         </table>
-      </div>
+      </section>
     </article>
   </section>
 
@@ -412,13 +412,13 @@
         <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table" tabindex="0" role="region" aria-labelledby="table-heading">
+    <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
       <table>
         <caption>All available emotion paths</caption>
         <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
         <tbody id="wheelTableBody"></tbody>
       </table>
-    </div>
+    </section>
   </section>
 
   <section id="export-data" class="export-panel" aria-labelledby="export-heading">
