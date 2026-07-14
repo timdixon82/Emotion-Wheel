@@ -89,7 +89,10 @@ jobs:
         # --chrome-path overrides ChromeDriver's hardcoded binary lookup with the
         # action-installed Chrome, ensuring version parity with --chromedriver-path.
         # env: pattern used so no ${{ }} expression appears in a run: command.
+        # --exit makes the axe CLI itself exit 1 when any violation is found.
+        # Without it axe always exits 0, so this step would report violations
+        # in the log but still pass the job -- a false-green gate.
         env:
           CHROMEDRIVER_PATH: ${{ steps.chrome.outputs.chromedriver-path }}
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
-        run: axe http://localhost:8080/index.html --tags wcag2a,wcag2aa,wcag2aaa,wcag22aa,wcag22aaa --chrome-options="no-sandbox" --chromedriver-path "$CHROMEDRIVER_PATH" --chrome-path "$CHROME_PATH"
+        run: axe http://localhost:8080/index.html --tags wcag2a,wcag2aa,wcag2aaa,wcag22aa,wcag22aaa --chrome-options="no-sandbox" --chromedriver-path "$CHROMEDRIVER_PATH" --chrome-path "$CHROME_PATH" --exit

@@ -250,7 +250,7 @@
         <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table">
+    <div class="scroll-table" tabindex="0" role="region" aria-label="Number of times each emotion selection has been recorded">
       <table>
         <caption>Number of times each emotion selection has been recorded</caption>
         <thead>
@@ -276,7 +276,7 @@
         <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table">
+    <div class="scroll-table" tabindex="0" role="region" aria-label="Most recent recorded emotions">
       <table>
         <caption>Most recent recorded emotions</caption>
         <thead>
@@ -309,9 +309,9 @@
         <h3 id="emotion-chart-heading">Most recorded emotions</h3>
         <button type="button" id="shareEmotionChartButton">Share chart image</button>
       </div>
-      <p id="emotionChartSummary" class="help">No emotion records available yet.</p>
+      <p id="emotionChartSummary" class="help" aria-live="polite">No emotion records available yet.</p>
       <ul id="emotionChart" class="bar-list" aria-labelledby="emotion-chart-heading" aria-describedby="emotionChartSummary"></ul>
-      <div class="scroll-table">
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Most recorded emotion paths">
         <table>
           <caption>Most recorded emotion paths</caption>
           <thead><tr><th scope="col">Emotion path</th><th scope="col">Times felt</th><th scope="col">Last recorded</th></tr></thead>
@@ -325,9 +325,9 @@
         <h3 id="level-chart-heading">Recorded level mix</h3>
         <button type="button" id="shareLevelChartButton">Share chart image</button>
       </div>
-      <p id="levelChartSummary" class="help">No recorded levels available yet.</p>
+      <p id="levelChartSummary" class="help" aria-live="polite">No recorded levels available yet.</p>
       <ul id="levelChart" class="bar-list" aria-labelledby="level-chart-heading" aria-describedby="levelChartSummary"></ul>
-      <div class="scroll-table">
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Recorded level counts">
         <table>
           <caption>Recorded level counts</caption>
           <thead><tr><th scope="col">Recorded level</th><th scope="col">Records</th></tr></thead>
@@ -341,9 +341,9 @@
         <h3 id="time-chart-heading">Records over time</h3>
         <button type="button" id="shareTimeChartButton">Share chart image</button>
       </div>
-      <p id="timeChartSummary" class="help">No dates available yet.</p>
+      <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
       <ul id="timeChart" class="bar-list" aria-labelledby="time-chart-heading" aria-describedby="timeChartSummary"></ul>
-      <div class="scroll-table">
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Emotion records grouped by date">
         <table>
           <caption>Emotion records grouped by date</caption>
           <thead><tr><th scope="col">Date</th><th scope="col">Records</th></tr></thead>
@@ -360,8 +360,9 @@
       <p id="reflectionChartSummary" class="help">No reflection data available yet.</p>
 
       <h4>Appropriate responses</h4>
-      <ul id="appropriateChart" class="bar-list" aria-label="Appropriate response counts" aria-describedby="reflectionChartSummary"></ul>
-      <div class="scroll-table">
+      <p id="appropriateChartSummary" class="help" aria-live="polite">No appropriate response data recorded yet.</p>
+      <ul id="appropriateChart" class="bar-list" aria-label="Appropriate response counts" aria-describedby="appropriateChartSummary"></ul>
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Appropriate response counts">
         <table>
           <caption>Appropriate response counts</caption>
           <thead><tr><th scope="col">Response</th><th scope="col">Records</th></tr></thead>
@@ -370,8 +371,9 @@
       </div>
 
       <h4>Intensity alignment</h4>
-      <ul id="alignmentChart" class="bar-list" aria-label="Intensity alignment counts" aria-describedby="reflectionChartSummary"></ul>
-      <div class="scroll-table">
+      <p id="alignmentChartSummary" class="help" aria-live="polite">No intensity alignment data recorded yet.</p>
+      <ul id="alignmentChart" class="bar-list" aria-label="Intensity alignment counts" aria-describedby="alignmentChartSummary"></ul>
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Intensity alignment counts">
         <table>
           <caption>Intensity alignment counts</caption>
           <thead><tr><th scope="col">Alignment</th><th scope="col">Records</th></tr></thead>
@@ -381,7 +383,7 @@
 
       <h4>Intensity averages</h4>
       <div id="intensityMetrics" class="metric-grid" role="group" aria-label="Intensity averages"></div>
-      <div class="scroll-table">
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Expected and actual intensity averages">
         <table>
           <caption>Expected and actual intensity averages</caption>
           <thead><tr><th scope="col">Metric</th><th scope="col">Value</th></tr></thead>
@@ -390,8 +392,9 @@
       </div>
 
       <h4>Most common physical sensations</h4>
-      <ul id="sensationsChart" class="bar-list" aria-label="Physical sensation counts" aria-describedby="reflectionChartSummary"></ul>
-      <div class="scroll-table">
+      <p id="sensationsChartSummary" class="help" aria-live="polite">No physical sensations recorded yet.</p>
+      <ul id="sensationsChart" class="bar-list" aria-label="Physical sensation counts" aria-describedby="sensationsChartSummary"></ul>
+      <div class="scroll-table" tabindex="0" role="region" aria-label="Most common physical sensations">
         <table>
           <caption>Most common physical sensations</caption>
           <thead><tr><th scope="col">Physical sensation</th><th scope="col">Records</th></tr></thead>
@@ -409,7 +412,7 @@
         <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
       </div>
     </div>
-    <div class="scroll-table">
+    <div class="scroll-table" tabindex="0" role="region" aria-labelledby="table-heading">
       <table>
         <caption>All available emotion paths</caption>
         <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
@@ -539,12 +542,15 @@ const timeChart = document.getElementById('timeChart');
 const timeChartBody = document.getElementById('timeChartBody');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
 const reflectionChartSummary = document.getElementById('reflectionChartSummary');
+const appropriateChartSummary = document.getElementById('appropriateChartSummary');
 const appropriateChart = document.getElementById('appropriateChart');
 const appropriateChartBody = document.getElementById('appropriateChartBody');
+const alignmentChartSummary = document.getElementById('alignmentChartSummary');
 const alignmentChart = document.getElementById('alignmentChart');
 const alignmentChartBody = document.getElementById('alignmentChartBody');
 const intensityMetrics = document.getElementById('intensityMetrics');
 const intensityMetricsBody = document.getElementById('intensityMetricsBody');
+const sensationsChartSummary = document.getElementById('sensationsChartSummary');
 const sensationsChart = document.getElementById('sensationsChart');
 const sensationsChartBody = document.getElementById('sensationsChartBody');
 
@@ -977,21 +983,18 @@ function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
   });
 }
 
-function renderBarChart(container, rows, emptyText) {
+function renderBarChart(container, summaryElement, rows, emptyText) {
   clearNode(container);
+
   if (!rows.length) {
-    const empty = document.createElement('p');
-    empty.className = 'help';
-    empty.textContent = emptyText;
-    container.appendChild(empty);
+    summaryElement.textContent = emptyText;
     return;
   }
 
   const max = Math.max(...rows.map(row => row.count), 1);
   rows.forEach(row => {
-    const item = document.createElement('div');
+    const item = document.createElement('li');
     item.className = 'bar-row';
-    item.setAttribute('role', 'listitem');
     item.setAttribute('aria-label', `${row.label}: ${row.count}`);
 
     const label = document.createElement('span');
@@ -1073,20 +1076,20 @@ function renderCharts() {
   emotionChartSummary.textContent = topEmotions.length
     ? `${topEmotions[0].label} is the most recorded emotion path, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.`
     : 'No emotion records available yet.';
-  renderBarChart(emotionChart, topEmotions, 'No emotions recorded yet.');
+  renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.');
   addTableRows(emotionChartBody, topEmotions, 'No emotions recorded yet.', row => [row.label, String(row.count), formatDateTime(row.lastRecorded)], 3);
 
   const topLevel = sortCountRows(levelRows)[0];
   levelChartSummary.textContent = topLevel
     ? `${topLevel.label} is the most used recording level, with ${topLevel.count} record${topLevel.count === 1 ? '' : 's'}.`
     : 'No recorded levels available yet.';
-  renderBarChart(levelChart, levelRows, 'No emotions recorded yet.');
+  renderBarChart(levelChart, levelChartSummary, levelRows, 'No recorded levels available yet.');
   addTableRows(levelChartBody, levelRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
 
   timeChartSummary.textContent = timeRows.length
     ? `${timeRows.length} date${timeRows.length === 1 ? '' : 's'} contain recorded emotions.`
     : 'No dates available yet.';
-  renderBarChart(timeChart, timeRows, 'No emotions recorded yet.');
+  renderBarChart(timeChart, timeChartSummary, timeRows, 'No dates available yet.');
   addTableRows(timeChartBody, timeRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
 
   reflectionChartSummary.textContent = hasReflectionData
@@ -1095,15 +1098,15 @@ function renderCharts() {
       ? 'No optional reflection fields have been recorded yet.'
       : 'No reflection data available yet.';
 
-  renderBarChart(appropriateChart, appropriateRows, 'No appropriate response data recorded yet.');
+  renderBarChart(appropriateChart, appropriateChartSummary, appropriateRows, 'No appropriate response data recorded yet.');
   addTableRows(appropriateChartBody, appropriateRows, 'No appropriate response data recorded yet.', row => [row.label, String(row.count)], 2);
 
-  renderBarChart(alignmentChart, alignmentRows, 'No intensity alignment data recorded yet.');
+  renderBarChart(alignmentChart, alignmentChartSummary, alignmentRows, 'No intensity alignment data recorded yet.');
   addTableRows(alignmentChartBody, alignmentRows, 'No intensity alignment data recorded yet.', row => [row.label, String(row.count)], 2);
 
   renderMetricCards(intensityAverages);
 
-  renderBarChart(sensationsChart, sensationRows, 'No physical sensations recorded yet.');
+  renderBarChart(sensationsChart, sensationsChartSummary, sensationRows, 'No physical sensations recorded yet.');
   addTableRows(sensationsChartBody, sensationRows, 'No physical sensations recorded yet.', row => [row.label, String(row.count)], 2);
 }
 
