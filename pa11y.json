@@ -1,0 +1,15 @@
+{
+  "_comment": [
+    "Pa11y base configuration. Committed to the project root.",
+    "The chromeLaunchConfig.args entry disables the sandbox for CI runners",
+    "that restrict unprivileged user namespaces (GitHub-hosted Ubuntu 24.04).",
+    "Deferred AAA findings should be recorded as exception records under",
+    "docs/exceptions/ (not added to the ignore list here). The ignore array",
+    "is for findings the team has formally accepted as permanent exceptions",
+    "with documented rationale."
+  ],
+  "chromeLaunchConfig": {
+    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+  },
+  "ignore": []
+}

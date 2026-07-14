@@ -48,6 +48,7 @@ jobs:
         with:
           node-version: lts/*
           cache: npm
+          cache-dependency-path: .github/lint-tools/package-lock.json
 
       - name: Install dependencies
         if: hashFiles('package.json') != ''
