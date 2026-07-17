@@ -1,73 +1,72 @@
 # Emotion Wheel - Tracking your emotions
 
-An accessible, single-page emotion wheel tool for tracking and reflecting on your emotions locally in your browser.
+Emotion Wheel is an accessible, single-page tool for recording and reflecting on emotions in your own browser. It is designed to make everyday entry simple while providing richer review tools when you want to spot patterns.
 
-Open `index.html` in a browser, or use the GitHub Pages site once published.
+Open `index.html` in a modern browser, or use the GitHub Pages site once published.
+
+## What it does
+
+- Record an emotion from the inner, middle, or outer level of the wheel. You never need to complete every level before recording.
+- Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, or use Custom to choose the fields that suit you.
+- Add an optional private note to each entry, such as what happened, a thought, or useful context.
+- Keep entry, review, and maintenance separate with keyboard-accessible tabs.
+- Review logs, tallies, charts, and a line chart of records over time.
+- Group the timeline by day, week, or month. Zero-entry periods can be included to show gaps in the pattern.
+- Save, load, merge, replace, share, export, and clear your local data.
 
 ## Privacy
 
-Emotion entries are stored only in the browser on the current device using local storage. Nothing is sent to a server.
+Your entries, optional notes, and settings are stored only in local storage in the browser on the device you are using. The app has no server and does not send data anywhere.
 
-## Change in this version
+Data only leaves the browser when you deliberately export a CSV or JSON backup, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
 
-The selector now supports configurable capture stages.
+Read the fuller [privacy notes](docs/privacy.md) before using this for sensitive information.
 
-It is recommended that you use Phase 1 for at least one week to build the habit of recording emotions, then move to Phase 2 to capture additional reflection information.
+## Getting started
 
-Phase 1 records the selected emotion at any level: inner circle, middle circle, or outer circle. The person does not need to complete all three steps before recording.
+1. Open the Entry tab.
+2. Choose Phase 1, Phase 2, or Custom in Capture settings if you want to change the recording fields.
+3. Select an emotion at any level and add an optional note if helpful.
+4. Select **Record this emotion**.
+5. Open Review when you want to see logs and charts, or Maintenance when you want to export, back up, load, or clear data.
 
-Phase 2 adds optional reflection fields:
+Phase 1 is recommended for at least one week to build the recording habit. Phase 2 then adds optional questions about appropriateness, expected and actual intensity, intensity alignment, and physical sensations.
 
-1. Whether the emotion feels appropriate.
-2. Expected intensity from 1 to 10.
-3. Actual intensity from 1 to 10.
-4. An alignment result comparing expected and actual intensity.
-5. Optional physical sensation checkboxes suggested from the selected emotion type.
+## Design and themes
 
-Use Phase 1 or Phase 2 for the common journeys, or choose Custom to turn individual fields on and off.
+The interface follows the Family Reward Chart design system: Roboto type, navy card hierarchy, accessible tables, 44-pixel minimum control targets, and four colour modes.
 
-The local log now includes accessible charts for spotting patterns and reviewing optional reflection data. You can also save a JSON backup file to your local machine and load it later by merging or replacing the current browser log.
+- Light
+- Dark
+- Muted Light
+- Muted Dark
 
-## Features
+Choose a theme from the top-right control. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
 
-- Jump between the main page sections from the top menu.
-- View a visual emotion wheel before using the selector.
-- Select emotions one layer at a time.
-- Record the selected emotion locally with date and time after any selected layer.
-- Choose Phase 1, Phase 2, or Custom capture fields.
-- Capture whether the emotion is appropriate.
-- Capture expected and actual intensity, with an alignment result.
-- Select optional physical sensations suggested by emotion type, or show more sensations when a broader list would help.
-- Store entries only in the browser on the current device using local storage.
-- Display a live tally table showing each emotion path and number of times felt.
-- Display recent logged entries.
-- Display accessible charts for most recorded emotions, recorded level mix, records over time, and reflection summaries.
-- Reflow chart labels, values, bars, cards, and controls for narrow mobile screens while keeping data tables horizontally scrollable.
-- Share each chart as a generated PNG image where the browser supports sharing or clipboard images, with download fallback.
-- Share table data from the tally, recent entries, and full emotion table using the native share sheet where the browser supports it.
-- Fall back to automatic clipboard copy when native sharing is not available.
-- Copy table data as HTML tables for pasting into rich text editors, with a second browser selection-copy method for browsers that block rich clipboard writes.
-- Show a manual copy panel only when the browser blocks every automatic share and copy method.
-- Export the tally as CSV.
-- Export the full dated log as CSV.
-- Save the full log as a JSON backup file.
-- Load a JSON backup file by merging new records or replacing the current browser log.
-- Clear the local log.
+The design notes are in [docs/design-system.md](docs/design-system.md).
 
-## Keyboard use
+## Accessibility
 
-- Tab and Shift+Tab move between controls.
-- Enter or Space selects an emotion or activates a button.
-- After choosing an emotion at any level, focus moves to the Record button.
+- A skip link takes keyboard and screen reader users directly to the main content.
+- Workspace and review tabs support Arrow Left, Arrow Right, Home, and End.
+- Secondary content uses native collapsed sections, reducing noise while keeping every feature reachable by keyboard.
+- The wheel has a text-based selector and a full reference table.
+- Charts have plain-language summaries, accessible line or bar visuals, and matching data tables.
+- Tables have captions and column headings, and wide tables remain horizontally scrollable on smaller screens.
+- Focus indicators and controls work in every colour mode.
 
-## Screen reader notes
+## Data and backups
 
-- A skip link lets keyboard and screen reader users move directly to the main content.
-- The wheel image is introduced as a visual reference; the selector and full table provide text access to the same workflow.
-- Native buttons are used for all selections.
-- Native checkboxes, radio buttons, and range inputs are used for optional capture fields.
-- Selection button groups are labelled by step and include helper text where choices depend on an earlier step.
-- Headings separate each step.
-- Live regions announce the current selection, intensity alignment, and recording actions.
-- Charts include text summaries, visible values, and matching data tables.
-- Tables use captions and column headers.
+All entries, including optional notes, are included in JSON backups and full-log CSV exports. Loading a backup can either merge new records into the current log or replace it after confirmation. Older backups without notes remain valid.
+
+## Development
+
+This is a static HTML, CSS, and JavaScript app. There is no build step.
+
+- Open `index.html` in a browser for a quick local check.
+- Use the HTML validator and JavaScript syntax check configured in `.github/lint-tools` when available.
+- The GitHub Actions workflows provide additional continuous integration checks.
+
+## Licence
+
+This project is available under the [MIT Licence](LICENSE).

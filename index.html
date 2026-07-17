@@ -5,16 +5,69 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <style>
+    @font-face {
+      font-family: "Roboto";
+      src: url("assets/fonts/Roboto-VariableFont.ttf") format("truetype-variations");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: "Roboto";
+      src: url("assets/fonts/Roboto-Italic-VariableFont.ttf") format("truetype-variations");
+      font-weight: 100 900;
+      font-style: italic;
+      font-display: swap;
+    }
     :root {
-      --bg: #ffffff; --text: #111111; --muted: #4a4a4a; --border: #6b6b6b;
-      --focus: #0047ff; --panel: #f7f7f7; --button: #ffffff; --selected: #e8f0ff;
-      --danger: #8b0000; --good: #045d24; --warn: #6b4500;
+      --bg: #ffffff; --text: #333333; --muted: #5b6b7f; --border: #cbd5e1;
+      --focus: #0c3b64; --panel: #f8fafc; --button: #ffffff; --selected: #e4f1f7;
+      --danger: #7f1d1d; --good: #14532d; --warn: #7c4a03;
+      --nav-bg: #0c3b64; --nav-text: #52c7eb; --nav-active: #ffffff;
+      --chart-bg: #f1f5f9; --chart-line: #0c3b64; --heading: #0c3b64;
+      --shadow: 0 1px 3px rgb(0 0 0 / 6%), 0 4px 12px rgb(0 0 0 / 5%);
+    }
+    :root[data-theme="dark"] {
+      --bg: #061528; --text: #e2e7ec; --muted: #b7c4d0; --border: #1c3a5c;
+      --focus: #e3c196; --panel: #0d2440; --button: #0d2440; --selected: #153a5f;
+      --danger: #f0a6a6; --good: #a7e5bb; --warn: #ffd48a;
+      --nav-bg: #061528; --nav-text: #52c7eb; --nav-active: #ffffff;
+      --chart-bg: #15314f; --chart-line: #63d2ff; --heading: #ffffff;
+      --shadow: 0 1px 3px rgb(0 0 0 / 22%), 0 4px 12px rgb(0 0 0 / 18%);
+    }
+    :root[data-theme="muted-light"] {
+      --bg: #edf0f3; --text: #2b3138; --muted: #51606e; --border: #d2d8de;
+      --focus: #234a73; --panel: #ffffff; --button: #ffffff; --selected: #dce9f3;
+      --danger: #8a2a2a; --good: #1e5b3a; --warn: #6f4d18;
+      --nav-bg: #234a73; --nav-text: #ffffff; --nav-active: #ffffff;
+      --chart-bg: #edf0f3; --chart-line: #234a73; --heading: #234a73;
+      --shadow: 0 1px 3px rgb(0 0 0 / 6%), 0 4px 12px rgb(0 0 0 / 5%);
+    }
+    :root[data-theme="muted-dark"] {
+      --bg: #142536; --text: #e2e7ec; --muted: #b6c5d4; --border: #2c3f54;
+      --focus: #e3c196; --panel: #1e3147; --button: #1e3147; --selected: #283f58;
+      --danger: #e6a9a9; --good: #b9e1c4; --warn: #ead29d;
+      --nav-bg: #142536; --nav-text: #8ebde1; --nav-active: #ffffff;
+      --chart-bg: #283a4e; --chart-line: #8ebde1; --heading: #ffffff;
+      --shadow: 0 1px 3px rgb(0 0 0 / 22%), 0 4px 12px rgb(0 0 0 / 18%);
     }
     * { box-sizing: border-box; }
     body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       line-height: 1.5; margin: 0; background: var(--bg); color: var(--text);
     }
+    .app-header { background: var(--nav-bg); color: var(--nav-active); }
+    .app-header-inner {
+      max-width: 980px; min-height: 4.25rem; margin: 0 auto; padding: .625rem 1rem;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .app-brand { display: flex; flex-direction: column; line-height: 1.1; }
+    .app-brand-eyebrow { color: var(--nav-text); font-size: .68rem; font-weight: 800; letter-spacing: .18em; }
+    .app-brand-name { font-size: 1.25rem; font-weight: 800; }
+    .theme-control { display: flex; align-items: center; gap: .5rem; }
+    .theme-control label { min-height: auto; color: var(--nav-text); font-size: .875rem; }
+    .theme-control select { min-height: 2.75rem; border-color: #ffffff80; background: transparent; color: var(--nav-active); }
+    .theme-control option { background: var(--nav-bg); color: var(--nav-active); }
     .skip-link {
       position: absolute; left: 1rem; top: 1rem; transform: translateY(-150%);
       background: var(--bg); color: var(--text); border: 2px solid var(--focus);
@@ -22,15 +75,30 @@
     }
     .skip-link:focus { transform: translateY(0); outline: 4px solid var(--focus); outline-offset: 2px; }
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
-    h1, h2, h3 { line-height: 1.2; }
+    h1, h2, h3 { line-height: 1.2; color: var(--heading); }
+    h1 { font-size: 1.9rem; font-weight: 900; letter-spacing: -.3px; }
     .intro, .help { color: var(--muted); }
     .page-nav, .settings-panel, .status, .log-panel, .export-panel {
-      border: 2px solid var(--border); padding: 1rem; margin: 1rem 0;
-      border-radius: .5rem;
+      border: 1px solid var(--border); padding: 1rem; margin: 1rem 0;
+      border-radius: .625rem; box-shadow: var(--shadow);
     }
     .settings-panel, .status, .log-panel { background: var(--panel); }
     .page-nav h2 { font-size: 1rem; margin: 0 0 .75rem; }
-    .page-nav ul { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; margin: 0; padding: 0; }
+    .workspace-tabs, .review-tabs { display: flex; flex-wrap: wrap; gap: .75rem; }
+    .workspace-panel { margin-top: 1rem; }
+    .review-tabs { margin: 1rem 0; }
+    [role="tab"][aria-selected="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
+    details {
+      border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
+      margin: 1rem 0; box-shadow: var(--shadow);
+    }
+    summary {
+      min-height: 3rem; padding: .75rem 1rem; cursor: pointer; font-weight: 700;
+    }
+    details[open] > summary { border-bottom: 1px solid var(--border); }
+    .details-content { padding: 0 1rem 1rem; }
+    .chart-card { margin: 1rem 0; }
+    .chart-card .details-content { padding-top: 1rem; }
     .wheel-figure { margin: 1.25rem 0; }
     .wheel-image {
       display: block; width: min(100%, 42rem); height: auto; margin: 0 auto;
@@ -69,6 +137,9 @@
       width: 100%; min-height: 12rem; padding: .75rem; border: 2px solid var(--border);
       border-radius: .5rem; background: var(--bg); color: var(--text); font: inherit;
     }
+    .comment-field { margin: 1rem 0; }
+    .comment-field > label { font-weight: 700; }
+    textarea.comment-input { min-height: 7rem; }
     .visually-hidden {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
@@ -80,10 +151,6 @@
     .alignment { font-weight: 700; }
     .alignment.good { color: var(--good); }
     .alignment.warn { color: var(--warn); }
-    .chart-card {
-      border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin: 1rem 0;
-      background: var(--bg);
-    }
     .chart-card h3, .chart-card h4 { margin-top: 0; }
     .bar-list { display: grid; gap: .75rem; margin: 1rem 0; padding: 0; list-style: none; }
     .bar-row {
@@ -99,21 +166,39 @@
       border: 1px solid var(--border); background: var(--panel);
     }
     .bar-fill { display: block; min-height: 1.5rem; background: var(--focus); }
+    .time-controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin: 1rem 0; }
+    .time-controls label { flex-direction: column; align-items: flex-start; }
+    select { min-height: 3rem; padding: .5rem; border: 2px solid var(--border); border-radius: .5rem; background: var(--button); color: var(--text); font: inherit; }
+    .line-chart { width: 100%; min-height: 16rem; margin: 1rem 0; border: 1px solid var(--border); background: var(--chart-bg); }
+    .line-chart .grid { stroke: var(--border); stroke-opacity: .45; stroke-width: 1; }
+    .line-chart .trend { fill: none; stroke: var(--chart-line); stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
+    .line-chart .point { fill: var(--chart-line); }
+    .line-chart text { fill: var(--text); font: 14px system-ui, sans-serif; }
     .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .metric { border: 1px solid var(--border); padding: .75rem; background: var(--panel); }
     .metric strong { display: block; font-size: 1.5rem; }
     table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
     th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
-    th { background: var(--panel); }
+    th { background: var(--nav-bg); color: var(--nav-active); }
     caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
     .scroll-table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     @media (max-width: 600px) {
+      .app-header-inner { min-height: 0; align-items: flex-start; flex-direction: column; }
+      .theme-control, .theme-control select { width: 100%; }
+      .theme-control { justify-content: space-between; }
       main { padding: .75rem; }
       .page-nav, .settings-panel, .status, .log-panel, .export-panel,
       .step, .chart-card, fieldset { padding: .75rem; }
       .button-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
       .page-nav li, .page-nav a.button,
       .actions > button, .section-heading > button { width: 100%; }
+      .workspace-tabs, .review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .workspace-tabs button:first-child { grid-column: 1 / -1; }
+      .workspace-tabs button, .review-tabs button { width: 100%; }
+      summary { padding: .75rem; }
+      .details-content { padding: 0 .75rem .75rem; }
+      .time-controls { align-items: stretch; }
+      .time-controls label, .time-controls select { width: 100%; }
       .bar-row {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "label value" "bar bar";
@@ -124,63 +209,87 @@
       th, td { padding: .45rem; }
     }
     @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #111111; --text: #f4f4f4; --muted: #c7c7c7; --border: #b9b9b9;
-        --focus: #8ab4ff; --panel: #1e1e1e; --button: #111111; --selected: #17345f;
-        --danger: #ff9a9a; --good: #8ff0ae; --warn: #ffd27d;
+      :root:not([data-theme]) {
+        --bg: #061528; --text: #e2e7ec; --muted: #b7c4d0; --border: #1c3a5c;
+        --focus: #e3c196; --panel: #0d2440; --button: #0d2440; --selected: #153a5f;
+        --danger: #f0a6a6; --good: #a7e5bb; --warn: #ffd48a;
+        --nav-bg: #061528; --nav-text: #52c7eb; --nav-active: #ffffff;
+        --chart-bg: #15314f; --chart-line: #63d2ff; --heading: #ffffff;
+        --shadow: 0 1px 3px rgb(0 0 0 / 22%), 0 4px 12px rgb(0 0 0 / 18%);
       }
     }
   </style>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="app-brand">
+      <span class="app-brand-eyebrow">EMOTION</span>
+      <span class="app-brand-name">Tracking Wheel</span>
+    </div>
+    <div class="theme-control">
+      <label for="themeMode">Theme</label>
+      <select id="themeMode">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="muted-light">Muted Light</option>
+        <option value="muted-dark">Muted Dark</option>
+      </select>
+    </div>
+  </div>
+</header>
 <main id="main-content" tabindex="-1">
   <h1>Emotion Wheel - Tracking your emotions</h1>
   <p class="intro">Use this tool to track and reflect on your emotions over time. It is recommended that you use Phase 1 for at least one week to build the habit of recording emotions, then move to Phase 2 to capture additional reflection information.</p>
 
   <nav class="page-nav" aria-labelledby="page-nav-heading">
-    <h2 id="page-nav-heading">Page sections</h2>
-    <ul>
-      <li><a class="button" href="#capture-settings">Capture settings</a></li>
-      <li><a class="button" href="#visual-wheel">Visual wheel</a></li>
-      <li><a class="button" href="#emotion-selector">Selector</a></li>
-      <li><a class="button" href="#local-log">Local log</a></li>
-      <li><a class="button" href="#charts">Charts</a></li>
-      <li><a class="button" href="#full-table">Full table</a></li>
-      <li><a class="button" href="#export-data">Save and export</a></li>
-    </ul>
+    <h2 id="page-nav-heading">Work area</h2>
+    <div class="workspace-tabs" role="tablist" aria-label="Work areas">
+      <button type="button" id="entryTab" role="tab" aria-selected="true" aria-controls="entryPanel">Entry</button>
+      <button type="button" id="reviewTab" role="tab" aria-selected="false" aria-controls="reviewPanel" tabindex="-1">Review</button>
+      <button type="button" id="maintenanceTab" role="tab" aria-selected="false" aria-controls="maintenancePanel" tabindex="-1">Maintenance</button>
+    </div>
   </nav>
 
-  <section id="capture-settings" class="settings-panel" aria-labelledby="settings-heading">
-    <h2 id="settings-heading">Capture settings</h2>
-    <p class="help">Use a preset, or choose exactly which fields appear when recording an emotion.</p>
-    <div class="actions" role="group" aria-label="Capture presets">
-      <button type="button" id="phaseOneButton">Phase 1</button>
-      <button type="button" id="phaseTwoButton">Phase 2</button>
-      <button type="button" id="customButton">Custom</button>
-    </div>
-    <div id="customSettingsPanel" class="optional-panel" hidden>
-      <fieldset>
-        <legend>Fields to collect</legend>
-        <div class="checkbox-grid">
-          <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
-          <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
-          <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
+  <section id="entryPanel" class="workspace-panel" role="tabpanel" aria-labelledby="entryTab">
+    <details id="capture-settings" class="settings-panel">
+      <summary>Capture settings</summary>
+      <div class="details-content">
+        <p class="help">Use a preset, or choose exactly which fields appear when recording an emotion.</p>
+        <div class="actions" role="group" aria-label="Capture presets">
+          <button type="button" id="phaseOneButton">Phase 1</button>
+          <button type="button" id="phaseTwoButton">Phase 2</button>
+          <button type="button" id="customButton">Custom</button>
         </div>
-      </fieldset>
-    </div>
-  </section>
+        <div id="customSettingsPanel" class="optional-panel" hidden>
+          <fieldset>
+            <legend>Fields to collect</legend>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
+              <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
+              <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
+            </div>
+          </fieldset>
+        </div>
+      </div>
+    </details>
 
-  <figure id="visual-wheel" class="wheel-figure" aria-labelledby="wheel-image-caption">
-    <img
-      class="wheel-image"
-      src="assets/emotion-wheel.png"
-      alt="Visual emotion wheel with inner, middle, and outer emotion labels arranged in coloured segments."
-      width="1002"
-      height="1018"
-    >
-    <figcaption id="wheel-image-caption">Visual reference for people who prefer to scan the wheel before using the step-by-step selector. The selector and full table below provide the text version of the emotion paths.</figcaption>
-  </figure>
+    <details id="visual-wheel" class="wheel-figure">
+      <summary>View the visual emotion wheel</summary>
+      <div class="details-content">
+        <figure aria-labelledby="wheel-image-caption">
+          <img
+            class="wheel-image"
+            src="assets/emotion-wheel.png"
+            alt="Visual emotion wheel with inner, middle, and outer emotion labels arranged in coloured segments."
+            width="1002"
+            height="1018"
+          >
+          <figcaption id="wheel-image-caption">Visual reference for people who prefer to scan the wheel before using the step-by-step selector. The selector and full table below provide the text version of the emotion paths.</figcaption>
+        </figure>
+      </div>
+    </details>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading">Step 1: Inner circle</h2>
@@ -241,10 +350,17 @@
       </fieldset>
     </div>
 
+    <div class="comment-field">
+      <label for="entryComment">Optional note</label>
+      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
+      <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
+    </div>
+
     <div class="actions">
       <button type="button" id="recordButton" disabled>Record this emotion</button>
       <button type="button" id="resetButton">Reset selection</button>
     </div>
+  </section>
   </section>
 
   <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copyFallbackHeading" hidden tabindex="-1">
@@ -260,19 +376,26 @@
     </div>
   </section>
 
+  <section id="reviewPanel" class="workspace-panel" role="tabpanel" aria-labelledby="reviewTab" hidden>
+    <div class="review-tabs" role="tablist" aria-label="Review views">
+      <button type="button" id="logsTab" role="tab" aria-selected="true" aria-controls="logsPanel">Logs</button>
+      <button type="button" id="chartsTab" role="tab" aria-selected="false" aria-controls="chartsPanel" tabindex="-1">Charts</button>
+    </div>
+
+  <section id="logsPanel" role="tabpanel" aria-labelledby="logsTab">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
     <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
     <p id="logSummary" aria-live="polite">No emotions recorded yet.</p>
 
-    <div class="section-heading">
-      <h3>Emotion tally</h3>
+    <details>
+      <summary>Emotion tally</summary>
+      <div class="details-content">
       <div class="actions">
         <button type="button" id="shareTallyButton" disabled>Share tally data</button>
         <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
       </div>
-    </div>
-    <section class="scroll-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded">
+      <section class="scroll-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded">
       <table>
         <caption>Number of times each emotion selection has been recorded</caption>
         <thead>
@@ -289,16 +412,18 @@
           <tr><td colspan="6">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
-    </section>
+      </section>
+      </div>
+    </details>
 
-    <div class="section-heading">
-      <h3>Recent entries</h3>
+    <details>
+      <summary>Recent entries</summary>
+      <div class="details-content">
       <div class="actions">
         <button type="button" id="shareLogButton" disabled>Share recent entries</button>
         <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
       </div>
-    </div>
-    <section class="scroll-table" tabindex="0" aria-label="Most recent recorded emotions">
+      <section class="scroll-table" tabindex="0" aria-label="Most recent recorded emotions">
       <table>
         <caption>Most recent recorded emotions</caption>
         <thead>
@@ -313,20 +438,27 @@
             <th scope="col">Actual intensity</th>
             <th scope="col">Alignment</th>
             <th scope="col">Physical sensations</th>
+            <th scope="col">Note</th>
           </tr>
         </thead>
         <tbody id="logBody">
-          <tr><td colspan="10">No emotions recorded yet.</td></tr>
+          <tr><td colspan="11">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
-    </section>
+      </section>
+      </div>
+    </details>
+  </section>
   </section>
 
+  <section id="chartsPanel" role="tabpanel" aria-labelledby="chartsTab" hidden>
   <section id="charts" class="log-panel" aria-labelledby="charts-heading">
     <h2 id="charts-heading">Charts</h2>
     <p id="chartsSummary" class="help" aria-live="polite">No emotions recorded yet.</p>
 
-    <article class="chart-card" aria-labelledby="emotion-chart-heading">
+    <details class="chart-card">
+      <summary>Most recorded emotions</summary>
+      <div class="details-content">
       <div class="section-heading">
         <h3 id="emotion-chart-heading">Most recorded emotions</h3>
         <button type="button" id="shareEmotionChartButton">Share chart image</button>
@@ -340,9 +472,12 @@
           <tbody id="emotionChartBody"><tr><td colspan="3">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
-    </article>
+      </div>
+    </details>
 
-    <article class="chart-card" aria-labelledby="level-chart-heading">
+    <details class="chart-card">
+      <summary>Recorded level mix</summary>
+      <div class="details-content">
       <div class="section-heading">
         <h3 id="level-chart-heading">Recorded level mix</h3>
         <button type="button" id="shareLevelChartButton">Share chart image</button>
@@ -356,15 +491,29 @@
           <tbody id="levelChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
-    </article>
+      </div>
+    </details>
 
-    <article class="chart-card" aria-labelledby="time-chart-heading">
+    <details class="chart-card">
+      <summary>Records over time</summary>
+      <div class="details-content">
       <div class="section-heading">
         <h3 id="time-chart-heading">Records over time</h3>
         <button type="button" id="shareTimeChartButton">Share chart image</button>
       </div>
+      <div class="time-controls">
+        <label>
+          Group records by
+          <select id="timeGrouping">
+            <option value="day">Day</option>
+            <option value="week">Week</option>
+            <option value="month">Month</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="includeEmptyPeriods" checked> Include periods with no entries</label>
+      </div>
       <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
-      <ul id="timeChart" class="bar-list" aria-labelledby="time-chart-heading" aria-describedby="timeChartSummary"></ul>
+      <div id="timeChart"></div>
       <section class="scroll-table" tabindex="0" aria-label="Emotion records grouped by date">
         <table>
           <caption>Emotion records grouped by date</caption>
@@ -372,9 +521,12 @@
           <tbody id="timeChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
-    </article>
+      </div>
+    </details>
 
-    <article class="chart-card" aria-labelledby="reflection-chart-heading">
+    <details class="chart-card">
+      <summary>Reflection summary</summary>
+      <div class="details-content">
       <div class="section-heading">
         <h3 id="reflection-chart-heading">Reflection summary</h3>
         <button type="button" id="shareReflectionChartButton">Share chart image</button>
@@ -423,28 +575,33 @@
           <tbody id="sensationsChartBody"><tr><td colspan="2">No physical sensations recorded yet.</td></tr></tbody>
         </table>
       </section>
-    </article>
+      </div>
+    </details>
+  </section>
+  </section>
   </section>
 
-  <section id="full-table" aria-labelledby="table-heading">
-    <div class="section-heading">
-      <h2 id="table-heading">Full emotion wheel table</h2>
+  <section id="maintenancePanel" class="workspace-panel" role="tabpanel" aria-labelledby="maintenanceTab" hidden>
+  <details id="full-table">
+    <summary>Full emotion wheel table</summary>
+    <div class="details-content">
       <div class="actions">
         <button type="button" id="shareWheelButton">Share full table</button>
         <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
       </div>
+      <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
+        <table>
+          <caption>All available emotion paths</caption>
+          <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
+          <tbody id="wheelTableBody"></tbody>
+        </table>
+      </section>
     </div>
-    <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
-      <table>
-        <caption>All available emotion paths</caption>
-        <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
-        <tbody id="wheelTableBody"></tbody>
-      </table>
-    </section>
-  </section>
+  </details>
 
-  <section id="export-data" class="export-panel" aria-labelledby="export-heading">
-    <h2 id="export-heading">Save, load, and manage data</h2>
+  <details id="export-data" class="export-panel">
+    <summary>Save, load, and manage data</summary>
+    <div class="details-content">
     <p class="help">CSV files are for reading and sharing. Backup files are JSON so they can be loaded back into this page. Clearing the local log only affects this browser.</p>
     <div class="actions">
       <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
@@ -457,6 +614,8 @@
     <label for="loadBackupInput" class="visually-hidden">Choose a backup file to load (JSON format)</label>
     <input type="file" id="loadBackupInput" class="visually-hidden" accept="application/json,.json">
     <p id="loadBackupStatus" class="help" aria-live="polite"></p>
+    </div>
+  </details>
   </section>
 </main>
 
@@ -562,6 +721,10 @@ const shareTimeChartButton = document.getElementById('shareTimeChartButton');
 const timeChartSummary = document.getElementById('timeChartSummary');
 const timeChart = document.getElementById('timeChart');
 const timeChartBody = document.getElementById('timeChartBody');
+const timeGrouping = document.getElementById('timeGrouping');
+const includeEmptyPeriods = document.getElementById('includeEmptyPeriods');
+const entryComment = document.getElementById('entryComment');
+const themeMode = document.getElementById('themeMode');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
 const reflectionChartSummary = document.getElementById('reflectionChartSummary');
 const appropriateChartSummary = document.getElementById('appropriateChartSummary');
@@ -575,6 +738,16 @@ const intensityMetricsBody = document.getElementById('intensityMetricsBody');
 const sensationsChartSummary = document.getElementById('sensationsChartSummary');
 const sensationsChart = document.getElementById('sensationsChart');
 const sensationsChartBody = document.getElementById('sensationsChartBody');
+const entryTab = document.getElementById('entryTab');
+const reviewTab = document.getElementById('reviewTab');
+const maintenanceTab = document.getElementById('maintenanceTab');
+const entryPanel = document.getElementById('entryPanel');
+const reviewPanel = document.getElementById('reviewPanel');
+const maintenancePanel = document.getElementById('maintenancePanel');
+const logsTab = document.getElementById('logsTab');
+const chartsTab = document.getElementById('chartsTab');
+const logsPanel = document.getElementById('logsPanel');
+const chartsPanel = document.getElementById('chartsPanel');
 
 let selectedInner = null;
 let selectedMiddle = null;
@@ -589,6 +762,48 @@ function unique(values) {
 
 function clearNode(node) {
   while (node.firstChild) node.removeChild(node.firstChild);
+}
+
+function getInitialTheme() {
+  try {
+    const savedTheme = localStorage.getItem('emotionWheelThemeV1');
+    if (['light', 'dark', 'muted-light', 'muted-dark'].includes(savedTheme)) return savedTheme;
+  } catch (error) {
+  }
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyTheme(theme, announce = false) {
+  document.documentElement.dataset.theme = theme;
+  themeMode.value = theme;
+  try {
+    localStorage.setItem('emotionWheelThemeV1', theme);
+  } catch (error) {
+  }
+  if (announce) liveStatus.textContent = `Switched to ${themeMode.options[themeMode.selectedIndex].textContent} theme.`;
+}
+
+function selectTab(selectedTab, tabs, selectedPanel, panels) {
+  tabs.forEach(tab => {
+    const selected = tab === selectedTab;
+    tab.setAttribute('aria-selected', String(selected));
+    tab.tabIndex = selected ? 0 : -1;
+  });
+  panels.forEach(panel => {
+    panel.hidden = panel !== selectedPanel;
+  });
+}
+
+function selectWorkspaceTab(tab) {
+  const panels = [entryPanel, reviewPanel, maintenancePanel];
+  const tabs = [entryTab, reviewTab, maintenanceTab];
+  selectTab(tab, tabs, panels[tabs.indexOf(tab)], panels);
+}
+
+function selectReviewTab(tab) {
+  const tabs = [logsTab, chartsTab];
+  const panels = [logsPanel, chartsPanel];
+  selectTab(tab, tabs, panels[tabs.indexOf(tab)], panels);
 }
 
 function loadLog() {
@@ -922,15 +1137,56 @@ function getLevelCounts() {
   return countValues(logEntries.map(getRecordedLevel), ['Inner circle', 'Middle circle', 'Outer circle']);
 }
 
-function getRecordsOverTime() {
+function startOfPeriod(date, grouping) {
+  const period = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  if (grouping === 'week') {
+    period.setUTCDate(period.getUTCDate() - ((period.getUTCDay() + 6) % 7));
+  } else if (grouping === 'month') {
+    period.setUTCDate(1);
+  }
+  return period;
+}
+
+function addPeriod(date, grouping) {
+  const next = new Date(date);
+  if (grouping === 'day') next.setUTCDate(next.getUTCDate() + 1);
+  if (grouping === 'week') next.setUTCDate(next.getUTCDate() + 7);
+  if (grouping === 'month') next.setUTCMonth(next.getUTCMonth() + 1, 1);
+  return next;
+}
+
+function getPeriodKey(date) {
+  return date.toISOString().slice(0, 10);
+}
+
+function formatPeriodLabel(date, grouping) {
+  if (grouping === 'week') return `Week of ${formatDateOnly(getPeriodKey(date))}`;
+  if (grouping === 'month') return new Intl.DateTimeFormat('en-GB', { month: 'short', year: 'numeric' }).format(date);
+  return formatDateOnly(getPeriodKey(date));
+}
+
+function getRecordsOverTime(grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
+  const datedEntries = logEntries
+    .map(entry => new Date(entry.timestamp))
+    .filter(date => !Number.isNaN(date.getTime()));
+  if (!datedEntries.length) return [];
+
   const counts = new Map();
-  logEntries.forEach(entry => {
-    const dateKey = getDateKey(entry.timestamp);
-    counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
+  datedEntries.forEach(date => {
+    const period = startOfPeriod(date, grouping);
+    const key = getPeriodKey(period);
+    counts.set(key, (counts.get(key) || 0) + 1);
   });
-  return [...counts.entries()]
-    .sort(([first], [second]) => first.localeCompare(second))
-    .map(([dateKey, count]) => ({ label: formatDateOnly(dateKey), count }));
+
+  const first = startOfPeriod(new Date(Math.min(...datedEntries)), grouping);
+  const last = startOfPeriod(new Date(Math.max(...datedEntries)), grouping);
+  const rows = [];
+  for (let period = first; period <= last; period = addPeriod(period, grouping)) {
+    const key = getPeriodKey(period);
+    const count = counts.get(key) || 0;
+    if (includeEmpty || count) rows.push({ label: formatPeriodLabel(period, grouping), count, key });
+  }
+  return rows;
 }
 
 function getAppropriateCounts() {
@@ -1040,6 +1296,71 @@ function renderBarChart(container, summaryElement, rows, emptyText) {
   });
 }
 
+function renderLineChart(container, rows) {
+  clearNode(container);
+  if (!rows.length) return;
+
+  const svgNamespace = 'http://www.w3.org/2000/svg';
+  const width = 720;
+  const height = 260;
+  const padding = { top: 28, right: 28, bottom: 48, left: 48 };
+  const max = Math.max(...rows.map(row => row.count), 1);
+  const plotWidth = width - padding.left - padding.right;
+  const plotHeight = height - padding.top - padding.bottom;
+  const xFor = index => padding.left + (rows.length === 1 ? plotWidth / 2 : index * (plotWidth / (rows.length - 1)));
+  const yFor = count => padding.top + plotHeight - ((count / max) * plotHeight);
+  const svg = document.createElementNS(svgNamespace, 'svg');
+  svg.classList.add('line-chart');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('role', 'img');
+  svg.setAttribute('aria-label', `Line chart of emotion records across ${rows.length} periods. The written insight and data table below provide the exact values.`);
+
+  [0, Math.ceil(max / 2), max].filter((value, index, values) => values.indexOf(value) === index).forEach(value => {
+    const y = yFor(value);
+    const line = document.createElementNS(svgNamespace, 'line');
+    line.setAttribute('class', 'grid');
+    line.setAttribute('x1', String(padding.left));
+    line.setAttribute('x2', String(width - padding.right));
+    line.setAttribute('y1', String(y));
+    line.setAttribute('y2', String(y));
+    svg.appendChild(line);
+    const label = document.createElementNS(svgNamespace, 'text');
+    label.setAttribute('x', String(padding.left - 10));
+    label.setAttribute('y', String(y + 5));
+    label.setAttribute('text-anchor', 'end');
+    label.textContent = String(value);
+    svg.appendChild(label);
+  });
+
+  const polyline = document.createElementNS(svgNamespace, 'polyline');
+  polyline.setAttribute('class', 'trend');
+  polyline.setAttribute('points', rows.map((row, index) => `${xFor(index)},${yFor(row.count)}`).join(' '));
+  svg.appendChild(polyline);
+
+  rows.forEach((row, index) => {
+    const point = document.createElementNS(svgNamespace, 'circle');
+    point.setAttribute('class', 'point');
+    point.setAttribute('cx', String(xFor(index)));
+    point.setAttribute('cy', String(yFor(row.count)));
+    point.setAttribute('r', '5');
+    const title = document.createElementNS(svgNamespace, 'title');
+    title.textContent = `${row.label}: ${row.count}`;
+    point.appendChild(title);
+    svg.appendChild(point);
+  });
+
+  [0, Math.floor((rows.length - 1) / 2), rows.length - 1].filter((value, index, values) => values.indexOf(value) === index).forEach(index => {
+    const label = document.createElementNS(svgNamespace, 'text');
+    label.setAttribute('x', String(xFor(index)));
+    label.setAttribute('y', String(height - 16));
+    label.setAttribute('text-anchor', 'middle');
+    label.textContent = rows[index].label;
+    svg.appendChild(label);
+  });
+
+  container.appendChild(svg);
+}
+
 function renderMetricCards(metrics) {
   clearNode(intensityMetrics);
   clearNode(intensityMetricsBody);
@@ -1108,10 +1429,14 @@ function renderCharts() {
   renderBarChart(levelChart, levelChartSummary, levelRows, 'No recorded levels available yet.');
   addTableRows(levelChartBody, levelRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
 
+  const nonEmptyTimeRows = timeRows.filter(row => row.count > 0);
+  const emptyTimeRows = timeRows.filter(row => row.count === 0);
+  const peak = [...timeRows].sort((first, second) => second.count - first.count)[0];
+  const groupingLabel = timeGrouping.options[timeGrouping.selectedIndex].textContent.toLowerCase();
   timeChartSummary.textContent = timeRows.length
-    ? `${timeRows.length} date${timeRows.length === 1 ? '' : 's'} contain recorded emotions.`
+    ? `${logEntries.length} record${logEntries.length === 1 ? '' : 's'} across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
     : 'No dates available yet.';
-  renderBarChart(timeChart, timeChartSummary, timeRows, 'No dates available yet.');
+  renderLineChart(timeChart, timeRows);
   addTableRows(timeChartBody, timeRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
 
   reflectionChartSummary.textContent = hasReflectionData
@@ -1134,7 +1459,7 @@ function renderCharts() {
 
 function getLogRows(entries = logEntries) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations', 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -1147,7 +1472,8 @@ function getLogRows(entries = logEntries) {
       displayValue(entry.expectedIntensity),
       displayValue(entry.actualIntensity),
       displayValue(entry.intensityAlignment),
-      entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded'
+      entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
+      displayValue(entry.comment)
     ]);
   }
   return rows;
@@ -1213,7 +1539,7 @@ function renderLog() {
 
   clearNode(logBody);
   if (!hasEntries) {
-    logBody.innerHTML = '<tr><td colspan="10">No emotions recorded yet.</td></tr>';
+    logBody.innerHTML = '<tr><td colspan="11">No emotions recorded yet.</td></tr>';
   } else {
     const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
@@ -1228,7 +1554,8 @@ function renderLog() {
         displayValue(entry.expectedIntensity),
         displayValue(entry.actualIntensity),
         displayValue(entry.intensityAlignment),
-        entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded'
+        entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
+        displayValue(entry.comment)
       ].forEach(value => {
         const td = document.createElement('td');
         td.textContent = value;
@@ -1597,7 +1924,8 @@ function getEntryKey(entry) {
     expectedIntensity: entry.expectedIntensity ?? '',
     actualIntensity: entry.actualIntensity ?? '',
     intensityAlignment: entry.intensityAlignment || '',
-    physicalSensations: entry.physicalSensations || []
+    physicalSensations: entry.physicalSensations || [],
+    comment: entry.comment || ''
   });
 }
 
@@ -1637,6 +1965,9 @@ function normalizeLoadedEntry(entry) {
   }
   if (typeof entry.sensationGuide === 'string') {
     normalized.sensationGuide = entry.sensationGuide;
+  }
+  if (typeof entry.comment === 'string') {
+    normalized.comment = entry.comment;
   }
 
   return normalized;
@@ -1752,6 +2083,35 @@ function copyHtmlWithSelection(html, text) {
   return copied || copyTextWithSelection(text);
 }
 
+function enableArrowKeyTabs(tabs, select) {
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('keydown', event => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      let nextIndex = index;
+      if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
+      if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
+      if (event.key === 'Home') nextIndex = 0;
+      if (event.key === 'End') nextIndex = tabs.length - 1;
+      select(tabs[nextIndex]);
+      tabs[nextIndex].focus();
+    });
+  });
+}
+
+[entryTab, reviewTab, maintenanceTab].forEach(tab => {
+  tab.addEventListener('click', () => selectWorkspaceTab(tab));
+});
+[logsTab, chartsTab].forEach(tab => {
+  tab.addEventListener('click', () => selectReviewTab(tab));
+});
+enableArrowKeyTabs([entryTab, reviewTab, maintenanceTab], selectWorkspaceTab);
+enableArrowKeyTabs([logsTab, chartsTab], selectReviewTab);
+
+timeGrouping.addEventListener('change', renderCharts);
+includeEmptyPeriods.addEventListener('change', renderCharts);
+themeMode.addEventListener('change', () => applyTheme(themeMode.value, true));
+
 phaseOneButton.addEventListener('click', () => {
   setSettings({
     captureMode: 'phase1',
@@ -1829,8 +2189,12 @@ recordButton.addEventListener('click', () => {
     entry.physicalSensations = getSelectedSensations();
     entry.sensationGuide = captureSettings.includeAllSensations ? 'All sensations' : getActiveSensationType();
   }
+  if (entryComment.value.trim()) {
+    entry.comment = entryComment.value.trim();
+  }
 
   logEntries.push(entry);
+  entryComment.value = '';
   saveLog();
   renderAll();
   liveStatus.textContent = `Recorded: ${getSelectionPath().join(', ')}.`;
@@ -1845,6 +2209,7 @@ resetButton.addEventListener('click', () => {
   });
   expectedIntensity.value = expectedIntensity.defaultValue;
   actualIntensity.value = actualIntensity.defaultValue;
+  entryComment.value = '';
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
     input.checked = false;
   });
@@ -1931,6 +2296,7 @@ clearLogButton.addEventListener('click', () => {
   liveStatus.textContent = 'Local emotion log cleared.';
 });
 
+applyTheme(getInitialTheme());
 renderFullEmotionTable();
 renderAll();
 </script>
