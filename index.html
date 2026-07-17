@@ -482,6 +482,21 @@
   <section id="charts" class="log-panel" aria-labelledby="charts-heading">
     <h2 id="charts-heading">Charts</h2>
     <p id="chartsSummary" class="help" aria-live="polite">No emotions recorded yet.</p>
+    <div class="time-controls">
+      <label>
+        View chart period
+        <select id="chartPeriod">
+          <option value="all">All time</option>
+          <option value="day">A day</option>
+          <option value="week">A week</option>
+          <option value="month">A month</option>
+        </select>
+      </label>
+      <label id="chartPeriodDateLabel" hidden>
+        Choose a date in the period
+        <input type="date" id="chartPeriodDate">
+      </label>
+    </div>
 
     <details class="chart-card">
       <summary>Most recorded emotions</summary>
@@ -537,14 +552,21 @@
             <option value="month">Month</option>
           </select>
         </label>
+        <label>
+          Show
+          <select id="timeMeasure">
+            <option value="total">All emotion records</option>
+            <option value="inner">Inner-circle emotions</option>
+          </select>
+        </label>
         <label><input type="checkbox" id="includeEmptyPeriods" checked> Include periods with no entries</label>
       </div>
       <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
       <div id="timeChart"></div>
       <section class="scroll-table" tabindex="0" aria-label="Emotion records grouped by date">
         <table>
-          <caption>Emotion records grouped by date</caption>
-          <thead><tr><th scope="col">Date</th><th scope="col">Records</th></tr></thead>
+          <caption id="timeChartCaption">Emotion records grouped by date</caption>
+          <thead id="timeChartHead"><tr><th scope="col">Date</th><th scope="col">Records</th></tr></thead>
           <tbody id="timeChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
@@ -739,8 +761,14 @@ const shareTimeChartButton = document.getElementById('shareTimeChartButton');
 const timeChartSummary = document.getElementById('timeChartSummary');
 const timeChart = document.getElementById('timeChart');
 const timeChartBody = document.getElementById('timeChartBody');
+const timeChartHead = document.getElementById('timeChartHead');
+const timeChartCaption = document.getElementById('timeChartCaption');
 const timeGrouping = document.getElementById('timeGrouping');
+const timeMeasure = document.getElementById('timeMeasure');
 const includeEmptyPeriods = document.getElementById('includeEmptyPeriods');
+const chartPeriod = document.getElementById('chartPeriod');
+const chartPeriodDate = document.getElementById('chartPeriodDate');
+const chartPeriodDateLabel = document.getElementById('chartPeriodDateLabel');
 const entryComment = document.getElementById('entryComment');
 const themeMode = document.getElementById('themeMode');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
@@ -1096,9 +1124,9 @@ function getIntensityComparison(expected, actual) {
   return Math.abs(expected - actual) <= 1 ? 'Aligned' : 'Not aligned';
 }
 
-function getTally() {
+function getTally(entries = logEntries) {
   const tallyMap = new Map();
-  for (const entry of logEntries) {
+  for (const entry of entries) {
     const key = `${getRecordedLevel(entry)}|||${entry.inner}|||${entry.middle || ''}|||${entry.outer || ''}`;
     const existing = tallyMap.get(key) || {
       level: getRecordedLevel(entry),
@@ -1159,8 +1187,8 @@ function sortCountRows(rows) {
   });
 }
 
-function getLevelCounts() {
-  return countValues(logEntries.map(getRecordedLevel), ['Inner circle', 'Middle circle', 'Outer circle']);
+function getLevelCounts(entries = logEntries) {
+  return countValues(entries.map(getRecordedLevel), ['Inner circle', 'Middle circle', 'Outer circle']);
 }
 
 function startOfPeriod(date, grouping) {
@@ -1191,21 +1219,38 @@ function formatPeriodLabel(date, grouping) {
   return formatDateOnly(getPeriodKey(date));
 }
 
-function getRecordsOverTime(grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
-  const datedEntries = logEntries
-    .map(entry => new Date(entry.timestamp))
-    .filter(date => !Number.isNaN(date.getTime()));
+function getChartEntries() {
+  if (chartPeriod.value === 'all' || !chartPeriodDate.value) return logEntries;
+  const selectedDate = new Date(`${chartPeriodDate.value}T00:00:00Z`);
+  if (Number.isNaN(selectedDate.getTime())) return logEntries;
+  const start = startOfPeriod(selectedDate, chartPeriod.value);
+  const end = addPeriod(start, chartPeriod.value);
+  return logEntries.filter(entry => {
+    const date = new Date(entry.timestamp);
+    return !Number.isNaN(date.getTime()) && date >= start && date < end;
+  });
+}
+
+function getChartPeriodLabel() {
+  if (chartPeriod.value === 'all' || !chartPeriodDate.value) return 'all time';
+  const date = new Date(`${chartPeriodDate.value}T00:00:00Z`);
+  return formatPeriodLabel(startOfPeriod(date, chartPeriod.value), chartPeriod.value);
+}
+
+function getRecordsOverTime(entries = getChartEntries(), grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
+  const datedEntries = entries
+    .map(entry => ({ entry, date: new Date(entry.timestamp) }))
+    .filter(item => !Number.isNaN(item.date.getTime()));
   if (!datedEntries.length) return [];
 
   const counts = new Map();
-  datedEntries.forEach(date => {
-    const period = startOfPeriod(date, grouping);
-    const key = getPeriodKey(period);
+  datedEntries.forEach(({ date }) => {
+    const key = getPeriodKey(startOfPeriod(date, grouping));
     counts.set(key, (counts.get(key) || 0) + 1);
   });
 
-  const first = startOfPeriod(new Date(Math.min(...datedEntries)), grouping);
-  const last = startOfPeriod(new Date(Math.max(...datedEntries)), grouping);
+  const first = startOfPeriod(new Date(Math.min(...datedEntries.map(item => item.date))), grouping);
+  const last = startOfPeriod(new Date(Math.max(...datedEntries.map(item => item.date))), grouping);
   const rows = [];
   for (let period = first; period <= last; period = addPeriod(period, grouping)) {
     const key = getPeriodKey(period);
@@ -1215,32 +1260,46 @@ function getRecordsOverTime(grouping = timeGrouping.value, includeEmpty = includ
   return rows;
 }
 
-function getAppropriateCounts() {
-  return countValues(logEntries.map(entry => entry.appropriate || 'Not recorded'), ['Yes', 'No', 'Not recorded']);
+function getInnerEmotionSeries(entries = getChartEntries(), grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
+  const totalRows = getRecordsOverTime(entries, grouping, includeEmpty);
+  const categories = unique(emotions.map(row => row[0]));
+  return categories.map(category => ({
+    key: category,
+    label: category,
+    colour: emotionColours[category],
+    rows: totalRows.map(row => ({ ...row, count: entries.filter(entry => {
+      const date = new Date(entry.timestamp);
+      return entry.inner === category && !Number.isNaN(date.getTime()) && getPeriodKey(startOfPeriod(date, grouping)) === row.key;
+    }).length }))
+  }));
 }
 
-function getAlignmentCounts() {
-  return countValues(logEntries.map(entry => entry.intensityAlignment || 'Not recorded'), ['Aligned', 'Not aligned', 'Not recorded']);
+function getAppropriateCounts(entries = logEntries) {
+  return countValues(entries.map(entry => entry.appropriate || 'Not recorded'), ['Yes', 'No', 'Not recorded']);
 }
 
-function getIntensityAverages() {
-  const entries = logEntries.filter(entry => Number.isFinite(Number(entry.expectedIntensity)) && Number.isFinite(Number(entry.actualIntensity)));
-  if (!entries.length) return null;
-  const expectedTotal = entries.reduce((total, entry) => total + Number(entry.expectedIntensity), 0);
-  const actualTotal = entries.reduce((total, entry) => total + Number(entry.actualIntensity), 0);
-  const expectedAverage = expectedTotal / entries.length;
-  const actualAverage = actualTotal / entries.length;
+function getAlignmentCounts(entries = logEntries) {
+  return countValues(entries.map(entry => entry.intensityAlignment || 'Not recorded'), ['Aligned', 'Not aligned', 'Not recorded']);
+}
+
+function getIntensityAverages(entries = logEntries) {
+  const validEntries = entries.filter(entry => Number.isFinite(Number(entry.expectedIntensity)) && Number.isFinite(Number(entry.actualIntensity)));
+  if (!validEntries.length) return null;
+  const expectedTotal = validEntries.reduce((total, entry) => total + Number(entry.expectedIntensity), 0);
+  const actualTotal = validEntries.reduce((total, entry) => total + Number(entry.actualIntensity), 0);
+  const expectedAverage = expectedTotal / validEntries.length;
+  const actualAverage = actualTotal / validEntries.length;
   return {
-    count: entries.length,
+    count: validEntries.length,
     expectedAverage,
     actualAverage,
     differenceAverage: actualAverage - expectedAverage
   };
 }
 
-function getSensationCounts() {
+function getSensationCounts(entries = logEntries) {
   const counts = new Map();
-  logEntries.forEach(entry => {
+  entries.forEach(entry => {
     (entry.physicalSensations || []).forEach(sensation => {
       counts.set(sensation, (counts.get(sensation) || 0) + 1);
     });
@@ -1248,8 +1307,8 @@ function getSensationCounts() {
   return sortCountRows([...counts.entries()].map(([label, count]) => ({ label, count }))).slice(0, 8);
 }
 
-function getTopEmotionRows() {
-  return getTally().slice(0, 8).map(item => ({
+function getTopEmotionRows(entries = logEntries) {
+  return getTally(entries).slice(0, 8).map(item => ({
     label: getEntryPathLabel(item),
     count: item.count,
     lastRecorded: item.lastRecorded,
@@ -1257,12 +1316,12 @@ function getTopEmotionRows() {
   }));
 }
 
-function getVisibleAppropriateRows() {
-  return getAppropriateCounts().filter(row => row.count > 0);
+function getVisibleAppropriateRows(entries = logEntries) {
+  return getAppropriateCounts(entries).filter(row => row.count > 0);
 }
 
-function getVisibleAlignmentRows() {
-  return getAlignmentCounts().filter(row => row.count > 0);
+function getVisibleAlignmentRows(entries = logEntries) {
+  return getAlignmentCounts(entries).filter(row => row.count > 0);
 }
 
 function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
@@ -1325,15 +1384,16 @@ function renderBarChart(container, summaryElement, rows, emptyText, getColour) {
   });
 }
 
-function renderLineChart(container, rows) {
+function renderLineChart(container, series) {
   clearNode(container);
+  const rows = series[0]?.rows || [];
   if (!rows.length) return;
 
   const svgNamespace = 'http://www.w3.org/2000/svg';
   const width = 720;
   const height = 260;
   const padding = { top: 28, right: 28, bottom: 48, left: 48 };
-  const max = Math.max(...rows.map(row => row.count), 1);
+  const max = Math.max(...series.flatMap(item => item.rows.map(row => row.count)), 1);
   const plotWidth = width - padding.left - padding.right;
   const plotHeight = height - padding.top - padding.bottom;
   const xFor = index => padding.left + (rows.length === 1 ? plotWidth / 2 : index * (plotWidth / (rows.length - 1)));
@@ -1342,7 +1402,7 @@ function renderLineChart(container, rows) {
   svg.classList.add('line-chart');
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('role', 'img');
-  svg.setAttribute('aria-label', `Line chart of emotion records across ${rows.length} periods. The written insight and data table below provide the exact values.`);
+  svg.setAttribute('aria-label', `Line chart of ${series.map(item => item.label).join(', ')} across ${rows.length} periods. The written insight and data table below provide the exact values.`);
 
   [0, Math.ceil(max / 2), max].filter((value, index, values) => values.indexOf(value) === index).forEach(value => {
     const y = yFor(value);
@@ -1361,21 +1421,25 @@ function renderLineChart(container, rows) {
     svg.appendChild(label);
   });
 
-  const polyline = document.createElementNS(svgNamespace, 'polyline');
-  polyline.setAttribute('class', 'trend');
-  polyline.setAttribute('points', rows.map((row, index) => `${xFor(index)},${yFor(row.count)}`).join(' '));
-  svg.appendChild(polyline);
+  series.forEach(item => {
+    const polyline = document.createElementNS(svgNamespace, 'polyline');
+    polyline.setAttribute('class', 'trend');
+    if (item.colour) polyline.style.stroke = item.colour;
+    polyline.setAttribute('points', item.rows.map((row, index) => `${xFor(index)},${yFor(row.count)}`).join(' '));
+    svg.appendChild(polyline);
 
-  rows.forEach((row, index) => {
-    const point = document.createElementNS(svgNamespace, 'circle');
-    point.setAttribute('class', 'point');
-    point.setAttribute('cx', String(xFor(index)));
-    point.setAttribute('cy', String(yFor(row.count)));
-    point.setAttribute('r', '5');
-    const title = document.createElementNS(svgNamespace, 'title');
-    title.textContent = `${row.label}: ${row.count}`;
-    point.appendChild(title);
-    svg.appendChild(point);
+    item.rows.forEach((row, index) => {
+      const point = document.createElementNS(svgNamespace, 'circle');
+      point.setAttribute('class', 'point');
+      if (item.colour) point.style.fill = item.colour;
+      point.setAttribute('cx', String(xFor(index)));
+      point.setAttribute('cy', String(yFor(row.count)));
+      point.setAttribute('r', '5');
+      const title = document.createElementNS(svgNamespace, 'title');
+      title.textContent = `${item.label}, ${row.label}: ${row.count}`;
+      point.appendChild(title);
+      svg.appendChild(point);
+    });
   });
 
   [0, Math.floor((rows.length - 1) / 2), rows.length - 1].filter((value, index, values) => values.indexOf(value) === index).forEach(index => {
@@ -1423,22 +1487,51 @@ function renderMetricCards(metrics) {
   addTableRows(intensityMetricsBody, rows, 'No intensity values recorded yet.', row => row, 2);
 }
 
+function renderTimeTable(timeRows, timeSeries) {
+  timeChartCaption.textContent = timeMeasure.value === 'inner'
+    ? 'Inner-circle emotion counts grouped by date'
+    : 'Emotion records grouped by date';
+  clearNode(timeChartHead);
+  const headerRow = document.createElement('tr');
+  ['Date', ...timeSeries.map(series => series.label)].forEach(label => {
+    const th = document.createElement('th');
+    th.scope = 'col';
+    th.textContent = label;
+    headerRow.appendChild(th);
+  });
+  timeChartHead.appendChild(headerRow);
+
+  const valuesByLabel = new Map(timeSeries.map(series => [series.label, new Map(series.rows.map(row => [row.key, row.count]))]));
+  addTableRows(
+    timeChartBody,
+    timeRows,
+    'No emotions recorded yet.',
+    row => [row.label, ...timeSeries.map(series => String(valuesByLabel.get(series.label).get(row.key) || 0))],
+    timeSeries.length + 1
+  );
+}
+
 function renderCharts() {
   const hasEntries = logEntries.length > 0;
-  const topEmotions = getTopEmotionRows();
-  const levelRows = getLevelCounts().filter(row => row.count > 0);
-  const timeRows = getRecordsOverTime();
-  const appropriateRows = getVisibleAppropriateRows();
-  const alignmentRows = getVisibleAlignmentRows();
-  const intensityAverages = getIntensityAverages();
-  const sensationRows = getSensationCounts();
+  const chartEntries = getChartEntries();
+  const topEmotions = getTopEmotionRows(chartEntries);
+  const levelRows = getLevelCounts(chartEntries).filter(row => row.count > 0);
+  const timeRows = getRecordsOverTime(chartEntries);
+  const timeSeries = timeMeasure.value === 'inner'
+    ? getInnerEmotionSeries(chartEntries)
+    : [{ label: 'All emotion records', rows: timeRows }];
+  const appropriateRows = getVisibleAppropriateRows(chartEntries);
+  const alignmentRows = getVisibleAlignmentRows(chartEntries);
+  const intensityAverages = getIntensityAverages(chartEntries);
+  const sensationRows = getSensationCounts(chartEntries);
   const hasReflectionData = appropriateRows.some(row => row.label !== 'Not recorded' && row.count > 0)
     || alignmentRows.some(row => row.label !== 'Not recorded' && row.count > 0)
     || intensityAverages
     || sensationRows.length > 0;
 
+  chartPeriodDateLabel.hidden = chartPeriod.value === 'all';
   chartsSummary.textContent = hasEntries
-    ? `${logEntries.length} emotion record${logEntries.length === 1 ? '' : 's'} available for charts.`
+    ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
   shareEmotionChartButton.disabled = !topEmotions.length;
   shareLevelChartButton.disabled = !levelRows.length;
@@ -1446,8 +1539,8 @@ function renderCharts() {
   shareReflectionChartButton.disabled = !hasReflectionData;
 
   emotionChartSummary.textContent = topEmotions.length
-    ? `${topEmotions[0].label} is the most recorded emotion path, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.`
-    : 'No emotion records available yet.';
+    ? `${topEmotions[0].label} is the most recorded emotion path in ${getChartPeriodLabel()}, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.`
+    : `No emotion records available for ${getChartPeriodLabel()}.`;
   renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.', row => emotionColours[row.category]);
   addTableRows(emotionChartBody, topEmotions, 'No emotions recorded yet.', row => [row.label, String(row.count), formatDateTime(row.lastRecorded)], 3);
 
@@ -1462,11 +1555,12 @@ function renderCharts() {
   const emptyTimeRows = timeRows.filter(row => row.count === 0);
   const peak = [...timeRows].sort((first, second) => second.count - first.count)[0];
   const groupingLabel = timeGrouping.options[timeGrouping.selectedIndex].textContent.toLowerCase();
+  const measureLabel = timeMeasure.value === 'inner' ? 'inner-circle emotion counts' : 'emotion records';
   timeChartSummary.textContent = timeRows.length
-    ? `${logEntries.length} record${logEntries.length === 1 ? '' : 's'} across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
-    : 'No dates available yet.';
-  renderLineChart(timeChart, timeRows);
-  addTableRows(timeChartBody, timeRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
+    ? `${chartEntries.length} ${measureLabel} in ${getChartPeriodLabel()}, across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
+    : `No dates available for ${getChartPeriodLabel()}.`;
+  renderLineChart(timeChart, timeSeries);
+  renderTimeTable(timeRows, timeSeries);
 
   reflectionChartSummary.textContent = hasReflectionData
     ? 'Reflection data is available from records that used optional Phase 2 or Custom fields.'
@@ -1732,7 +1826,7 @@ function downloadBlob(filename, blob) {
 
 function getChartShareData(type) {
   if (type === 'emotions') {
-    const rows = getTopEmotionRows();
+    const rows = getTopEmotionRows(getChartEntries());
     return {
       title: 'Most recorded emotions',
       summary: emotionChartSummary.textContent,
@@ -1742,7 +1836,7 @@ function getChartShareData(type) {
   }
 
   if (type === 'levels') {
-    const rows = getLevelCounts().filter(row => row.count > 0);
+    const rows = getLevelCounts(getChartEntries()).filter(row => row.count > 0);
     return {
       title: 'Recorded level mix',
       summary: levelChartSummary.textContent,
@@ -1752,15 +1846,20 @@ function getChartShareData(type) {
   }
 
   if (type === 'time') {
+    const chartEntries = getChartEntries();
+    const series = timeMeasure.value === 'inner'
+      ? getInnerEmotionSeries(chartEntries)
+      : [{ label: 'All emotion records', rows: getRecordsOverTime(chartEntries) }];
     return {
       title: 'Records over time',
       summary: timeChartSummary.textContent,
       filename: 'emotion-wheel-records-over-time.png',
-      sections: [{ title: 'Dates', rows: getRecordsOverTime() }]
+      sections: series.map(item => ({ title: item.label, rows: item.rows }))
     };
   }
 
-  const intensityAverages = getIntensityAverages();
+  const chartEntries = getChartEntries();
+  const intensityAverages = getIntensityAverages(chartEntries);
   const metricRows = intensityAverages ? [
     { label: 'Records with intensity', value: String(intensityAverages.count) },
     { label: 'Average expected intensity', value: intensityAverages.expectedAverage.toFixed(1) },
@@ -1773,10 +1872,10 @@ function getChartShareData(type) {
     summary: reflectionChartSummary.textContent,
     filename: 'emotion-wheel-reflection-summary.png',
     sections: [
-      { title: 'Appropriate responses', rows: getVisibleAppropriateRows() },
-      { title: 'Intensity alignment', rows: getVisibleAlignmentRows() },
+      { title: 'Appropriate responses', rows: getVisibleAppropriateRows(chartEntries) },
+      { title: 'Intensity alignment', rows: getVisibleAlignmentRows(chartEntries) },
       { title: 'Intensity averages', rows: metricRows, type: 'metrics' },
-      { title: 'Physical sensations', rows: getSensationCounts() }
+      { title: 'Physical sensations', rows: getSensationCounts(chartEntries) }
     ]
   };
 }
@@ -2160,8 +2259,10 @@ function enableArrowKeyTabs(tabs, select) {
 enableArrowKeyTabs([entryTab, reviewTab, maintenanceTab], selectWorkspaceTab);
 enableArrowKeyTabs([logsTab, chartsTab], selectReviewTab);
 
-timeGrouping.addEventListener('change', renderCharts);
-includeEmptyPeriods.addEventListener('change', renderCharts);
+chartPeriodDate.value = new Date().toISOString().slice(0, 10);
+[chartPeriod, chartPeriodDate, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {
+  control.addEventListener('change', renderCharts);
+});
 themeMode.addEventListener('change', () => applyTheme(themeMode.value, true));
 
 phaseOneButton.addEventListener('click', () => {
