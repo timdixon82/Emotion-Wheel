@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility and design - Emotion Wheel</title>
+  <link rel="stylesheet" href="../assets/info-pages.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to main content</a>
+<header><div class="header-inner"><span class="brand">Emotion Tracking Wheel</span><a class="button" href="../index.html">Back to the app</a></div></header>
+<main id="main-content" tabindex="-1">
+  <h1>Accessibility and design</h1>
+  <p>Emotion Wheel follows Tim Dixon's design system.</p>
+  <section class="panel">
+    <h2>Design principles</h2>
+    <ul>
+      <li>Light, Dark, Muted Light and Muted Dark themes.</li>
+      <li>Roboto type with system-font fallbacks.</li>
+      <li>Clear navigation, card boundaries and generous spacing.</li>
+      <li>Visible focus indicators and controls sized for touch and keyboard use.</li>
+      <li>Charts paired with written summaries and data tables.</li>
+      <li>Colour never used as the only way information is communicated.</li>
+    </ul>
+  </section>
+  <section class="panel">
+    <h2>Keyboard and screen-reader support</h2>
+    <ul>
+      <li>A skip link moves directly to the main content.</li>
+      <li>Work-area and review tabs support Arrow Left, Arrow Right, Home and End.</li>
+      <li>Entry focus follows the visible emotion levels, reflection controls, optional note and Record action.</li>
+      <li>Hidden controls are removed from the visual layout and accessibility tree.</li>
+      <li>The mobile sticky action uses the same Record button rather than adding a duplicate control.</li>
+      <li>Tables include captions and column headings and remain scrollable on small screens.</li>
+    </ul>
+  </section>
+  <section class="panel">
+    <h2>Responsive behaviour</h2>
+    <p>On smaller screens, the header and navigation become more compact and selected entry actions stay reachable at the bottom of the viewport. Chart controls expose only the picker relevant to the selected day, week or month view.</p>
+  </section>
+</main>
+<footer><nav aria-label="Information pages"><a href="privacy.html">Privacy</a><a href="about.html">About</a><a href="licence.html">MIT Licence</a></nav></footer>
+</body>
+</html>

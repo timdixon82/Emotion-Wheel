@@ -1,0 +1,128 @@
+@font-face {
+  font-family: "Roboto";
+  src: url("fonts/Roboto-VariableFont.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: light dark;
+  --bg: #ffffff;
+  --text: #333333;
+  --muted: #5b6b7f;
+  --border: #cbd5e1;
+  --focus: #0c3b64;
+  --panel: #f8fafc;
+  --nav-bg: #0c3b64;
+  --nav-text: #ffffff;
+  --header-focus: #ffffff;
+  --heading: #0c3b64;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #061528;
+    --text: #e2e7ec;
+    --muted: #b7c4d0;
+    --border: #1c3a5c;
+    --focus: #e3c196;
+    --panel: #0d2440;
+    --nav-bg: #061528;
+    --nav-text: #ffffff;
+    --header-focus: #e3c196;
+    --heading: #ffffff;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 1rem/1.6 "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: 1rem;
+  transform: translateY(-160%);
+  padding: .75rem 1rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 2px solid var(--focus);
+  z-index: 2;
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+header { background: var(--nav-bg); color: var(--nav-text); }
+
+.header-inner,
+main,
+footer {
+  width: min(100% - 2rem, 54rem);
+  margin-inline: auto;
+}
+
+.header-inner {
+  min-height: 4.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.brand { font-weight: 800; }
+
+main { padding-block: 1.5rem 2rem; }
+
+h1,
+h2 { color: var(--heading); line-height: 1.2; }
+
+h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); }
+
+.panel {
+  margin-block: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: .625rem;
+  background: var(--panel);
+}
+
+a { color: var(--focus); }
+
+header a { color: var(--nav-text); }
+
+a:focus,
+button:focus {
+  outline: 4px solid var(--focus);
+  outline-offset: 2px;
+}
+
+header a:focus { outline-color: var(--header-focus); }
+
+.button {
+  min-height: 3rem;
+  display: inline-flex;
+  align-items: center;
+  padding: .65rem 1rem;
+  border: 2px solid currentColor;
+  border-radius: .5rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+footer {
+  padding-block: 1rem 2rem;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+}
+
+footer nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+
+@media (max-width: 600px) {
+  .header-inner { padding-block: .75rem; align-items: flex-start; flex-direction: column; }
+}

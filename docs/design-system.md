@@ -1,6 +1,6 @@
 # Design system
 
-Emotion Wheel uses the Family Reward Chart design system as its visual and interaction foundation.
+Emotion Wheel follows Tim Dixon's design system as its visual and interaction foundation.
 
 ## Principles
 

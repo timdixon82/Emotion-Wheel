@@ -23,7 +23,7 @@ Your entries, optional notes, and settings are stored only in local storage in t
 
 Data only leaves the browser when you deliberately export a CSV or JSON backup, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
 
-Read the fuller [privacy notes](docs/privacy.md) before using this for sensitive information.
+Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
 
 ## Getting started
 
@@ -38,7 +38,7 @@ Phase 1 is recommended for at least one week to build the recording habit. Phase
 
 ## Design and themes
 
-The interface follows the Family Reward Chart design system: Roboto type, navy card hierarchy, accessible tables, 44-pixel minimum control targets, and four colour modes.
+The interface follows Tim Dixon's design system: Roboto type, navy card hierarchy, accessible tables, 44-pixel minimum control targets, and four colour modes.
 
 - Light
 - Dark
@@ -47,7 +47,7 @@ The interface follows the Family Reward Chart design system: Roboto type, navy c
 
 Choose a theme from the top-right control. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
 
-The design notes are in [docs/design-system.md](docs/design-system.md).
+The rendered design and accessibility notes are in [docs/accessibility.html](docs/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
 
 ## Accessibility
 
