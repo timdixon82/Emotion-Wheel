@@ -165,7 +165,14 @@
       grid-area: bar; min-width: 0; min-height: 1.5rem;
       border: 1px solid var(--border); background: var(--panel);
     }
-    .bar-fill { display: block; min-height: 1.5rem; background: var(--focus); }
+    .bar-fill { display: block; min-height: 1.5rem; background: var(--bar-colour, var(--focus)); }
+    .emotion-category {
+      background: var(--emotion-colour); border-color: var(--emotion-colour); color: #ffffff;
+    }
+    .emotion-category:hover, .emotion-category[aria-pressed="true"] {
+      background: var(--emotion-colour); border-color: #ffffff; color: #ffffff;
+      box-shadow: inset 0 0 0 2px rgb(255 255 255 / 45%);
+    }
     .time-controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin: 1rem 0; }
     .time-controls label { flex-direction: column; align-items: flex-start; }
     select { min-height: 3rem; padding: .5rem; border: 2px solid var(--border); border-radius: .5rem; background: var(--button); color: var(--text); font: inherit; }
@@ -307,6 +314,24 @@
     <p id="outerHelp">Choose a middle-circle emotion first.</p>
     <div id="outerButtons" class="button-grid" role="group" aria-labelledby="outer-heading" aria-describedby="outerHelp"></div>
   </section>
+
+  <details id="full-table">
+    <summary>Emotion reference table</summary>
+    <div class="details-content">
+      <p class="help">Choose a complete emotion path to prepare a new entry, then add any reflection details or note before recording.</p>
+      <div class="actions">
+        <button type="button" id="shareWheelButton">Share full table</button>
+        <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
+      </div>
+      <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
+        <table>
+          <caption>All available emotion paths</caption>
+          <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Prepare entry</th></tr></thead>
+          <tbody id="wheelTableBody"></tbody>
+        </table>
+      </section>
+    </div>
+  </details>
 
   <section class="status" aria-labelledby="current-selection-heading">
     <h2 id="current-selection-heading">Review and record</h2>
@@ -582,23 +607,6 @@
   </section>
 
   <section id="maintenancePanel" class="workspace-panel" role="tabpanel" aria-labelledby="maintenanceTab" hidden>
-  <details id="full-table">
-    <summary>Full emotion wheel table</summary>
-    <div class="details-content">
-      <div class="actions">
-        <button type="button" id="shareWheelButton">Share full table</button>
-        <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
-      </div>
-      <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
-        <table>
-          <caption>All available emotion paths</caption>
-          <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
-          <tbody id="wheelTableBody"></tbody>
-        </table>
-      </section>
-    </div>
-  </details>
-
   <details id="export-data" class="export-panel">
     <summary>Save, load, and manage data</summary>
     <div class="details-content">
@@ -623,6 +631,14 @@
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
 const settingsKey = 'emotionWheelCaptureSettingsV1';
+const emotionColours = {
+  Anger: '#7f1d1d',
+  Disgust: '#14532d',
+  Sad: '#1e3a8a',
+  Happy: '#6b4500',
+  Surprise: '#4c1d95',
+  Fear: '#164e63'
+};
 
 const sensationGuides = {
   Fear: ['Cold', 'Frozen posture', 'Eyes staring or tight shut', 'Urge to curl up or freeze', 'Hard to talk'],
@@ -877,11 +893,15 @@ function getSelectionPath() {
   return [selectedInner, selectedMiddle, selectedOuter].filter(Boolean);
 }
 
-function makeButton(label, onClick, selected) {
+function makeButton(label, onClick, selected, category) {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = label;
   button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+  if (category && emotionColours[category]) {
+    button.classList.add('emotion-category');
+    button.style.setProperty('--emotion-colour', emotionColours[category]);
+  }
   button.addEventListener('click', onClick);
   return button;
 }
@@ -937,6 +957,10 @@ function focusNextRecordingControl(fallback = recordButton) {
   if (focusFirstVisibleControl(appropriatePanel)) return;
   if (focusFirstVisibleControl(intensityPanel)) return;
   if (focusFirstVisibleControl(sensationsPanel)) return;
+  if (entryComment.offsetParent !== null) {
+    entryComment.focus();
+    return;
+  }
   fallback.focus();
 }
 
@@ -949,7 +973,7 @@ function renderInner() {
       selectedOuter = null;
       renderAll();
       focusFirstButton(middleButtons, recordButton);
-    }, selectedInner === label));
+    }, selectedInner === label, label));
   });
 }
 
@@ -967,7 +991,7 @@ function renderMiddle() {
       selectedOuter = null;
       renderAll();
       focusFirstButton(outerButtons, recordButton);
-    }, selectedMiddle === label));
+    }, selectedMiddle === label, selectedInner));
   });
 }
 
@@ -986,7 +1010,7 @@ function renderOuter() {
       selectedOuter = label;
       renderAll();
       focusNextRecordingControl();
-    }, selectedOuter === label));
+    }, selectedOuter === label, selectedInner));
   });
 }
 
@@ -1226,7 +1250,8 @@ function getTopEmotionRows() {
   return getTally().slice(0, 8).map(item => ({
     label: getEntryPathLabel(item),
     count: item.count,
-    lastRecorded: item.lastRecorded
+    lastRecorded: item.lastRecorded,
+    category: item.inner
   }));
 }
 
@@ -1261,7 +1286,7 @@ function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
   });
 }
 
-function renderBarChart(container, summaryElement, rows, emptyText) {
+function renderBarChart(container, summaryElement, rows, emptyText, getColour) {
   clearNode(container);
 
   if (!rows.length) {
@@ -1285,6 +1310,8 @@ function renderBarChart(container, summaryElement, rows, emptyText) {
     const fill = document.createElement('span');
     fill.className = 'bar-fill';
     fill.style.width = `${Math.max((row.count / max) * 100, 4)}%`;
+    const colour = getColour?.(row);
+    if (colour) fill.style.setProperty('--bar-colour', colour);
     track.appendChild(fill);
 
     const value = document.createElement('span');
@@ -1419,7 +1446,7 @@ function renderCharts() {
   emotionChartSummary.textContent = topEmotions.length
     ? `${topEmotions[0].label} is the most recorded emotion path, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.`
     : 'No emotion records available yet.';
-  renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.');
+  renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.', row => emotionColours[row.category]);
   addTableRows(emotionChartBody, topEmotions, 'No emotions recorded yet.', row => [row.label, String(row.count), formatDateTime(row.lastRecorded)], 3);
 
   const topLevel = sortCountRows(levelRows)[0];
@@ -1453,6 +1480,10 @@ function renderCharts() {
 
   renderMetricCards(intensityAverages);
 
+  const topSensation = sensationRows[0];
+  sensationsChartSummary.textContent = topSensation
+    ? `${topSensation.label} is the most recorded physical sensation, with ${topSensation.count} record${topSensation.count === 1 ? '' : 's'}.`
+    : 'No physical sensations recorded yet.';
   renderBarChart(sensationsChart, sensationsChartSummary, sensationRows, 'No physical sensations recorded yet.');
   addTableRows(sensationsChartBody, sensationRows, 'No physical sensations recorded yet.', row => [row.label, String(row.count)], 2);
 }
@@ -1575,6 +1606,24 @@ function renderFullEmotionTable() {
       td.textContent = value;
       tr.appendChild(td);
     });
+    const actionCell = document.createElement('td');
+    const useButton = document.createElement('button');
+    useButton.type = 'button';
+    useButton.textContent = 'Use this path';
+    useButton.classList.add('emotion-category');
+    useButton.style.setProperty('--emotion-colour', emotionColours[row[0]]);
+    useButton.setAttribute('aria-label', `Use ${row.join(', ')} for a new entry`);
+    useButton.addEventListener('click', () => {
+      selectedInner = row[0];
+      selectedMiddle = row[1];
+      selectedOuter = row[2];
+      selectWorkspaceTab(entryTab);
+      renderAll();
+      liveStatus.textContent = `Prepared ${row.join(' then ')}. Add optional reflection details or a note, then record.`;
+      focusNextRecordingControl();
+    });
+    actionCell.appendChild(useButton);
+    tr.appendChild(actionCell);
     wheelTableBody.appendChild(tr);
   }
 }
@@ -1585,6 +1634,7 @@ function renderAll() {
   renderMiddle();
   renderOuter();
   renderSelection();
+  renderFullEmotionTable();
   renderLog();
   renderCharts();
 }
@@ -1816,7 +1866,7 @@ function drawChartSection(context, section, x, y, width) {
     context.lineWidth = 2;
     context.fillRect(barX, barY, barWidth, 28);
     context.strokeRect(barX, barY, barWidth, 28);
-    context.fillStyle = '#0047ff';
+    context.fillStyle = row.category ? emotionColours[row.category] : '#0c3b64';
     context.fillRect(barX, barY, Math.max((row.count / max) * barWidth, 8), 28);
 
     context.font = '700 20px system-ui, sans-serif';
@@ -2297,7 +2347,6 @@ clearLogButton.addEventListener('click', () => {
 });
 
 applyTheme(getInitialTheme());
-renderFullEmotionTable();
 renderAll();
 </script>
 </body>
