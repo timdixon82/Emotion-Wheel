@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
+  <script src="assets/theme.js"></script>
+  <script src="assets/version.js" defer></script>
   <style>
     @font-face {
       font-family: "Roboto";
@@ -207,8 +209,9 @@
     .table-actions { display: flex; flex-wrap: wrap; gap: .5rem; min-width: 12rem; }
     .table-actions button { min-height: 2.75rem; padding: .5rem .75rem; }
     .site-footer { max-width: 980px; margin: 1rem auto 0; padding: 1rem; border-top: 1px solid var(--border); color: var(--muted); }
-    .site-footer nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .site-footer nav { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
     .site-footer a { color: var(--focus); }
+    .site-footer .sep { color: var(--muted); }
     @media (max-width: 600px) {
       .app-header-inner { min-height: 0; align-items: center; flex-direction: row; }
       .theme-control { margin-left: auto; }
@@ -732,10 +735,14 @@
 <footer class="site-footer">
   <p><strong>Your data stays on this device</strong> unless you deliberately export, copy, or share it.</p>
   <nav aria-label="App information">
+    <span data-app-version></span><span class="sep" aria-hidden="true">·</span>
+    <a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
+    <a href="docs/licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/privacy.html">Privacy</a>
-    <a href="docs/accessibility.html">Accessibility and design</a>
-    <a href="docs/about.html">About this app</a>
-    <a href="docs/licence.html">MIT Licence</a>
+    <span class="sep" aria-hidden="true">·</span><a href="docs/accessibility.html">Accessibility and design</a>
+    <span class="sep" aria-hidden="true">·</span><a href="docs/about.html">About</a>
+    <span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/contact/" target="_blank" rel="noopener">Contact / feedback</a>
+    <span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/" target="_blank" rel="noopener">© Tim Dixon</a>
   </nav>
 </footer>
 
@@ -928,7 +935,7 @@ function clearNode(node) {
 
 function getInitialTheme() {
   try {
-    const savedTheme = localStorage.getItem('emotionWheelThemeV1');
+    const savedTheme = localStorage.getItem('td-theme') || localStorage.getItem('emotionWheelThemeV1');
     if (['light', 'dark', 'muted-light', 'muted-dark'].includes(savedTheme)) return savedTheme;
   } catch (error) {
   }
@@ -939,6 +946,7 @@ function applyTheme(theme, announce = false) {
   document.documentElement.dataset.theme = theme;
   themeMode.value = theme;
   try {
+    localStorage.setItem('td-theme', theme);
     localStorage.setItem('emotionWheelThemeV1', theme);
   } catch (error) {
   }
