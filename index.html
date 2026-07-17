@@ -492,10 +492,21 @@
           <option value="month">A month</option>
         </select>
       </label>
-      <label id="chartPeriodDateLabel" hidden>
-        Choose a date in the period
-        <input type="date" id="chartPeriodDate">
+      <button type="button" id="previousChartPeriod" hidden aria-label="Previous chart period">← Previous</button>
+      <label id="chartDayLabel" hidden>
+        Choose day
+        <input type="date" id="chartDayInput">
       </label>
+      <label id="chartWeekLabel" hidden>
+        Choose week
+        <input type="week" id="chartWeekInput">
+      </label>
+      <label id="chartMonthLabel" hidden>
+        Choose month
+        <input type="month" id="chartMonthInput">
+      </label>
+      <button type="button" id="nextChartPeriod" hidden aria-label="Next chart period">Next →</button>
+      <p id="chartPeriodRange" class="help" aria-live="polite">All time</p>
     </div>
 
     <details class="chart-card">
@@ -767,8 +778,15 @@ const timeGrouping = document.getElementById('timeGrouping');
 const timeMeasure = document.getElementById('timeMeasure');
 const includeEmptyPeriods = document.getElementById('includeEmptyPeriods');
 const chartPeriod = document.getElementById('chartPeriod');
-const chartPeriodDate = document.getElementById('chartPeriodDate');
-const chartPeriodDateLabel = document.getElementById('chartPeriodDateLabel');
+const previousChartPeriod = document.getElementById('previousChartPeriod');
+const nextChartPeriod = document.getElementById('nextChartPeriod');
+const chartDayInput = document.getElementById('chartDayInput');
+const chartWeekInput = document.getElementById('chartWeekInput');
+const chartMonthInput = document.getElementById('chartMonthInput');
+const chartDayLabel = document.getElementById('chartDayLabel');
+const chartWeekLabel = document.getElementById('chartWeekLabel');
+const chartMonthLabel = document.getElementById('chartMonthLabel');
+const chartPeriodRange = document.getElementById('chartPeriodRange');
 const entryComment = document.getElementById('entryComment');
 const themeMode = document.getElementById('themeMode');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
@@ -1219,10 +1237,71 @@ function formatPeriodLabel(date, grouping) {
   return formatDateOnly(getPeriodKey(date));
 }
 
+function getWeekInputValue(date) {
+  const weekDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+  weekDate.setUTCDate(weekDate.getUTCDate() + 4 - (weekDate.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(weekDate.getUTCFullYear(), 0, 1));
+  const week = Math.ceil((((weekDate - yearStart) / 86400000) + 1) / 7);
+  return `${weekDate.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+}
+
+function getDateFromWeekInput(value) {
+  const match = /^(\d{4})-W(\d{2})$/.exec(value);
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  const fourthJanuary = new Date(Date.UTC(year, 0, 4));
+  const firstMonday = startOfPeriod(fourthJanuary, 'week');
+  firstMonday.setUTCDate(firstMonday.getUTCDate() + (week - 1) * 7);
+  return firstMonday;
+}
+
+function getSelectedChartDate() {
+  if (chartPeriod.value === 'day' && chartDayInput.value) return new Date(`${chartDayInput.value}T00:00:00Z`);
+  if (chartPeriod.value === 'week') return getDateFromWeekInput(chartWeekInput.value);
+  if (chartPeriod.value === 'month' && chartMonthInput.value) return new Date(`${chartMonthInput.value}-01T00:00:00Z`);
+  return null;
+}
+
+function setSelectedChartDate(date) {
+  chartDayInput.value = getPeriodKey(date);
+  chartWeekInput.value = getWeekInputValue(date);
+  chartMonthInput.value = getPeriodKey(date).slice(0, 7);
+}
+
+function renderChartPeriodControls() {
+  const period = chartPeriod.value;
+  const isAllTime = period === 'all';
+  chartDayLabel.hidden = period !== 'day';
+  chartWeekLabel.hidden = period !== 'week';
+  chartMonthLabel.hidden = period !== 'month';
+  previousChartPeriod.hidden = isAllTime;
+  nextChartPeriod.hidden = isAllTime;
+  previousChartPeriod.setAttribute('aria-label', `Previous ${period} for charts`);
+  nextChartPeriod.setAttribute('aria-label', `Next ${period} for charts`);
+  chartPeriodRange.textContent = isAllTime ? 'Showing all time' : `Showing ${getChartPeriodLabel()}`;
+}
+
+function moveChartPeriod(direction) {
+  const selectedDate = getSelectedChartDate();
+  if (!selectedDate || chartPeriod.value === 'all') return;
+  const nextDate = direction === 'previous'
+    ? (() => {
+      const prior = new Date(selectedDate);
+      if (chartPeriod.value === 'day') prior.setUTCDate(prior.getUTCDate() - 1);
+      if (chartPeriod.value === 'week') prior.setUTCDate(prior.getUTCDate() - 7);
+      if (chartPeriod.value === 'month') prior.setUTCMonth(prior.getUTCMonth() - 1, 1);
+      return prior;
+    })()
+    : addPeriod(startOfPeriod(selectedDate, chartPeriod.value), chartPeriod.value);
+  setSelectedChartDate(nextDate);
+  renderCharts();
+}
+
 function getChartEntries() {
-  if (chartPeriod.value === 'all' || !chartPeriodDate.value) return logEntries;
-  const selectedDate = new Date(`${chartPeriodDate.value}T00:00:00Z`);
-  if (Number.isNaN(selectedDate.getTime())) return logEntries;
+  if (chartPeriod.value === 'all') return logEntries;
+  const selectedDate = getSelectedChartDate();
+  if (!selectedDate || Number.isNaN(selectedDate.getTime())) return logEntries;
   const start = startOfPeriod(selectedDate, chartPeriod.value);
   const end = addPeriod(start, chartPeriod.value);
   return logEntries.filter(entry => {
@@ -1232,9 +1311,16 @@ function getChartEntries() {
 }
 
 function getChartPeriodLabel() {
-  if (chartPeriod.value === 'all' || !chartPeriodDate.value) return 'all time';
-  const date = new Date(`${chartPeriodDate.value}T00:00:00Z`);
-  return formatPeriodLabel(startOfPeriod(date, chartPeriod.value), chartPeriod.value);
+  if (chartPeriod.value === 'all') return 'all time';
+  const date = getSelectedChartDate();
+  if (!date || Number.isNaN(date.getTime())) return 'the selected period';
+  const start = startOfPeriod(date, chartPeriod.value);
+  if (chartPeriod.value === 'week') {
+    const end = new Date(start);
+    end.setUTCDate(end.getUTCDate() + 6);
+    return `${formatDateOnly(getPeriodKey(start))} to ${formatDateOnly(getPeriodKey(end))}`;
+  }
+  return formatPeriodLabel(start, chartPeriod.value);
 }
 
 function getRecordsOverTime(entries = getChartEntries(), grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
@@ -1529,7 +1615,7 @@ function renderCharts() {
     || intensityAverages
     || sensationRows.length > 0;
 
-  chartPeriodDateLabel.hidden = chartPeriod.value === 'all';
+  renderChartPeriodControls();
   chartsSummary.textContent = hasEntries
     ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
@@ -2259,10 +2345,12 @@ function enableArrowKeyTabs(tabs, select) {
 enableArrowKeyTabs([entryTab, reviewTab, maintenanceTab], selectWorkspaceTab);
 enableArrowKeyTabs([logsTab, chartsTab], selectReviewTab);
 
-chartPeriodDate.value = new Date().toISOString().slice(0, 10);
-[chartPeriod, chartPeriodDate, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {
+setSelectedChartDate(new Date());
+[chartPeriod, chartDayInput, chartWeekInput, chartMonthInput, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {
   control.addEventListener('change', renderCharts);
 });
+previousChartPeriod.addEventListener('click', () => moveChartPeriod('previous'));
+nextChartPeriod.addEventListener('click', () => moveChartPeriod('next'));
 themeMode.addEventListener('change', () => applyTheme(themeMode.value, true));
 
 phaseOneButton.addEventListener('click', () => {
