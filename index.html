@@ -97,6 +97,7 @@
     }
     details[open] > summary { border-bottom: 1px solid var(--border); }
     .details-content { padding: 0 1rem 1rem; }
+    details.settings-panel, details.export-panel { padding: 0; }
     .chart-card { margin: 1rem 0; }
     .chart-card .details-content { padding-top: 1rem; }
     .wheel-figure { margin: 1.25rem 0; }
@@ -105,6 +106,7 @@
       border: 1px solid var(--border); border-radius: .5rem;
     }
     .wheel-figure figcaption { color: var(--muted); margin-top: .75rem; }
+    .wheel-figure figure { margin: 1rem 0; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions, .field-row, .checkbox-grid, .radio-row {
@@ -298,6 +300,24 @@
       </div>
     </details>
 
+    <details id="full-table">
+      <summary>Emotion reference table</summary>
+      <div class="details-content">
+        <p class="help">Choose a complete emotion path to prepare a new entry, then add any reflection details or note before recording.</p>
+        <div class="actions">
+          <button type="button" id="shareWheelButton">Share full table</button>
+          <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
+        </div>
+        <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
+          <table>
+            <caption>All available emotion paths</caption>
+            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Prepare entry</th></tr></thead>
+            <tbody id="wheelTableBody"></tbody>
+          </table>
+        </section>
+      </div>
+    </details>
+
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading">Step 1: Inner circle</h2>
     <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
@@ -314,24 +334,6 @@
     <p id="outerHelp">Choose a middle-circle emotion first.</p>
     <div id="outerButtons" class="button-grid" role="group" aria-labelledby="outer-heading" aria-describedby="outerHelp"></div>
   </section>
-
-  <details id="full-table">
-    <summary>Emotion reference table</summary>
-    <div class="details-content">
-      <p class="help">Choose a complete emotion path to prepare a new entry, then add any reflection details or note before recording.</p>
-      <div class="actions">
-        <button type="button" id="shareWheelButton">Share full table</button>
-        <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
-      </div>
-      <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
-        <table>
-          <caption>All available emotion paths</caption>
-          <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Prepare entry</th></tr></thead>
-          <tbody id="wheelTableBody"></tbody>
-        </table>
-      </section>
-    </div>
-  </details>
 
   <section class="status" aria-labelledby="current-selection-heading">
     <h2 id="current-selection-heading">Review and record</h2>
