@@ -52,6 +52,7 @@
       --shadow: 0 1px 3px rgb(0 0 0 / 22%), 0 4px 12px rgb(0 0 0 / 18%);
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     body {
       font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
       line-height: 1.5; margin: 0; background: var(--bg); color: var(--text);
@@ -107,6 +108,12 @@
     }
     .wheel-figure figcaption { color: var(--muted); margin-top: .75rem; }
     .wheel-figure figure { margin: 1rem 0; }
+    .confirmation {
+      border: 2px solid var(--good); border-radius: .625rem; background: var(--panel);
+      padding: 1rem; margin: 1rem 0; box-shadow: var(--shadow);
+    }
+    .confirmation h2 { margin-top: 0; }
+    .empty-action { margin-top: .75rem; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions, .field-row, .checkbox-grid, .radio-row {
@@ -177,6 +184,12 @@
     }
     .time-controls { display: flex; flex-wrap: wrap; align-items: end; gap: .75rem; margin: 1rem 0; }
     .time-controls label { flex-direction: column; align-items: flex-start; }
+    .chart-scope-controls { padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--bg); }
+    .period-navigator { display: flex; align-items: center; gap: .75rem; flex: 1 1 22rem; }
+    .period-navigator p { flex: 1; margin: 0; text-align: center; font-weight: 700; color: var(--text); }
+    .series-controls { margin: .75rem 0; }
+    .series-controls .checkbox-grid { align-items: center; }
+    .emotion-swatch { width: 1rem; height: 1rem; border-radius: .2rem; background: var(--emotion-colour); flex: 0 0 auto; }
     select { min-height: 3rem; padding: .5rem; border: 2px solid var(--border); border-radius: .5rem; background: var(--button); color: var(--text); font: inherit; }
     .line-chart { width: 100%; min-height: 16rem; margin: 1rem 0; border: 1px solid var(--border); background: var(--chart-bg); }
     .line-chart .grid { stroke: var(--border); stroke-opacity: .45; stroke-width: 1; }
@@ -191,23 +204,43 @@
     th { background: var(--nav-bg); color: var(--nav-active); }
     caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
     .scroll-table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-actions { display: flex; flex-wrap: wrap; gap: .5rem; min-width: 12rem; }
+    .table-actions button { min-height: 2.75rem; padding: .5rem .75rem; }
+    .site-footer { max-width: 980px; margin: 1rem auto 0; padding: 1rem; border-top: 1px solid var(--border); color: var(--muted); }
+    .site-footer nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .site-footer a { color: var(--focus); }
     @media (max-width: 600px) {
-      .app-header-inner { min-height: 0; align-items: flex-start; flex-direction: column; }
-      .theme-control, .theme-control select { width: 100%; }
-      .theme-control { justify-content: space-between; }
+      .app-header-inner { min-height: 0; align-items: center; flex-direction: row; }
+      .theme-control { margin-left: auto; }
+      .theme-control select { width: 8.5rem; }
       main { padding: .75rem; }
+      h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
+      .intro { margin: 0 0 .75rem; font-size: .95rem; }
       .page-nav, .settings-panel, .status, .log-panel, .export-panel,
       .step, .chart-card, fieldset { padding: .75rem; }
+      .page-nav { margin: .75rem 0; }
+      details, .wheel-figure, .step { margin: .65rem 0; }
       .button-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
       .page-nav li, .page-nav a.button,
       .actions > button, .section-heading > button { width: 100%; }
-      .workspace-tabs, .review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .workspace-tabs button:first-child { grid-column: 1 / -1; }
+      .workspace-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+      .review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
       .workspace-tabs button, .review-tabs button { width: 100%; }
+      .workspace-tabs button { padding: .5rem; justify-content: center; font-size: .9rem; }
       summary { padding: .75rem; }
       .details-content { padding: 0 .75rem .75rem; }
       .time-controls { align-items: stretch; }
       .time-controls label, .time-controls select { width: 100%; }
+      .period-navigator { flex-basis: 100%; }
+      .period-navigator button { padding: .5rem .75rem; }
+      .period-navigator p { font-size: .95rem; }
+      body.has-selection { padding-bottom: 5.5rem; }
+      .status.has-selection .actions {
+        position: fixed; z-index: 8; left: .75rem; right: .75rem; bottom: .5rem;
+        margin: 0; padding: .5rem; background: var(--panel); border: 2px solid var(--focus);
+        border-radius: .625rem; box-shadow: 0 4px 18px rgb(0 0 0 / 35%);
+      }
+      .status.has-selection .actions > button { width: auto; flex: 1; justify-content: center; }
       .bar-row {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "label value" "bar bar";
@@ -250,7 +283,7 @@
 </header>
 <main id="main-content" tabindex="-1">
   <h1>Emotion Wheel - Tracking your emotions</h1>
-  <p class="intro">Use this tool to track and reflect on your emotions over time. It is recommended that you use Phase 1 for at least one week to build the habit of recording emotions, then move to Phase 2 to capture additional reflection information.</p>
+  <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 when you want guided reflection.</p>
 
   <nav class="page-nav" aria-labelledby="page-nav-heading">
     <h2 id="page-nav-heading">Work area</h2>
@@ -263,7 +296,7 @@
 
   <section id="entryPanel" class="workspace-panel" role="tabpanel" aria-labelledby="entryTab">
     <details id="capture-settings" class="settings-panel">
-      <summary>Capture settings</summary>
+      <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
       <div class="details-content">
         <p class="help">Use a preset, or choose exactly which fields appear when recording an emotion.</p>
         <div class="actions" role="group" aria-label="Capture presets">
@@ -377,15 +410,28 @@
       </fieldset>
     </div>
 
-    <div class="comment-field">
-      <label for="entryComment">Optional note</label>
-      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
-      <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
-    </div>
+    <details id="entryNoteDetails" class="inline-details">
+      <summary>Add an optional note</summary>
+      <div class="details-content comment-field">
+        <label for="entryComment">Note</label>
+        <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
+        <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
+      </div>
+    </details>
 
     <div class="actions">
       <button type="button" id="recordButton" disabled>Record this emotion</button>
       <button type="button" id="resetButton">Reset selection</button>
+    </div>
+  </section>
+
+  <section id="recordConfirmation" class="confirmation" aria-labelledby="recordConfirmationHeading" tabindex="-1" hidden>
+    <h2 id="recordConfirmationHeading">Emotion recorded</h2>
+    <p id="recordConfirmationText">Your emotion was saved on this device.</p>
+    <div class="actions">
+      <button type="button" id="undoRecordButton">Undo</button>
+      <button type="button" id="recordAgainButton">Record another like this</button>
+      <button type="button" id="newEntryButton">Start a new entry</button>
     </div>
   </section>
   </section>
@@ -413,7 +459,12 @@
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
     <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
-    <p id="logSummary" aria-live="polite">No emotions recorded yet.</p>
+    <p id="logSummary" aria-live="polite" tabindex="-1">No emotions recorded yet.</p>
+    <button type="button" id="emptyLogEntryButton" class="empty-action">Record your first emotion</button>
+    <div id="logActionNotice" class="confirmation" tabindex="-1" hidden>
+      <p id="logActionText">Entry deleted.</p>
+      <button type="button" id="undoDeleteButton">Undo delete</button>
+    </div>
 
     <details>
       <summary>Emotion tally</summary>
@@ -466,10 +517,11 @@
             <th scope="col">Alignment</th>
             <th scope="col">Physical sensations</th>
             <th scope="col">Note</th>
+            <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody id="logBody">
-          <tr><td colspan="11">No emotions recorded yet.</td></tr>
+          <tr><td colspan="12">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
       </section>
@@ -482,7 +534,8 @@
   <section id="charts" class="log-panel" aria-labelledby="charts-heading">
     <h2 id="charts-heading">Charts</h2>
     <p id="chartsSummary" class="help" aria-live="polite">No emotions recorded yet.</p>
-    <div class="time-controls">
+    <button type="button" id="emptyChartEntryButton" class="empty-action">Record your first emotion</button>
+    <div class="time-controls chart-scope-controls">
       <label>
         View chart period
         <select id="chartPeriod">
@@ -492,7 +545,11 @@
           <option value="month">A month</option>
         </select>
       </label>
-      <button type="button" id="previousChartPeriod" hidden aria-label="Previous chart period">← Previous</button>
+      <div class="period-navigator">
+        <button type="button" id="previousChartPeriod" hidden aria-label="Previous chart period">←</button>
+        <p id="chartPeriodRange" class="help" aria-live="polite">Showing all time</p>
+        <button type="button" id="nextChartPeriod" hidden aria-label="Next chart period">→</button>
+      </div>
       <label id="chartDayLabel" hidden>
         Choose day
         <input type="date" id="chartDayInput">
@@ -505,8 +562,6 @@
         Choose month
         <input type="month" id="chartMonthInput">
       </label>
-      <button type="button" id="nextChartPeriod" hidden aria-label="Next chart period">Next →</button>
-      <p id="chartPeriodRange" class="help" aria-live="polite">All time</p>
     </div>
 
     <details class="chart-card">
@@ -572,6 +627,18 @@
         </label>
         <label><input type="checkbox" id="includeEmptyPeriods" checked> Include periods with no entries</label>
       </div>
+      <fieldset id="innerSeriesControls" class="series-controls" hidden>
+        <legend>Inner-circle emotions to show</legend>
+        <div class="checkbox-grid">
+          <label><input type="checkbox" id="showAllInnerSeries" checked> Show all</label>
+          <label><input type="checkbox" class="inner-series" value="Anger" checked><span class="emotion-swatch" style="--emotion-colour:#7f1d1d" aria-hidden="true"></span> Anger</label>
+          <label><input type="checkbox" class="inner-series" value="Disgust" checked><span class="emotion-swatch" style="--emotion-colour:#14532d" aria-hidden="true"></span> Disgust</label>
+          <label><input type="checkbox" class="inner-series" value="Sad" checked><span class="emotion-swatch" style="--emotion-colour:#1e3a8a" aria-hidden="true"></span> Sad</label>
+          <label><input type="checkbox" class="inner-series" value="Happy" checked><span class="emotion-swatch" style="--emotion-colour:#6b4500" aria-hidden="true"></span> Happy</label>
+          <label><input type="checkbox" class="inner-series" value="Surprise" checked><span class="emotion-swatch" style="--emotion-colour:#4c1d95" aria-hidden="true"></span> Surprise</label>
+          <label><input type="checkbox" class="inner-series" value="Fear" checked><span class="emotion-swatch" style="--emotion-colour:#164e63" aria-hidden="true"></span> Fear</label>
+        </div>
+      </fieldset>
       <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
       <div id="timeChart"></div>
       <section class="scroll-table" tabindex="0" aria-label="Emotion records grouped by date">
@@ -662,6 +729,16 @@
   </section>
 </main>
 
+<footer class="site-footer">
+  <p><strong>Your data stays on this device</strong> unless you deliberately export, copy, or share it.</p>
+  <nav aria-label="App information">
+    <a href="docs/privacy.md">Privacy</a>
+    <a href="docs/design-system.md">Accessibility and design</a>
+    <a href="README.md">About this app</a>
+    <a href="LICENSE">MIT Licence</a>
+  </nav>
+</footer>
+
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
@@ -717,6 +794,9 @@ const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
 const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
+const recordStatus = recordButton.closest('.status');
+const captureSettingsDetails = document.getElementById('capture-settings');
+const captureModeSummary = document.getElementById('captureModeSummary');
 const phaseOneButton = document.getElementById('phaseOneButton');
 const phaseTwoButton = document.getElementById('phaseTwoButton');
 const customButton = document.getElementById('customButton');
@@ -758,8 +838,13 @@ const clearLogButton = document.getElementById('clearLogButton');
 const tallyBody = document.getElementById('tallyBody');
 const logBody = document.getElementById('logBody');
 const logSummary = document.getElementById('logSummary');
+const emptyLogEntryButton = document.getElementById('emptyLogEntryButton');
+const logActionNotice = document.getElementById('logActionNotice');
+const logActionText = document.getElementById('logActionText');
+const undoDeleteButton = document.getElementById('undoDeleteButton');
 const wheelTableBody = document.getElementById('wheelTableBody');
 const chartsSummary = document.getElementById('chartsSummary');
+const emptyChartEntryButton = document.getElementById('emptyChartEntryButton');
 const shareEmotionChartButton = document.getElementById('shareEmotionChartButton');
 const emotionChartSummary = document.getElementById('emotionChartSummary');
 const emotionChart = document.getElementById('emotionChart');
@@ -787,7 +872,17 @@ const chartDayLabel = document.getElementById('chartDayLabel');
 const chartWeekLabel = document.getElementById('chartWeekLabel');
 const chartMonthLabel = document.getElementById('chartMonthLabel');
 const chartPeriodRange = document.getElementById('chartPeriodRange');
+const innerSeriesControls = document.getElementById('innerSeriesControls');
+const showAllInnerSeries = document.getElementById('showAllInnerSeries');
+const innerSeriesCheckboxes = [...document.querySelectorAll('.inner-series')];
 const entryComment = document.getElementById('entryComment');
+const entryNoteDetails = document.getElementById('entryNoteDetails');
+const recordConfirmation = document.getElementById('recordConfirmation');
+const recordConfirmationHeading = document.getElementById('recordConfirmationHeading');
+const recordConfirmationText = document.getElementById('recordConfirmationText');
+const undoRecordButton = document.getElementById('undoRecordButton');
+const recordAgainButton = document.getElementById('recordAgainButton');
+const newEntryButton = document.getElementById('newEntryButton');
 const themeMode = document.getElementById('themeMode');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
 const reflectionChartSummary = document.getElementById('reflectionChartSummary');
@@ -819,6 +914,9 @@ let selectedOuter = null;
 let captureSettings = loadSettings();
 let logEntries = loadLog();
 let pendingLoadMode = 'merge';
+let lastRecordedEntry = null;
+let deletedEntryForUndo = null;
+let editingEntry = null;
 
 function unique(values) {
   return [...new Set(values)];
@@ -862,6 +960,7 @@ function selectWorkspaceTab(tab) {
   const panels = [entryPanel, reviewPanel, maintenancePanel];
   const tabs = [entryTab, reviewTab, maintenanceTab];
   selectTab(tab, tabs, panels[tabs.indexOf(tab)], panels);
+  document.body.classList.toggle('has-selection', tab === entryTab && Boolean(selectedInner));
 }
 
 function selectReviewTab(tab) {
@@ -955,6 +1054,12 @@ function makeButton(label, onClick, selected, category) {
 }
 
 function renderSettings() {
+  const modeLabels = {
+    phase1: 'Phase 1: Emotion only',
+    phase2: 'Phase 2: Guided reflection',
+    custom: 'Custom fields'
+  };
+  captureModeSummary.textContent = `Capture settings — ${modeLabels[captureSettings.captureMode] || modeLabels.phase1}`;
   collectAppropriate.checked = captureSettings.collectAppropriate;
   collectIntensity.checked = captureSettings.collectIntensity;
   collectSensations.checked = captureSettings.collectSensations;
@@ -1005,10 +1110,8 @@ function focusNextRecordingControl(fallback = recordButton) {
   if (focusFirstVisibleControl(appropriatePanel)) return;
   if (focusFirstVisibleControl(intensityPanel)) return;
   if (focusFirstVisibleControl(sensationsPanel)) return;
-  if (entryComment.offsetParent !== null) {
-    entryComment.focus();
-    return;
-  }
+  const noteSummary = entryNoteDetails.querySelector('summary');
+  if (noteSummary) return noteSummary.focus();
   fallback.focus();
 }
 
@@ -1064,6 +1167,9 @@ function renderOuter() {
 
 function renderSelection() {
   recordButton.disabled = !selectedInner;
+  recordButton.textContent = editingEntry ? 'Save changes' : 'Record this emotion';
+  recordStatus.classList.toggle('has-selection', Boolean(selectedInner));
+  document.body.classList.toggle('has-selection', entryTab.getAttribute('aria-selected') === 'true' && Boolean(selectedInner));
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -1073,6 +1179,55 @@ function renderSelection() {
     selectionText.textContent = `${path} (${getSelectionLevel()})`;
     liveStatus.textContent = `Selected ${path}. You can record this emotion now or continue refining it.`;
   }
+}
+
+function clearEntryForm() {
+  selectedInner = null;
+  selectedMiddle = null;
+  selectedOuter = null;
+  document.querySelectorAll('input[name="appropriate"]').forEach(input => {
+    input.checked = false;
+  });
+  expectedIntensity.value = expectedIntensity.defaultValue;
+  actualIntensity.value = actualIntensity.defaultValue;
+  entryNoteDetails.open = false;
+  entryComment.value = '';
+  sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = false;
+  });
+}
+
+function prepareEntry(entry, announcement, edit = false) {
+  editingEntry = edit ? entry : null;
+  selectedInner = entry.inner;
+  selectedMiddle = entry.middle || null;
+  selectedOuter = entry.outer || null;
+  selectWorkspaceTab(entryTab);
+  recordConfirmation.hidden = true;
+  renderAll();
+  const appropriateInput = [...document.querySelectorAll('input[name="appropriate"]')]
+    .find(input => input.value === entry.appropriate);
+  if (appropriateInput) appropriateInput.checked = true;
+  if (entry.expectedIntensity) expectedIntensity.value = entry.expectedIntensity;
+  if (entry.actualIntensity) actualIntensity.value = entry.actualIntensity;
+  entryNoteDetails.open = Boolean(entry.comment);
+  entryComment.value = entry.comment || '';
+  const sensations = new Set(entry.physicalSensations || []);
+  sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
+    input.checked = sensations.has(input.value);
+  });
+  renderIntensityAlignment();
+  liveStatus.textContent = announcement;
+  focusNextRecordingControl();
+}
+
+function startNewEntry() {
+  selectWorkspaceTab(entryTab);
+  recordConfirmation.hidden = true;
+  editingEntry = null;
+  clearEntryForm();
+  renderAll();
+  innerButtons.querySelector('button')?.focus();
 }
 
 function getActiveSensationType() {
@@ -1310,6 +1465,21 @@ function getChartEntries() {
   });
 }
 
+function getPreviousChartEntries() {
+  if (chartPeriod.value === 'all') return [];
+  const selectedDate = getSelectedChartDate();
+  if (!selectedDate || Number.isNaN(selectedDate.getTime())) return [];
+  const currentStart = startOfPeriod(selectedDate, chartPeriod.value);
+  const previousStart = new Date(currentStart);
+  if (chartPeriod.value === 'day') previousStart.setUTCDate(previousStart.getUTCDate() - 1);
+  if (chartPeriod.value === 'week') previousStart.setUTCDate(previousStart.getUTCDate() - 7);
+  if (chartPeriod.value === 'month') previousStart.setUTCMonth(previousStart.getUTCMonth() - 1, 1);
+  return logEntries.filter(entry => {
+    const date = new Date(entry.timestamp);
+    return !Number.isNaN(date.getTime()) && date >= previousStart && date < currentStart;
+  });
+}
+
 function getChartPeriodLabel() {
   if (chartPeriod.value === 'all') return 'all time';
   const date = getSelectedChartDate();
@@ -1348,7 +1518,7 @@ function getRecordsOverTime(entries = getChartEntries(), grouping = timeGrouping
 
 function getInnerEmotionSeries(entries = getChartEntries(), grouping = timeGrouping.value, includeEmpty = includeEmptyPeriods.checked) {
   const totalRows = getRecordsOverTime(entries, grouping, includeEmpty);
-  const categories = unique(emotions.map(row => row[0]));
+  const categories = innerSeriesCheckboxes.filter(input => input.checked).map(input => input.value);
   return categories.map(category => ({
     key: category,
     label: category,
@@ -1599,8 +1769,10 @@ function renderTimeTable(timeRows, timeSeries) {
 
 function renderCharts() {
   const hasEntries = logEntries.length > 0;
+  emptyChartEntryButton.hidden = hasEntries;
   const chartEntries = getChartEntries();
   const topEmotions = getTopEmotionRows(chartEntries);
+  const previousTopEmotions = getTopEmotionRows(getPreviousChartEntries());
   const levelRows = getLevelCounts(chartEntries).filter(row => row.count > 0);
   const timeRows = getRecordsOverTime(chartEntries);
   const timeSeries = timeMeasure.value === 'inner'
@@ -1616,16 +1788,23 @@ function renderCharts() {
     || sensationRows.length > 0;
 
   renderChartPeriodControls();
+  innerSeriesControls.hidden = timeMeasure.value !== 'inner';
   chartsSummary.textContent = hasEntries
     ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
   shareEmotionChartButton.disabled = !topEmotions.length;
   shareLevelChartButton.disabled = !levelRows.length;
-  shareTimeChartButton.disabled = !timeRows.length;
+  shareTimeChartButton.disabled = !timeRows.length || (timeMeasure.value === 'inner' && !timeSeries.length);
   shareReflectionChartButton.disabled = !hasReflectionData;
 
+  const previousTopMatch = topEmotions.length
+    ? previousTopEmotions.find(row => row.label === topEmotions[0].label)
+    : null;
+  const comparisonText = chartPeriod.value !== 'all' && topEmotions.length
+    ? ` It had ${previousTopMatch?.count || 0} in the previous ${chartPeriod.value}.`
+    : '';
   emotionChartSummary.textContent = topEmotions.length
-    ? `${topEmotions[0].label} is the most recorded emotion path in ${getChartPeriodLabel()}, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.`
+    ? `${topEmotions[0].label} is the most recorded emotion path in ${getChartPeriodLabel()}, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.${comparisonText}`
     : `No emotion records available for ${getChartPeriodLabel()}.`;
   renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.', row => emotionColours[row.category]);
   addTableRows(emotionChartBody, topEmotions, 'No emotions recorded yet.', row => [row.label, String(row.count), formatDateTime(row.lastRecorded)], 3);
@@ -1642,14 +1821,17 @@ function renderCharts() {
   const peak = [...timeRows].sort((first, second) => second.count - first.count)[0];
   const groupingLabel = timeGrouping.options[timeGrouping.selectedIndex].textContent.toLowerCase();
   const measureLabel = timeMeasure.value === 'inner' ? 'inner-circle emotion counts' : 'emotion records';
-  timeChartSummary.textContent = timeRows.length
+  timeChartSummary.textContent = timeMeasure.value === 'inner' && !timeSeries.length
+    ? 'Choose at least one inner-circle emotion to display.'
+    : timeRows.length
     ? `${chartEntries.length} ${measureLabel} in ${getChartPeriodLabel()}, across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
     : `No dates available for ${getChartPeriodLabel()}.`;
   renderLineChart(timeChart, timeSeries);
   renderTimeTable(timeRows, timeSeries);
 
+  const reflectedEntries = chartEntries.filter(entry => entry.appropriate || entry.expectedIntensity || entry.actualIntensity || entry.physicalSensations?.length);
   reflectionChartSummary.textContent = hasReflectionData
-    ? 'Reflection data is available from records that used optional Phase 2 or Custom fields.'
+    ? `${reflectedEntries.length} of ${chartEntries.length} record${chartEntries.length === 1 ? '' : 's'} include optional reflection information.`
     : hasEntries
       ? 'No optional reflection fields have been recorded yet.'
       : 'No reflection data available yet.';
@@ -1721,6 +1903,7 @@ function formatRowsAsHtmlTable(caption, rows) {
 
 function renderLog() {
   const hasEntries = logEntries.length > 0;
+  emptyLogEntryButton.hidden = hasEntries;
   shareTallyButton.disabled = !hasEntries;
   shareLogButton.disabled = !hasEntries;
   copyTallyHtmlButton.disabled = !hasEntries;
@@ -1752,7 +1935,7 @@ function renderLog() {
 
   clearNode(logBody);
   if (!hasEntries) {
-    logBody.innerHTML = '<tr><td colspan="11">No emotions recorded yet.</td></tr>';
+    logBody.innerHTML = '<tr><td colspan="12">No emotions recorded yet.</td></tr>';
   } else {
     const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
@@ -1774,6 +1957,43 @@ function renderLog() {
         td.textContent = value;
         tr.appendChild(td);
       });
+      const actionCell = document.createElement('td');
+      const actions = document.createElement('div');
+      actions.className = 'table-actions';
+      const path = getEntryPathLabel(entry);
+      const useButton = document.createElement('button');
+      useButton.type = 'button';
+      useButton.textContent = 'Use as new';
+      useButton.setAttribute('aria-label', `Use ${path} as a new entry`);
+      useButton.addEventListener('click', () => {
+        prepareEntry(entry, `Prepared ${path} as a new entry.`);
+      });
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.textContent = 'Edit';
+      editButton.setAttribute('aria-label', `Edit ${path} recorded ${formatDateTime(entry.timestamp)}`);
+      editButton.addEventListener('click', () => {
+        prepareEntry(entry, `Editing ${path}. Change the fields, then save.`, true);
+      });
+      const deleteButton = document.createElement('button');
+      deleteButton.type = 'button';
+      deleteButton.textContent = 'Delete';
+      deleteButton.className = 'danger';
+      deleteButton.setAttribute('aria-label', `Delete ${path} recorded ${formatDateTime(entry.timestamp)}`);
+      deleteButton.addEventListener('click', () => {
+        const index = logEntries.indexOf(entry);
+        if (index < 0) return;
+        deletedEntryForUndo = { entry, index };
+        logEntries.splice(index, 1);
+        saveLog();
+        renderAll();
+        logActionText.textContent = `Deleted ${path}.`;
+        logActionNotice.hidden = false;
+        logActionNotice.focus();
+      });
+      actions.append(useButton, editButton, deleteButton);
+      actionCell.appendChild(actions);
+      tr.appendChild(actionCell);
       logBody.appendChild(tr);
     }
   }
@@ -1796,6 +2016,7 @@ function renderFullEmotionTable() {
     useButton.style.setProperty('--emotion-colour', emotionColours[row[0]]);
     useButton.setAttribute('aria-label', `Use ${row.join(', ')} for a new entry`);
     useButton.addEventListener('click', () => {
+      editingEntry = null;
       selectedInner = row[0];
       selectedMiddle = row[1];
       selectedOuter = row[2];
@@ -2351,7 +2572,55 @@ setSelectedChartDate(new Date());
 });
 previousChartPeriod.addEventListener('click', () => moveChartPeriod('previous'));
 nextChartPeriod.addEventListener('click', () => moveChartPeriod('next'));
+showAllInnerSeries.addEventListener('change', () => {
+  innerSeriesCheckboxes.forEach(input => {
+    input.checked = showAllInnerSeries.checked;
+  });
+  showAllInnerSeries.indeterminate = false;
+  renderCharts();
+});
+innerSeriesCheckboxes.forEach(input => {
+  input.addEventListener('change', () => {
+    const checkedCount = innerSeriesCheckboxes.filter(series => series.checked).length;
+    showAllInnerSeries.checked = checkedCount === innerSeriesCheckboxes.length;
+    showAllInnerSeries.indeterminate = checkedCount > 0 && checkedCount < innerSeriesCheckboxes.length;
+    renderCharts();
+  });
+});
 themeMode.addEventListener('change', () => applyTheme(themeMode.value, true));
+
+[emptyLogEntryButton, emptyChartEntryButton, newEntryButton].forEach(button => {
+  button.addEventListener('click', startNewEntry);
+});
+
+undoRecordButton.addEventListener('click', () => {
+  if (!lastRecordedEntry) return;
+  const index = logEntries.indexOf(lastRecordedEntry);
+  if (index >= 0) {
+    logEntries.splice(index, 1);
+    saveLog();
+  }
+  lastRecordedEntry = null;
+  recordConfirmation.hidden = true;
+  renderAll();
+  liveStatus.textContent = 'The last recorded emotion was removed.';
+  innerButtons.querySelector('button')?.focus();
+});
+
+recordAgainButton.addEventListener('click', () => {
+  if (!lastRecordedEntry) return;
+  prepareEntry(lastRecordedEntry, `Prepared ${getEntryPathLabel(lastRecordedEntry)} as a new entry.`);
+});
+
+undoDeleteButton.addEventListener('click', () => {
+  if (!deletedEntryForUndo) return;
+  logEntries.splice(deletedEntryForUndo.index, 0, deletedEntryForUndo.entry);
+  saveLog();
+  deletedEntryForUndo = null;
+  logActionNotice.hidden = true;
+  renderAll();
+  logSummary.focus?.();
+});
 
 phaseOneButton.addEventListener('click', () => {
   setSettings({
@@ -2410,8 +2679,10 @@ recordButton.addEventListener('click', () => {
 
   const expected = Number(expectedIntensity.value);
   const actual = Number(actualIntensity.value);
+  const previousEntry = editingEntry;
   const entry = {
-    timestamp: new Date().toISOString(),
+    ...(previousEntry || {}),
+    timestamp: previousEntry?.timestamp || new Date().toISOString(),
     level: getSelectionLevel(),
     inner: selectedInner,
     middle: selectedMiddle,
@@ -2432,28 +2703,32 @@ recordButton.addEventListener('click', () => {
   }
   if (entryComment.value.trim()) {
     entry.comment = entryComment.value.trim();
+  } else {
+    delete entry.comment;
   }
 
-  logEntries.push(entry);
-  entryComment.value = '';
+  if (previousEntry) {
+    const index = logEntries.indexOf(previousEntry);
+    if (index >= 0) logEntries[index] = entry;
+  } else {
+    logEntries.push(entry);
+  }
+  lastRecordedEntry = entry;
+  const recordedPath = getEntryPathLabel(entry);
+  editingEntry = null;
+  clearEntryForm();
   saveLog();
   renderAll();
-  liveStatus.textContent = `Recorded: ${getSelectionPath().join(', ')}.`;
+  recordConfirmationHeading.textContent = previousEntry ? 'Changes saved' : 'Emotion recorded';
+  recordConfirmationText.textContent = `${recordedPath} was ${previousEntry ? 'updated' : 'saved'} on this device.`;
+  undoRecordButton.hidden = Boolean(previousEntry);
+  recordConfirmation.hidden = false;
+  recordConfirmation.focus();
 });
 
 resetButton.addEventListener('click', () => {
-  selectedInner = null;
-  selectedMiddle = null;
-  selectedOuter = null;
-  document.querySelectorAll('input[name="appropriate"]').forEach(input => {
-    input.checked = false;
-  });
-  expectedIntensity.value = expectedIntensity.defaultValue;
-  actualIntensity.value = actualIntensity.defaultValue;
-  entryComment.value = '';
-  sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
-    input.checked = false;
-  });
+  editingEntry = null;
+  clearEntryForm();
   renderAll();
   innerButtons.querySelector('button')?.focus();
 });

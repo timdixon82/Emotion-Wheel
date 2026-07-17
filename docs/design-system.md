@@ -10,7 +10,12 @@ Emotion Wheel uses the Family Reward Chart design system as its visual and inter
 - Strong visible focus indicators and controls sized for touch and keyboard use.
 - Charts always include a written summary and a data table.
 - Colour is never the only way information is communicated.
+- Hidden controls are removed from both the visual layout and accessibility tree.
+- Entry focus follows the visible sequence and uses one Record control across desktop and sticky mobile layouts.
+- Destructive entry actions provide an immediate undo path.
 
 ## Local adaptations
 
 Emotion Wheel keeps its own name, emotion-wheel artwork, privacy wording, and local-only data model. It uses the design system to make the recording, review, and maintenance journey consistent and easier to navigate.
+
+On smaller screens, the header and navigation become more compact, the three work areas remain on one row, and the selected entry actions stay reachable at the bottom of the viewport. Chart period controls expose only the picker relevant to the selected day, week, or month view.
