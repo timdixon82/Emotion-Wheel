@@ -42,6 +42,7 @@ The local log now includes accessible charts for spotting patterns and reviewing
 - Display a live tally table showing each emotion path and number of times felt.
 - Display recent logged entries.
 - Display accessible charts for most recorded emotions, recorded level mix, records over time, and reflection summaries.
+- Reflow chart labels, values, bars, cards, and controls for narrow mobile screens while keeping data tables horizontally scrollable.
 - Share each chart as a generated PNG image where the browser supports sharing or clipboard images, with download fallback.
 - Share table data from the tally, recent entries, and full emotion table using the native share sheet where the browser supports it.
 - Fall back to automatic clipboard copy when native sharing is not available.

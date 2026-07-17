@@ -88,10 +88,16 @@
     .bar-list { display: grid; gap: .75rem; margin: 1rem 0; }
     .bar-row {
       display: grid; grid-template-columns: minmax(8rem, 1fr) minmax(10rem, 2fr) auto;
+      grid-template-areas: "label bar value";
       gap: .75rem; align-items: center;
     }
     .bar-label, .bar-value { font-weight: 700; }
-    .bar-track { min-height: 1.5rem; border: 1px solid var(--border); background: var(--panel); }
+    .bar-label { grid-area: label; min-width: 0; overflow-wrap: anywhere; }
+    .bar-value { grid-area: value; }
+    .bar-track {
+      grid-area: bar; min-width: 0; min-height: 1.5rem;
+      border: 1px solid var(--border); background: var(--panel);
+    }
     .bar-fill { display: block; min-height: 1.5rem; background: var(--focus); }
     .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .metric { border: 1px solid var(--border); padding: .75rem; background: var(--panel); }
@@ -100,7 +106,23 @@
     th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
     th { background: var(--panel); }
     caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
-    .scroll-table { overflow-x: auto; }
+    .scroll-table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    @media (max-width: 600px) {
+      main { padding: .75rem; }
+      .page-nav, .settings-panel, .status, .log-panel, .export-panel,
+      .step, .chart-card, fieldset { padding: .75rem; }
+      .button-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
+      .page-nav li, .page-nav a.button,
+      .actions > button, .section-heading > button { width: 100%; }
+      .bar-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "label value" "bar bar";
+        gap: .35rem .75rem;
+      }
+      .bar-list { gap: 1rem; }
+      .bar-track, .bar-fill { min-height: 1.75rem; }
+      th, td { padding: .45rem; }
+    }
     @media (prefers-color-scheme: dark) {
       :root {
         --bg: #111111; --text: #f4f4f4; --muted: #c7c7c7; --border: #b9b9b9;
