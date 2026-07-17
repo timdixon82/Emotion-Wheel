@@ -15,7 +15,7 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 - Move through chart periods by day, week, or month. Zero-entry periods can be included to show gaps in the pattern.
 - Compare inner-circle emotion trends and choose which colour-coded series to display.
 - Correct entries, use an existing entry as the start of a new one, or delete with an immediate undo option.
-- Share chart images through the device's native share sheet when supported, with clipboard and download fallbacks.
+- Share an image captured from the chart currently displayed on screen through the device's native share sheet when supported, with clipboard and download fallbacks.
 - Save, load, merge, replace, share, export, and clear your local data.
 
 ## Privacy

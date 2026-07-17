@@ -1858,6 +1858,7 @@ function renderCharts() {
     : 'No physical sensations recorded yet.';
   renderBarChart(sensationsChart, sensationsChartSummary, sensationRows, 'No physical sensations recorded yet.');
   addTableRows(sensationsChartBody, sensationRows, 'No physical sensations recorded yet.', row => [row.label, String(row.count)], 2);
+  queueDisplayedChartImages();
 }
 
 function getLogRows(entries = logEntries) {
@@ -2195,143 +2196,146 @@ function getChartShareData(type) {
   };
 }
 
-function wrapCanvasText(context, text, maxWidth) {
-  const words = String(text).split(/\s+/);
-  const lines = [];
-  let line = '';
-  words.forEach(word => {
-    const testLine = line ? `${line} ${word}` : word;
-    if (context.measureText(testLine).width <= maxWidth || !line) {
-      line = testLine;
-    } else {
-      lines.push(line);
-      line = word;
-    }
-  });
-  if (line) lines.push(line);
-  return lines;
+const displayedChartImageFiles = new Map();
+const displayedChartImagePromises = new Map();
+let displayedChartImageGeneration = 0;
+let displayedChartImageTimer = null;
+
+function getChartShareButton(type) {
+  return {
+    emotions: shareEmotionChartButton,
+    levels: shareLevelChartButton,
+    time: shareTimeChartButton,
+    reflection: shareReflectionChartButton
+  }[type];
 }
 
-function measureChartImageHeight(context, chartData, width, padding) {
-  let height = padding + 48;
-  context.font = '28px system-ui, sans-serif';
-  height += wrapCanvasText(context, chartData.summary, width - padding * 2).length * 34 + 18;
-  chartData.sections.forEach(section => {
-    height += 42;
-    if (!section.rows.length) {
-      height += 42;
-    } else if (section.type === 'metrics') {
-      height += section.rows.length * 42;
-    } else {
-      height += section.rows.length * 48;
-    }
-    height += 24;
-  });
-  return height + padding;
-}
-
-function drawWrappedCanvasText(context, text, x, y, maxWidth, lineHeight) {
-  const lines = wrapCanvasText(context, text, maxWidth);
-  lines.forEach((line, index) => {
-    context.fillText(line, x, y + index * lineHeight);
-  });
-  return y + lines.length * lineHeight;
-}
-
-function drawChartSection(context, section, x, y, width) {
-  context.font = '700 26px system-ui, sans-serif';
-  context.fillStyle = '#111111';
-  context.fillText(section.title, x, y);
-  y += 34;
-
-  if (!section.rows.length) {
-    context.font = '22px system-ui, sans-serif';
-    context.fillStyle = '#4a4a4a';
-    context.fillText('No data recorded yet.', x, y);
-    return y + 48;
-  }
-
-  if (section.type === 'metrics') {
-    section.rows.forEach(row => {
-      context.font = '700 22px system-ui, sans-serif';
-      context.fillStyle = '#111111';
-      context.fillText(row.value, x, y);
-      context.font = '22px system-ui, sans-serif';
-      context.fillStyle = '#4a4a4a';
-      context.fillText(row.label, x + 140, y);
-      y += 42;
+function inlineDisplayedStyles(element) {
+  const properties = [
+    'display', 'box-sizing', 'width', 'height', 'min-width', 'min-height',
+    'margin', 'padding', 'border', 'border-radius', 'background', 'background-color',
+    'color', 'font', 'font-family', 'font-size', 'font-weight', 'line-height',
+    'text-align', 'list-style', 'grid-template-columns', 'grid-template-areas', 'grid-area',
+    'gap', 'align-items', 'justify-content', 'flex', 'fill', 'stroke',
+    'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
+    'opacity', 'overflow-wrap', 'white-space'
+  ];
+  [element, ...element.querySelectorAll('*')].forEach(node => {
+    const styles = getComputedStyle(node);
+    properties.forEach(property => {
+      node.style.setProperty(property, styles.getPropertyValue(property), styles.getPropertyPriority(property));
     });
-    return y + 12;
-  }
-
-  const max = Math.max(...section.rows.map(row => row.count), 1);
-  const labelWidth = Math.min(360, Math.max(240, width * 0.38));
-  const valueWidth = 72;
-  const barWidth = width - labelWidth - valueWidth - 28;
-
-  section.rows.forEach(row => {
-    context.font = '20px system-ui, sans-serif';
-    context.fillStyle = '#111111';
-    const label = row.label.length > 42 ? `${row.label.slice(0, 39)}...` : row.label;
-    context.fillText(label, x, y + 24);
-
-    const barX = x + labelWidth + 12;
-    const barY = y + 4;
-    context.fillStyle = '#f7f7f7';
-    context.strokeStyle = '#6b6b6b';
-    context.lineWidth = 2;
-    context.fillRect(barX, barY, barWidth, 28);
-    context.strokeRect(barX, barY, barWidth, 28);
-    context.fillStyle = row.category ? emotionColours[row.category] : '#0c3b64';
-    context.fillRect(barX, barY, Math.max((row.count / max) * barWidth, 8), 28);
-
-    context.font = '700 20px system-ui, sans-serif';
-    context.fillStyle = '#111111';
-    context.fillText(String(row.count), barX + barWidth + 16, y + 24);
-    y += 48;
   });
-
-  return y + 12;
 }
 
-function makeChartImageFile(chartData) {
-  const scale = 2;
-  const width = 1000;
-  const padding = 48;
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  const height = measureChartImageHeight(context, chartData, width, padding);
-  canvas.width = width * scale;
-  canvas.height = height * scale;
-  context.scale(scale, scale);
-
-  context.fillStyle = '#ffffff';
-  context.fillRect(0, 0, width, height);
-  context.fillStyle = '#111111';
-  context.font = '700 36px system-ui, sans-serif';
-  context.fillText(chartData.title, padding, padding);
-
-  context.font = '22px system-ui, sans-serif';
-  context.fillStyle = '#4a4a4a';
-  let y = drawWrappedCanvasText(context, chartData.summary, padding, padding + 44, width - padding * 2, 30) + 18;
-
-  chartData.sections.forEach(section => {
-    y = drawChartSection(context, section, padding, y, width - padding * 2) + 18;
+function imageFromUrl(url) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error('Could not capture the displayed chart.'));
+    image.src = url;
   });
+}
 
-  context.font = '18px system-ui, sans-serif';
-  context.fillStyle = '#4a4a4a';
-  context.fillText('Emotion Wheel - Tracking your emotions', padding, height - 28);
+function canvasToPngFile(canvas, filename) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(new File([blob], filename, { type: 'image/png' }));
+      else reject(new Error('Could not create the displayed chart image.'));
+    }, 'image/png');
+  });
+}
 
-  const dataUrl = canvas.toDataURL('image/png');
-  const encodedImage = dataUrl.split(',')[1];
-  if (!encodedImage) throw new Error('Could not generate chart image.');
-  const binaryImage = atob(encodedImage);
-  const imageBytes = new Uint8Array(binaryImage.length);
-  for (let index = 0; index < binaryImage.length; index += 1) {
-    imageBytes[index] = binaryImage.charCodeAt(index);
+async function captureDisplayedChart(type) {
+  const button = getChartShareButton(type);
+  const source = button.closest('.details-content');
+  if (!source) throw new Error('Could not find the displayed chart.');
+
+  const card = source.closest('.chart-card');
+  const sourceWidth = Math.ceil(card?.getBoundingClientRect().width || chartsPanel.getBoundingClientRect().width || 900);
+  const background = getComputedStyle(card || source).backgroundColor || getComputedStyle(document.body).backgroundColor;
+  const stage = document.createElement('div');
+  stage.style.position = 'fixed';
+  stage.style.left = '-100000px';
+  stage.style.top = '0';
+  stage.style.width = `${sourceWidth}px`;
+  stage.style.padding = '0';
+  stage.style.background = background;
+  stage.setAttribute('aria-hidden', 'true');
+
+  const clone = source.cloneNode(true);
+  clone.querySelectorAll('button, .scroll-table, .time-controls, .series-controls').forEach(element => element.remove());
+  clone.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+  stage.appendChild(clone);
+  document.body.appendChild(stage);
+
+  try {
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    inlineDisplayedStyles(clone);
+    const width = Math.max(1, Math.ceil(clone.getBoundingClientRect().width));
+    const height = Math.max(1, Math.ceil(clone.getBoundingClientRect().height));
+    const markup = new XMLSerializer().serializeToString(clone);
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="${background}"/><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml">${markup}</div></foreignObject></svg>`;
+    const image = await imageFromUrl(`data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`);
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    const context = canvas.getContext('2d');
+    context.scale(scale, scale);
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+    context.drawImage(image, 0, 0, width, height);
+    return canvasToPngFile(canvas, getChartShareData(type).filename);
+  } finally {
+    stage.remove();
   }
-  return new File([imageBytes], chartData.filename, { type: 'image/png' });
+}
+
+async function prepareDisplayedChartImage(type, generation = displayedChartImageGeneration) {
+  const button = getChartShareButton(type);
+  if (!button || button.disabled) return null;
+  if (displayedChartImagePromises.has(type)) return displayedChartImagePromises.get(type);
+  button.setAttribute('aria-busy', 'true');
+  button.dataset.imageReady = 'false';
+  const promise = (async () => {
+    try {
+      const file = await captureDisplayedChart(type);
+      if (generation === displayedChartImageGeneration) {
+        displayedChartImageFiles.set(type, file);
+        button.dataset.imageReady = 'true';
+        delete button.dataset.imageError;
+      }
+      return file;
+    } catch (error) {
+      button.dataset.imageReady = 'error';
+      button.dataset.imageError = error.message;
+      return null;
+    } finally {
+      if (displayedChartImagePromises.get(type) === promise) displayedChartImagePromises.delete(type);
+      button.removeAttribute('aria-busy');
+    }
+  })();
+  displayedChartImagePromises.set(type, promise);
+  return promise;
+}
+
+function queueDisplayedChartImages() {
+  displayedChartImageGeneration += 1;
+  const generation = displayedChartImageGeneration;
+  displayedChartImageFiles.clear();
+  displayedChartImagePromises.clear();
+  ['emotions', 'levels', 'time', 'reflection'].forEach(type => {
+    delete getChartShareButton(type).dataset.imageReady;
+    delete getChartShareButton(type).dataset.imageError;
+  });
+  window.clearTimeout(displayedChartImageTimer);
+  displayedChartImageTimer = window.setTimeout(() => {
+    ['emotions', 'levels', 'time', 'reflection'].forEach(type => {
+      const details = getChartShareButton(type).closest('details');
+      if (details?.open) prepareDisplayedChartImage(type, generation);
+    });
+  }, 0);
 }
 
 async function shareChartImage(type) {
@@ -2343,9 +2347,8 @@ async function shareChartImage(type) {
   }
 
   try {
-    // Keep image creation synchronous so native sharing still has the
-    // transient user activation created by the button press.
-    const file = makeChartImageFile(chartData);
+    const file = displayedChartImageFiles.get(type) || await prepareDisplayedChartImage(type);
+    if (!file) throw new Error('Could not capture the displayed chart.');
     const shareData = {
       title: chartData.title,
       text: chartData.summary,
@@ -2776,6 +2779,24 @@ shareTimeChartButton.addEventListener('click', () => {
 
 shareReflectionChartButton.addEventListener('click', () => {
   shareChartImage('reflection');
+});
+
+[
+  ['emotions', shareEmotionChartButton],
+  ['levels', shareLevelChartButton],
+  ['time', shareTimeChartButton],
+  ['reflection', shareReflectionChartButton]
+].forEach(([type, button]) => {
+  ['focus', 'pointerenter'].forEach(eventName => {
+    button.addEventListener(eventName, () => {
+      if (!displayedChartImageFiles.has(type)) prepareDisplayedChartImage(type);
+    });
+  });
+  button.closest('details')?.addEventListener('toggle', event => {
+    if (event.currentTarget.open && !displayedChartImageFiles.has(type)) {
+      prepareDisplayedChartImage(type);
+    }
+  });
 });
 
 copyTallyHtmlButton.addEventListener('click', () => {
