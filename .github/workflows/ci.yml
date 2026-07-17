@@ -1,0 +1,143 @@
+# Continuous integration.
+#
+# Action versions were verified against GitHub and pinned to commit SHAs
+# on 2026-05-21. The version tag is shown in the trailing comment. To
+# update an action, change the SHA and the comment together.
+#
+# Stack selection is automatic, by manifest file, not a manual switch:
+#   - a package.json at the repository root runs the static front-end
+#     (npm) block — the default stack across the estate.
+#   - a composer.json at the repository root runs the Composer block,
+#     which covers both the PHP-MariaDB stack and the WordPress stack,
+#     since both use the same composer install / analyse / test commands
+#     (see docs/stacks/php-mariadb.md and docs/stacks/wordpress.md).
+# A project can have both manifests; both blocks then run.
+#
+# .github/ci-archetype: a required, single-line declaration file for a
+# code-type project that has neither manifest — a hand-written static site
+# with no package.json and no build step. Its contents (trimmed of
+# whitespace) must be one of: static-content, static-app, browser-extension,
+# php. Only the value "static-content" excuses a project from the
+# no-manifest failure below; the other three values exist so the file is a
+# complete, self-documenting record of the project's archetype even where a
+# manifest already tells CI what to do. See jacob-ci-archetypes.md section 2b.
+# A project with neither a manifest nor a static-content declaration fails
+# the job, because a code-type project is expected to have one or the other.
+
+name: CI
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      # --- Static front-end: HTML, CSS, JavaScript ---
+      - name: Set up Node.js
+        if: hashFiles('package.json') != ''
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies (npm)
+        if: hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Install Playwright browsers
+        # Gated on a Playwright config file, not a remembered flag: any
+        # project that adds one gets the browser install for free, whether
+        # Playwright runs from the default "test" script or a separate one.
+        if: hashFiles('playwright.config.js', 'playwright.config.ts', 'playwright.config.mjs') != ''
+        run: npx playwright install --with-deps
+
+      - name: Run unit tests (npm)
+        # --if-present no-ops when the project has no "test" script, so a
+        # static-content or not-yet-tested project does not fail the build
+        # for lacking one. The paired warning step below keeps the gap
+        # visible in the log without gating the merge.
+        if: hashFiles('package.json') != ''
+        run: npm run test --if-present
+
+      - name: Warn if no test script is present (npm)
+        # Non-blocking by design: always exits 0. Surfaces the gap in the
+        # log so an untested project is not silently green.
+        if: hashFiles('package.json') != ''
+        run: |
+          if ! node -e "process.exit(require('./package.json').scripts && require('./package.json').scripts.test ? 0 : 1)"; then
+            echo "::warning::No \"test\" script found in package.json. Unit tests did not run for this project."
+          fi
+
+      - name: Build (npm)
+        # --if-present no-ops when the project has no "build" script, for
+        # a small static project that needs no bundler.
+        if: hashFiles('package.json') != ''
+        run: npm run build --if-present
+
+      # --- PHP with MariaDB, and WordPress ---
+      # Both stacks use the same Composer scripts, defined in each
+      # project's composer.json per docs/stacks/php-mariadb.md and
+      # docs/stacks/wordpress.md.
+      - name: Set up PHP
+        if: hashFiles('composer.json') != ''
+        uses: shivammathur/setup-php@7c071dfe9dc99bdf297fa79cb49ea005b9fcadbc  # v2.37.1
+        with:
+          php-version: '8.3'
+
+      - name: Install dependencies (Composer)
+        if: hashFiles('composer.json') != ''
+        run: composer install --prefer-dist --no-interaction
+
+      - name: Static analysis (composer analyse)
+        if: hashFiles('composer.json') != ''
+        run: composer analyse
+
+      - name: Unit tests (composer test)
+        if: hashFiles('composer.json') != ''
+        run: composer test
+
+      # WordPress integration and end-to-end suites (composer
+      # test:integration, composer test:e2e) need a running WordPress
+      # instance via wp-env and belong in a dedicated job once a WordPress
+      # project reaches that point. See docs/stacks/wordpress.md.
+
+      - name: Check for a static-content archetype declaration
+        # Reads .github/ci-archetype, trimmed of surrounding whitespace and
+        # newlines, and records whether it declares "static-content". Runs
+        # unconditionally (cheap) so the fail-check below can read the
+        # result regardless of which manifests are present.
+        id: archetype
+        run: |
+          if [ -f .github/ci-archetype ]; then
+            value=$(tr -d '[:space:]' < .github/ci-archetype)
+          else
+            value=""
+          fi
+          if [ "$value" = "static-content" ]; then
+            echo "is_static_content=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_static_content=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fail if no manifest or static-content declaration was found
+        if: |
+          hashFiles('package.json') == '' &&
+          hashFiles('composer.json') == '' &&
+          steps.archetype.outputs.is_static_content != 'true'
+        run: |
+          echo "No package.json or composer.json found at the repository root,"
+          echo "and .github/ci-archetype does not declare \"static-content\"."
+          echo "This is a code-type project, so one of the two is expected."
+          echo "See the comments at the top of this workflow for what each"
+          echo "manifest or declaration means."
+          exit 1

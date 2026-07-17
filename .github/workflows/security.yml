@@ -1,0 +1,68 @@
+# Security checks: Semgrep, Trivy, and dependency review.
+#
+# Action versions were verified against GitHub and pinned to commit SHAs
+# on 2026-05-21. The version tag is in the trailing comment.
+
+name: Security
+on:
+  pull_request:
+  schedule:
+    - cron: '0 6 * * 1'  # weekly, Monday morning
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - name: Cache pip packages for Semgrep
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-semgrep-1.166.0
+      - name: Semgrep
+        # semgrep scan runs locally with the default ruleset and exits non-zero
+        # on any finding. semgrep ci requires a SEMGREP_APP_TOKEN and uses
+        # cloud-based CI mode; it is not used here to avoid token dependency.
+        run: |
+          pip install semgrep==1.166.0
+          semgrep scan --config p/default --error
+
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
+        with:
+          scan-type: fs
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+  # ── PRIVATE REPOS: REMOVE THIS JOB ──────────────────────────────────────────
+  # dependency-review requires GitHub Advanced Security. On a private repository
+  # without Advanced Security, this job will fail with a 403 error.
+  # Remove it from any private project repository.
+  # ─────────────────────────────────────────────────────────────────────────────
+  dependency-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
+        # There is nothing to diff without a manifest and lockfile; skip
+        # rather than fail or no-op unpredictably on a static-content
+        # project. hashFiles is only valid at step level, not job level, so
+        # the gate lives here rather than on the job's own "if:". Semgrep
+        # and Trivy above need no such gate; both are filesystem scans that
+        # already work without a manifest.
+        if: hashFiles('package.json') != '' || hashFiles('composer.json') != ''
+
+  # Note for PHP projects: CodeQL does not support PHP. Add a PHP static
+  # analysis job here, for example PHPStan or Psalm, in place of CodeQL.
