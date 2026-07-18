@@ -18,4 +18,4 @@ Emotion Wheel follows Tim Dixon's design system as its visual and interaction fo
 
 Emotion Wheel keeps its own name, emotion-wheel artwork, privacy wording, and local-only data model. It uses the design system to make the recording, review, and maintenance journey consistent and easier to navigate.
 
-On smaller screens, the header and navigation become more compact, the three work areas remain on one row, and the selected entry actions stay reachable at the bottom of the viewport. Chart period controls expose only the picker relevant to the selected day, week, or month view.
+On smaller screens, the header navigation collapses into a Menu button containing Entry, Review Logs, Review Charts, and Maintenance. On wider screens those destinations remain visible. Selected entry actions stay reachable at the bottom of the viewport. Chart period controls expose only the picker relevant to the selected day, week, or month view.

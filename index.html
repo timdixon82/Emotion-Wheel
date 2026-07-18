@@ -64,13 +64,31 @@
       max-width: 980px; min-height: 4.25rem; margin: 0 auto; padding: .625rem 1rem;
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .app-brand { display: flex; flex-direction: column; line-height: 1.1; }
+    .app-brand { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
     .app-brand-eyebrow { color: var(--nav-text); font-size: .68rem; font-weight: 800; letter-spacing: .18em; }
     .app-brand-name { font-size: 1.25rem; font-weight: 800; }
+    .header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
     .theme-control { display: flex; align-items: center; gap: .5rem; }
     .theme-control label { min-height: auto; color: var(--nav-text); font-size: .875rem; }
     .theme-control select { min-height: 2.75rem; border-color: #ffffff80; background: transparent; color: var(--nav-active); }
     .theme-control option { background: var(--nav-bg); color: var(--nav-active); }
+    .menu-toggle { display: none; }
+    .app-navigation { max-width: 980px; margin: 0 auto; padding: 0 1rem .75rem; }
+    .app-nav-list, .app-nav-sublist {
+      display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
+    }
+    .app-nav-group { display: flex; align-items: center; gap: .5rem; }
+    .app-nav-label { color: var(--nav-text); font-weight: 700; padding: 0 .25rem; }
+    .menu-toggle, .app-navigation button {
+      min-height: 2.75rem; padding: .5rem .875rem; border-color: #ffffff80;
+      background: transparent; color: var(--nav-active);
+    }
+    .menu-toggle:hover, .app-navigation button:hover {
+      background: rgb(255 255 255 / 12%); color: var(--nav-active);
+    }
+    .app-navigation button[aria-current="page"] {
+      background: var(--nav-active); border-color: var(--nav-active); color: var(--nav-bg); font-weight: 800;
+    }
     .skip-link {
       position: absolute; left: 1rem; top: 1rem; transform: translateY(-150%);
       background: var(--bg); color: var(--text); border: 2px solid var(--focus);
@@ -81,16 +99,12 @@
     h1, h2, h3 { line-height: 1.2; color: var(--heading); }
     h1 { font-size: 1.9rem; font-weight: 900; letter-spacing: -.3px; }
     .intro, .help { color: var(--muted); }
-    .page-nav, .settings-panel, .status, .log-panel, .export-panel {
+    .settings-panel, .status, .log-panel, .export-panel {
       border: 1px solid var(--border); padding: 1rem; margin: 1rem 0;
       border-radius: .625rem; box-shadow: var(--shadow);
     }
     .settings-panel, .status, .log-panel { background: var(--panel); }
-    .page-nav h2 { font-size: 1rem; margin: 0 0 .75rem; }
-    .workspace-tabs, .review-tabs { display: flex; flex-wrap: wrap; gap: .75rem; }
     .workspace-panel { margin-top: 1rem; }
-    .review-tabs { margin: 1rem 0; }
-    [role="tab"][aria-selected="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
     details {
       border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
       margin: 1rem 0; box-shadow: var(--shadow);
@@ -213,23 +227,29 @@
     .site-footer a { color: var(--focus); }
     .site-footer .sep { color: var(--muted); }
     @media (max-width: 600px) {
-      .app-header-inner { min-height: 0; align-items: center; flex-direction: row; }
-      .theme-control { margin-left: auto; }
-      .theme-control select { width: 8.5rem; }
+      .app-header-inner { min-height: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .5rem; }
+      .header-actions { gap: .4rem; }
+      .theme-control label {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+      .theme-control select { width: 7.25rem; }
+      .menu-toggle { display: inline-flex; padding: .5rem .65rem; }
+      .app-navigation { display: none; padding: .25rem .75rem .75rem; }
+      .app-navigation.is-open { display: block; }
+      .app-nav-list, .app-nav-sublist { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
+      .app-nav-group { display: grid; gap: .35rem; }
+      .app-nav-label { padding: .5rem .75rem .1rem; }
+      .app-nav-sublist { padding-left: 1rem; }
+      .app-navigation button { width: 100%; }
       main { padding: .75rem; }
       h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
       .intro { margin: 0 0 .75rem; font-size: .95rem; }
-      .page-nav, .settings-panel, .status, .log-panel, .export-panel,
+      .settings-panel, .status, .log-panel, .export-panel,
       .step, .chart-card, fieldset { padding: .75rem; }
-      .page-nav { margin: .75rem 0; }
       details, .wheel-figure, .step { margin: .65rem 0; }
       .button-grid, .metric-grid { grid-template-columns: minmax(0, 1fr); }
-      .page-nav li, .page-nav a.button,
       .actions > button, .section-heading > button { width: 100%; }
-      .workspace-tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
-      .review-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .workspace-tabs button, .review-tabs button { width: 100%; }
-      .workspace-tabs button { padding: .5rem; justify-content: center; font-size: .9rem; }
       summary { padding: .75rem; }
       .details-content { padding: 0 .75rem .75rem; }
       .time-controls { align-items: stretch; }
@@ -273,31 +293,38 @@
       <span class="app-brand-eyebrow">EMOTION</span>
       <span class="app-brand-name">Tracking Wheel</span>
     </div>
-    <div class="theme-control">
-      <label for="themeMode">Theme</label>
-      <select id="themeMode">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="muted-light">Muted Light</option>
-        <option value="muted-dark">Muted Dark</option>
-      </select>
+    <div class="header-actions">
+      <button type="button" id="menuToggle" class="menu-toggle" aria-expanded="false" aria-controls="appNavigation" aria-label="Open navigation menu">Menu</button>
+      <div class="theme-control">
+        <label for="themeMode">Theme</label>
+        <select id="themeMode">
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+          <option value="muted-light">Muted Light</option>
+          <option value="muted-dark">Muted Dark</option>
+        </select>
+      </div>
     </div>
   </div>
+  <nav id="appNavigation" class="app-navigation" aria-label="App sections">
+    <ul class="app-nav-list">
+      <li><button type="button" id="entryTab" aria-current="page" aria-controls="entryPanel">Entry</button></li>
+      <li class="app-nav-group">
+        <span id="reviewNavLabel" class="app-nav-label">Review</span>
+        <ul class="app-nav-sublist" aria-labelledby="reviewNavLabel">
+          <li><button type="button" id="logsTab" aria-controls="logsPanel">Logs</button></li>
+          <li><button type="button" id="chartsTab" aria-controls="chartsPanel">Charts</button></li>
+        </ul>
+      </li>
+      <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">Maintenance</button></li>
+    </ul>
+  </nav>
 </header>
 <main id="main-content" tabindex="-1">
   <h1>Emotion Wheel - Tracking your emotions</h1>
   <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 when you want guided reflection.</p>
 
-  <nav class="page-nav" aria-labelledby="page-nav-heading">
-    <h2 id="page-nav-heading">Work area</h2>
-    <div class="workspace-tabs" role="tablist" aria-label="Work areas">
-      <button type="button" id="entryTab" role="tab" aria-selected="true" aria-controls="entryPanel">Entry</button>
-      <button type="button" id="reviewTab" role="tab" aria-selected="false" aria-controls="reviewPanel" tabindex="-1">Review</button>
-      <button type="button" id="maintenanceTab" role="tab" aria-selected="false" aria-controls="maintenancePanel" tabindex="-1">Maintenance</button>
-    </div>
-  </nav>
-
-  <section id="entryPanel" class="workspace-panel" role="tabpanel" aria-labelledby="entryTab">
+  <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
     <details id="capture-settings" class="settings-panel">
       <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
       <div class="details-content">
@@ -452,13 +479,8 @@
     </div>
   </section>
 
-  <section id="reviewPanel" class="workspace-panel" role="tabpanel" aria-labelledby="reviewTab" hidden>
-    <div class="review-tabs" role="tablist" aria-label="Review views">
-      <button type="button" id="logsTab" role="tab" aria-selected="true" aria-controls="logsPanel">Logs</button>
-      <button type="button" id="chartsTab" role="tab" aria-selected="false" aria-controls="chartsPanel" tabindex="-1">Charts</button>
-    </div>
-
-  <section id="logsPanel" role="tabpanel" aria-labelledby="logsTab">
+  <section id="reviewPanel" class="workspace-panel" hidden>
+  <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
     <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
@@ -533,7 +555,7 @@
   </section>
   </section>
 
-  <section id="chartsPanel" role="tabpanel" aria-labelledby="chartsTab" hidden>
+  <section id="chartsPanel" aria-label="Review charts" tabindex="-1" hidden>
   <section id="charts" class="log-panel" aria-labelledby="charts-heading">
     <h2 id="charts-heading">Charts</h2>
     <p id="chartsSummary" class="help" aria-live="polite">No emotions recorded yet.</p>
@@ -711,7 +733,7 @@
   </section>
   </section>
 
-  <section id="maintenancePanel" class="workspace-panel" role="tabpanel" aria-labelledby="maintenanceTab" hidden>
+  <section id="maintenancePanel" class="workspace-panel" aria-label="Maintenance" tabindex="-1" hidden>
   <details id="export-data" class="export-panel">
     <summary>Save, load, and manage data</summary>
     <div class="details-content">
@@ -904,8 +926,9 @@ const intensityMetricsBody = document.getElementById('intensityMetricsBody');
 const sensationsChartSummary = document.getElementById('sensationsChartSummary');
 const sensationsChart = document.getElementById('sensationsChart');
 const sensationsChartBody = document.getElementById('sensationsChartBody');
+const menuToggle = document.getElementById('menuToggle');
+const appNavigation = document.getElementById('appNavigation');
 const entryTab = document.getElementById('entryTab');
-const reviewTab = document.getElementById('reviewTab');
 const maintenanceTab = document.getElementById('maintenanceTab');
 const entryPanel = document.getElementById('entryPanel');
 const reviewPanel = document.getElementById('reviewPanel');
@@ -924,6 +947,7 @@ let pendingLoadMode = 'merge';
 let lastRecordedEntry = null;
 let deletedEntryForUndo = null;
 let editingEntry = null;
+let currentAppView = 'entry';
 
 function unique(values) {
   return [...new Set(values)];
@@ -953,28 +977,35 @@ function applyTheme(theme, announce = false) {
   if (announce) liveStatus.textContent = `Switched to ${themeMode.options[themeMode.selectedIndex].textContent} theme.`;
 }
 
-function selectTab(selectedTab, tabs, selectedPanel, panels) {
-  tabs.forEach(tab => {
-    const selected = tab === selectedTab;
-    tab.setAttribute('aria-selected', String(selected));
-    tab.tabIndex = selected ? 0 : -1;
-  });
-  panels.forEach(panel => {
-    panel.hidden = panel !== selectedPanel;
-  });
+function setMenuOpen(open) {
+  appNavigation.classList.toggle('is-open', open);
+  menuToggle.setAttribute('aria-expanded', String(open));
+  menuToggle.setAttribute('aria-label', `${open ? 'Close' : 'Open'} navigation menu`);
 }
 
-function selectWorkspaceTab(tab) {
-  const panels = [entryPanel, reviewPanel, maintenancePanel];
-  const tabs = [entryTab, reviewTab, maintenanceTab];
-  selectTab(tab, tabs, panels[tabs.indexOf(tab)], panels);
-  document.body.classList.toggle('has-selection', tab === entryTab && Boolean(selectedInner));
-}
+function selectAppView(selectedButton, focusContent = false) {
+  const views = [
+    { name: 'entry', button: entryTab, panel: entryPanel },
+    { name: 'logs', button: logsTab, panel: logsPanel },
+    { name: 'charts', button: chartsTab, panel: chartsPanel },
+    { name: 'maintenance', button: maintenanceTab, panel: maintenancePanel }
+  ];
+  const selectedView = views.find(view => view.button === selectedButton) || views[0];
+  currentAppView = selectedView.name;
 
-function selectReviewTab(tab) {
-  const tabs = [logsTab, chartsTab];
-  const panels = [logsPanel, chartsPanel];
-  selectTab(tab, tabs, panels[tabs.indexOf(tab)], panels);
+  views.forEach(view => {
+    if (view === selectedView) view.button.setAttribute('aria-current', 'page');
+    else view.button.removeAttribute('aria-current');
+  });
+  entryPanel.hidden = currentAppView !== 'entry';
+  reviewPanel.hidden = !['logs', 'charts'].includes(currentAppView);
+  logsPanel.hidden = currentAppView !== 'logs';
+  chartsPanel.hidden = currentAppView !== 'charts';
+  maintenancePanel.hidden = currentAppView !== 'maintenance';
+  document.body.classList.toggle('has-selection', currentAppView === 'entry' && Boolean(selectedInner));
+  setMenuOpen(false);
+
+  if (focusContent) requestAnimationFrame(() => selectedView.panel.focus());
 }
 
 function loadLog() {
@@ -1177,7 +1208,7 @@ function renderSelection() {
   recordButton.disabled = !selectedInner;
   recordButton.textContent = editingEntry ? 'Save changes' : 'Record this emotion';
   recordStatus.classList.toggle('has-selection', Boolean(selectedInner));
-  document.body.classList.toggle('has-selection', entryTab.getAttribute('aria-selected') === 'true' && Boolean(selectedInner));
+  document.body.classList.toggle('has-selection', currentAppView === 'entry' && Boolean(selectedInner));
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -1210,7 +1241,7 @@ function prepareEntry(entry, announcement, edit = false) {
   selectedInner = entry.inner;
   selectedMiddle = entry.middle || null;
   selectedOuter = entry.outer || null;
-  selectWorkspaceTab(entryTab);
+  selectAppView(entryTab);
   recordConfirmation.hidden = true;
   renderAll();
   const appropriateInput = [...document.querySelectorAll('input[name="appropriate"]')]
@@ -1230,7 +1261,7 @@ function prepareEntry(entry, announcement, edit = false) {
 }
 
 function startNewEntry() {
-  selectWorkspaceTab(entryTab);
+  selectAppView(entryTab);
   recordConfirmation.hidden = true;
   editingEntry = null;
   clearEntryForm();
@@ -2029,7 +2060,7 @@ function renderFullEmotionTable() {
       selectedInner = row[0];
       selectedMiddle = row[1];
       selectedOuter = row[2];
-      selectWorkspaceTab(entryTab);
+      selectAppView(entryTab);
       renderAll();
       liveStatus.textContent = `Prepared ${row.join(' then ')}. Add optional reflection details or a note, then record.`;
       focusNextRecordingControl();
@@ -2560,30 +2591,18 @@ function copyHtmlWithSelection(html, text) {
   return copied || copyTextWithSelection(text);
 }
 
-function enableArrowKeyTabs(tabs, select) {
-  tabs.forEach((tab, index) => {
-    tab.addEventListener('keydown', event => {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      event.preventDefault();
-      let nextIndex = index;
-      if (event.key === 'ArrowLeft') nextIndex = (index - 1 + tabs.length) % tabs.length;
-      if (event.key === 'ArrowRight') nextIndex = (index + 1) % tabs.length;
-      if (event.key === 'Home') nextIndex = 0;
-      if (event.key === 'End') nextIndex = tabs.length - 1;
-      select(tabs[nextIndex]);
-      tabs[nextIndex].focus();
-    });
-  });
-}
-
-[entryTab, reviewTab, maintenanceTab].forEach(tab => {
-  tab.addEventListener('click', () => selectWorkspaceTab(tab));
+[entryTab, logsTab, chartsTab, maintenanceTab].forEach(button => {
+  button.addEventListener('click', () => selectAppView(button, true));
 });
-[logsTab, chartsTab].forEach(tab => {
-  tab.addEventListener('click', () => selectReviewTab(tab));
+menuToggle.addEventListener('click', () => {
+  setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true');
 });
-enableArrowKeyTabs([entryTab, reviewTab, maintenanceTab], selectWorkspaceTab);
-enableArrowKeyTabs([logsTab, chartsTab], selectReviewTab);
+document.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || menuToggle.getAttribute('aria-expanded') !== 'true') return;
+  setMenuOpen(false);
+  menuToggle.focus();
+});
+window.matchMedia('(min-width: 601px)').addEventListener?.('change', () => setMenuOpen(false));
 
 setSelectedChartDate(new Date());
 [chartPeriod, chartDayInput, chartWeekInput, chartMonthInput, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {

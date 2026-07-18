@@ -10,7 +10,7 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 - Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, or use Custom to choose the fields that suit you.
 - Add an optional private note to each entry, such as what happened, a thought, or useful context.
 - See the active capture mode without opening settings, and use the compact mobile recording action without adding a duplicate screen-reader control.
-- Keep entry, review, and maintenance separate with keyboard-accessible tabs.
+- Move directly between Entry, Review Logs, Review Charts, and Maintenance using responsive app navigation that collapses into a menu on smaller screens.
 - Review logs, tallies, charts, and a line chart of records over time.
 - Move through chart periods by day, week, or month. Zero-entry periods can be included to show gaps in the pattern.
 - Compare inner-circle emotion trends and choose which colour-coded series to display.
@@ -28,12 +28,12 @@ Read the fuller [privacy notes](docs/privacy.html) before using this for sensiti
 
 ## Getting started
 
-1. Open the Entry tab.
+1. Open Entry from the app navigation.
 2. Choose Phase 1, Phase 2, or Custom in Capture settings if you want to change the recording fields.
 3. Select an emotion at any level and add an optional note if helpful.
 4. Select **Record this emotion**.
 5. After saving, undo the entry, prepare another like it, or start a clean entry.
-6. Open Review when you want to see logs and charts, or Maintenance when you want to export, back up, load, or clear data.
+6. Open Logs or Charts from the Review group when you want to explore your records, or Maintenance when you want to export, back up, load, or clear data.
 
 Phase 1 is recommended for at least one week to build the recording habit. Phase 2 then adds optional questions about appropriateness, expected and actual intensity, intensity alignment, and physical sensations.
 
@@ -53,7 +53,8 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 ## Accessibility
 
 - A skip link takes keyboard and screen reader users directly to the main content.
-- Workspace and review tabs support Arrow Left, Arrow Right, Home, and End.
+- App navigation follows the normal keyboard Tab order, identifies the current section, and moves focus to the selected content.
+- On smaller screens, the Menu button exposes its expanded state and Escape closes the navigation and returns focus to the button.
 - Secondary content uses native collapsed sections, reducing noise while keeping every feature reachable by keyboard.
 - Focus follows the visible entry sequence: emotion levels, optional reflection fields, optional note, then Record.
 - Mobile recording uses the same Record control in a sticky action area, avoiding duplicated controls for screen readers.
