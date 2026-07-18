@@ -64,21 +64,24 @@
       max-width: 980px; min-height: 4.25rem; margin: 0 auto; padding: .625rem 1rem;
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .app-brand { display: flex; flex-direction: column; line-height: 1.1; min-width: 0; }
-    .app-brand-eyebrow { color: var(--nav-text); font-size: .68rem; font-weight: 800; letter-spacing: .18em; }
-    .app-brand-name { font-size: 1.25rem; font-weight: 800; }
+    .app-brand { display: flex; line-height: 1.1; min-width: 0; }
+    .app-brand-name { color: var(--nav-active); font-size: 1.25rem; font-weight: 800; margin: 0; }
     .header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
     .theme-control { display: flex; align-items: center; gap: .5rem; }
     .theme-control label { min-height: auto; color: var(--nav-text); font-size: .875rem; }
     .theme-control select { min-height: 2.75rem; border-color: #ffffff80; background: transparent; color: var(--nav-active); }
     .theme-control option { background: var(--nav-bg); color: var(--nav-active); }
+    .mobile-theme-control { display: none; }
     .menu-toggle { display: none; }
     .app-navigation { max-width: 980px; margin: 0 auto; padding: 0 1rem .75rem; }
     .app-nav-list, .app-nav-sublist {
       display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
     }
     .app-nav-group { display: flex; align-items: center; gap: .5rem; }
-    .app-nav-label { color: var(--nav-text); font-weight: 700; padding: 0 .25rem; }
+    .app-nav-label {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+    }
     .menu-toggle, .app-navigation button {
       min-height: 2.75rem; padding: .5rem .875rem; border-color: #ffffff80;
       background: transparent; color: var(--nav-active);
@@ -113,6 +116,7 @@
       min-height: 3rem; padding: .75rem 1rem; cursor: pointer; font-weight: 700;
     }
     details[open] > summary { border-bottom: 1px solid var(--border); }
+    details:not([open]) > :not(summary) { display: none !important; }
     .details-content { padding: 0 1rem 1rem; }
     details.settings-panel, details.export-panel { padding: 0; }
     .chart-card { margin: 1rem 0; }
@@ -212,16 +216,33 @@
     .line-chart .trend { fill: none; stroke: var(--chart-line); stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
     .line-chart .point { fill: var(--chart-line); }
     .line-chart text { fill: var(--text); font: 14px system-ui, sans-serif; }
+    .chart-key {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem;
+      margin: .75rem 0; padding: .65rem .75rem; border: 1px solid var(--border);
+      border-radius: .5rem; background: var(--panel);
+    }
+    .chart-key strong { color: var(--heading); }
+    .chart-key-list { display: flex; flex-wrap: wrap; gap: .5rem 1rem; list-style: none; margin: 0; padding: 0; }
+    .chart-key-item { display: inline-flex; align-items: center; gap: .4rem; }
+    .chart-key-swatch { width: 1.5rem; height: 1rem; border: 1px solid var(--border); background: var(--key-colour, var(--focus)); }
+    .chart-key-line { height: .25rem; border: 0; }
+    .chart-key-note { color: var(--muted); }
     .metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .metric { border: 1px solid var(--border); padding: .75rem; background: var(--panel); }
     .metric strong { display: block; font-size: 1.5rem; }
     table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-    th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; }
+    th, td { border: 1px solid var(--border); padding: .5rem; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
     th { background: var(--nav-bg); color: var(--nav-active); }
     caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
     .scroll-table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .table-actions { display: flex; flex-wrap: wrap; gap: .5rem; min-width: 12rem; }
     .table-actions button { min-height: 2.75rem; padding: .5rem .75rem; }
+    .mobile-cell-label { display: none; }
+    .table-path-button {
+      width: 100%; min-height: 2.75rem; padding: .35rem .5rem; border-color: transparent;
+      background: transparent; color: var(--focus); font-weight: 700; text-decoration: underline;
+    }
+    .table-path-button:hover { background: var(--selected); color: var(--focus); }
     .site-footer { max-width: 980px; margin: 1rem auto 0; padding: 1rem; border-top: 1px solid var(--border); color: var(--muted); }
     .site-footer nav { display: flex; flex-wrap: wrap; align-items: center; gap: .45rem; }
     .site-footer a { color: var(--focus); }
@@ -229,19 +250,24 @@
     @media (max-width: 600px) {
       .app-header-inner { min-height: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .5rem; }
       .header-actions { gap: .4rem; }
-      .theme-control label {
-        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
-      }
-      .theme-control select { width: 7.25rem; }
+      .desktop-theme-control { display: none; }
       .menu-toggle { display: inline-flex; padding: .5rem .65rem; }
       .app-navigation { display: none; padding: .25rem .75rem .75rem; }
       .app-navigation.is-open { display: block; }
       .app-nav-list, .app-nav-sublist { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
       .app-nav-group { display: grid; gap: .35rem; }
-      .app-nav-label { padding: .5rem .75rem .1rem; }
+      .app-nav-label {
+        position: static; width: auto; height: auto; padding: .5rem .75rem .1rem; margin: 0;
+        overflow: visible; clip: auto; white-space: normal; color: var(--nav-text); font-weight: 700;
+      }
       .app-nav-sublist { padding-left: 1rem; }
       .app-navigation button { width: 100%; }
+      .mobile-theme-control {
+        display: flex; align-items: stretch; flex-direction: column; gap: .25rem;
+        margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #ffffff80;
+      }
+      .mobile-theme-control label { color: var(--nav-text); font-weight: 700; }
+      .mobile-theme-control select { width: 100%; }
       main { padding: .75rem; }
       h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
       .intro { margin: 0 0 .75rem; font-size: .95rem; }
@@ -257,6 +283,25 @@
       .period-navigator { flex-basis: 100%; }
       .period-navigator button { padding: .5rem .75rem; }
       .period-navigator p { font-size: .95rem; }
+      .scroll-table { overflow: visible; }
+      .scroll-table table, .scroll-table caption, .scroll-table tbody, .scroll-table tr { display: block; width: 100%; }
+      .scroll-table thead {
+        position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+        overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+      }
+      .scroll-table tbody tr {
+        margin: .75rem 0; border: 1px solid var(--border); border-radius: .5rem;
+        background: var(--bg); overflow: hidden;
+      }
+      .scroll-table tbody td {
+        display: grid; grid-template-columns: minmax(7.5rem, 40%) minmax(0, 1fr);
+        gap: .5rem; width: 100%; border: 0; border-bottom: 1px solid var(--border);
+      }
+      .scroll-table tbody td:last-child { border-bottom: 0; }
+      .mobile-cell-label { display: block; font-weight: 700; color: var(--heading); }
+      .scroll-table tbody td[colspan] { display: block; }
+      .table-actions { min-width: 0; }
+      .table-actions button { width: 100%; }
       body.has-selection { padding-bottom: 5.5rem; }
       .status.has-selection .actions {
         position: fixed; z-index: 8; left: .75rem; right: .75rem; bottom: .5rem;
@@ -290,12 +335,11 @@
 <header class="app-header">
   <div class="app-header-inner">
     <div class="app-brand">
-      <span class="app-brand-eyebrow">EMOTION</span>
-      <span class="app-brand-name">Tracking Wheel</span>
+      <h1 class="app-brand-name">Emotion Wheel - Tracking your emotions</h1>
     </div>
     <div class="header-actions">
       <button type="button" id="menuToggle" class="menu-toggle" aria-expanded="false" aria-controls="appNavigation" aria-label="Open navigation menu">Menu</button>
-      <div class="theme-control">
+      <div class="theme-control desktop-theme-control">
         <label for="themeMode">Theme</label>
         <select id="themeMode">
           <option value="light">Light</option>
@@ -318,10 +362,18 @@
       </li>
       <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">Maintenance</button></li>
     </ul>
+    <div class="theme-control mobile-theme-control">
+      <label for="mobileThemeMode">Theme</label>
+      <select id="mobileThemeMode">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="muted-light">Muted Light</option>
+        <option value="muted-dark">Muted Dark</option>
+      </select>
+    </div>
   </nav>
 </header>
 <main id="main-content" tabindex="-1">
-  <h1>Emotion Wheel - Tracking your emotions</h1>
   <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 when you want guided reflection.</p>
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
@@ -366,7 +418,7 @@
     <details id="full-table">
       <summary>Emotion reference table</summary>
       <div class="details-content">
-        <p class="help">Choose a complete emotion path to prepare a new entry, then add any reflection details or note before recording.</p>
+        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry, then add any reflection details or note before recording.</p>
         <div class="actions">
           <button type="button" id="shareWheelButton">Share full table</button>
           <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
@@ -374,7 +426,7 @@
         <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
           <table>
             <caption>All available emotion paths</caption>
-            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Prepare entry</th></tr></thead>
+            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
             <tbody id="wheelTableBody"></tbody>
           </table>
         </section>
@@ -597,6 +649,7 @@
         <button type="button" id="shareEmotionChartButton">Share chart image</button>
       </div>
       <p id="emotionChartSummary" class="help" aria-live="polite">No emotion records available yet.</p>
+      <div id="emotionChartKey" class="chart-key" role="group" aria-label="Most recorded emotions chart key" hidden></div>
       <ul id="emotionChart" class="bar-list" aria-labelledby="emotion-chart-heading" aria-describedby="emotionChartSummary"></ul>
       <section class="scroll-table" tabindex="0" aria-label="Most recorded emotion paths">
         <table>
@@ -616,6 +669,7 @@
         <button type="button" id="shareLevelChartButton">Share chart image</button>
       </div>
       <p id="levelChartSummary" class="help" aria-live="polite">No recorded levels available yet.</p>
+      <div id="levelChartKey" class="chart-key" role="group" aria-label="Recorded level chart key" hidden></div>
       <ul id="levelChart" class="bar-list" aria-labelledby="level-chart-heading" aria-describedby="levelChartSummary"></ul>
       <section class="scroll-table" tabindex="0" aria-label="Recorded level counts">
         <table>
@@ -665,6 +719,7 @@
         </div>
       </fieldset>
       <p id="timeChartSummary" class="help" aria-live="polite">No dates available yet.</p>
+      <div id="timeChartKey" class="chart-key" role="group" aria-label="Records over time chart key" hidden></div>
       <div id="timeChart"></div>
       <section class="scroll-table" tabindex="0" aria-label="Emotion records grouped by date">
         <table>
@@ -684,6 +739,7 @@
         <button type="button" id="shareReflectionChartButton">Share chart image</button>
       </div>
       <p id="reflectionChartSummary" class="help">No reflection data available yet.</p>
+      <div id="reflectionChartKey" class="chart-key" role="group" aria-label="Reflection charts key" hidden></div>
 
       <h4>Appropriate responses</h4>
       <p id="appropriateChartSummary" class="help" aria-live="polite">No appropriate response data recorded yet.</p>
@@ -876,14 +932,17 @@ const chartsSummary = document.getElementById('chartsSummary');
 const emptyChartEntryButton = document.getElementById('emptyChartEntryButton');
 const shareEmotionChartButton = document.getElementById('shareEmotionChartButton');
 const emotionChartSummary = document.getElementById('emotionChartSummary');
+const emotionChartKey = document.getElementById('emotionChartKey');
 const emotionChart = document.getElementById('emotionChart');
 const emotionChartBody = document.getElementById('emotionChartBody');
 const shareLevelChartButton = document.getElementById('shareLevelChartButton');
 const levelChartSummary = document.getElementById('levelChartSummary');
+const levelChartKey = document.getElementById('levelChartKey');
 const levelChart = document.getElementById('levelChart');
 const levelChartBody = document.getElementById('levelChartBody');
 const shareTimeChartButton = document.getElementById('shareTimeChartButton');
 const timeChartSummary = document.getElementById('timeChartSummary');
+const timeChartKey = document.getElementById('timeChartKey');
 const timeChart = document.getElementById('timeChart');
 const timeChartBody = document.getElementById('timeChartBody');
 const timeChartHead = document.getElementById('timeChartHead');
@@ -913,8 +972,10 @@ const undoRecordButton = document.getElementById('undoRecordButton');
 const recordAgainButton = document.getElementById('recordAgainButton');
 const newEntryButton = document.getElementById('newEntryButton');
 const themeMode = document.getElementById('themeMode');
+const mobileThemeMode = document.getElementById('mobileThemeMode');
 const shareReflectionChartButton = document.getElementById('shareReflectionChartButton');
 const reflectionChartSummary = document.getElementById('reflectionChartSummary');
+const reflectionChartKey = document.getElementById('reflectionChartKey');
 const appropriateChartSummary = document.getElementById('appropriateChartSummary');
 const appropriateChart = document.getElementById('appropriateChart');
 const appropriateChartBody = document.getElementById('appropriateChartBody');
@@ -969,6 +1030,7 @@ function getInitialTheme() {
 function applyTheme(theme, announce = false) {
   document.documentElement.dataset.theme = theme;
   themeMode.value = theme;
+  mobileThemeMode.value = theme;
   try {
     localStorage.setItem('td-theme', theme);
     localStorage.setItem('emotionWheelThemeV1', theme);
@@ -1628,6 +1690,7 @@ function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
     td.textContent = emptyText;
     tr.appendChild(td);
     tbody.appendChild(tr);
+    labelTableCells(tbody);
     return;
   }
 
@@ -1639,6 +1702,24 @@ function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
       tr.appendChild(td);
     });
     tbody.appendChild(tr);
+  });
+  labelTableCells(tbody);
+}
+
+function labelTableCells(tbody) {
+  const table = tbody.closest('table');
+  if (!table) return;
+  const headings = [...table.querySelectorAll('thead th')].map(heading => heading.textContent.trim());
+  tbody.querySelectorAll('tr').forEach(row => {
+    [...row.children].forEach((cell, index) => {
+      if (cell.colSpan > 1) return;
+      cell.querySelector('.mobile-cell-label')?.remove();
+      const label = document.createElement('span');
+      label.className = 'mobile-cell-label';
+      label.setAttribute('aria-hidden', 'true');
+      label.textContent = headings[index] || '';
+      cell.prepend(label);
+    });
   });
 }
 
@@ -1677,6 +1758,36 @@ function renderBarChart(container, summaryElement, rows, emptyText, getColour) {
     item.append(label, track, value);
     container.appendChild(item);
   });
+}
+
+function renderChartKey(container, items, note = '') {
+  clearNode(container);
+  container.hidden = !items.length;
+  if (!items.length) return;
+
+  const title = document.createElement('strong');
+  title.textContent = 'Key:';
+  const list = document.createElement('ul');
+  list.className = 'chart-key-list';
+  items.forEach(item => {
+    const listItem = document.createElement('li');
+    listItem.className = 'chart-key-item';
+    const swatch = document.createElement('span');
+    swatch.className = `chart-key-swatch${item.type === 'line' ? ' chart-key-line' : ''}`;
+    swatch.style.setProperty('--key-colour', item.colour || 'var(--focus)');
+    swatch.setAttribute('aria-hidden', 'true');
+    const label = document.createElement('span');
+    label.textContent = item.label;
+    listItem.append(swatch, label);
+    list.appendChild(listItem);
+  });
+  container.append(title, list);
+  if (note) {
+    const explanation = document.createElement('span');
+    explanation.className = 'chart-key-note';
+    explanation.textContent = note;
+    container.appendChild(explanation);
+  }
 }
 
 function renderLineChart(container, series) {
@@ -1845,6 +1956,12 @@ function renderCharts() {
   emotionChartSummary.textContent = topEmotions.length
     ? `${topEmotions[0].label} is the most recorded emotion path in ${getChartPeriodLabel()}, with ${topEmotions[0].count} record${topEmotions[0].count === 1 ? '' : 's'}.${comparisonText}`
     : `No emotion records available for ${getChartPeriodLabel()}.`;
+  const emotionKeyCategories = unique(topEmotions.map(row => row.category));
+  renderChartKey(
+    emotionChartKey,
+    emotionKeyCategories.map(category => ({ label: category, colour: emotionColours[category] })),
+    'Bar length shows the number of records.'
+  );
   renderBarChart(emotionChart, emotionChartSummary, topEmotions, 'No emotion records available yet.', row => emotionColours[row.category]);
   addTableRows(emotionChartBody, topEmotions, 'No emotions recorded yet.', row => [row.label, String(row.count), formatDateTime(row.lastRecorded)], 3);
 
@@ -1852,6 +1969,7 @@ function renderCharts() {
   levelChartSummary.textContent = topLevel
     ? `${topLevel.label} is the most used recording level, with ${topLevel.count} record${topLevel.count === 1 ? '' : 's'}.`
     : 'No recorded levels available yet.';
+  renderChartKey(levelChartKey, levelRows.length ? [{ label: 'Number of records' }] : [], 'Bar length shows the value.');
   renderBarChart(levelChart, levelChartSummary, levelRows, 'No recorded levels available yet.');
   addTableRows(levelChartBody, levelRows, 'No emotions recorded yet.', row => [row.label, String(row.count)], 2);
 
@@ -1865,6 +1983,11 @@ function renderCharts() {
     : timeRows.length
     ? `${chartEntries.length} ${measureLabel} in ${getChartPeriodLabel()}, across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
     : `No dates available for ${getChartPeriodLabel()}.`;
+  renderChartKey(
+    timeChartKey,
+    timeRows.length ? timeSeries.map(series => ({ label: series.label, colour: series.colour || 'var(--chart-line)', type: 'line' })) : [],
+    'The vertical scale shows the number of records.'
+  );
   renderLineChart(timeChart, timeSeries);
   renderTimeTable(timeRows, timeSeries);
 
@@ -1874,6 +1997,7 @@ function renderCharts() {
     : hasEntries
       ? 'No optional reflection fields have been recorded yet.'
       : 'No reflection data available yet.';
+  renderChartKey(reflectionChartKey, hasReflectionData ? [{ label: 'Number of records' }] : [], 'Bar length shows the value.');
 
   renderBarChart(appropriateChart, appropriateChartSummary, appropriateRows, 'No appropriate response data recorded yet.');
   addTableRows(appropriateChartBody, appropriateRows, 'No appropriate response data recorded yet.', row => [row.label, String(row.count)], 2);
@@ -2037,25 +2161,15 @@ function renderLog() {
       logBody.appendChild(tr);
     }
   }
+  labelTableCells(tallyBody);
+  labelTableCells(logBody);
 }
 
 function renderFullEmotionTable() {
   clearNode(wheelTableBody);
   for (const row of emotions) {
     const tr = document.createElement('tr');
-    row.forEach(value => {
-      const td = document.createElement('td');
-      td.textContent = value;
-      tr.appendChild(td);
-    });
-    const actionCell = document.createElement('td');
-    const useButton = document.createElement('button');
-    useButton.type = 'button';
-    useButton.textContent = 'Use this path';
-    useButton.classList.add('emotion-category');
-    useButton.style.setProperty('--emotion-colour', emotionColours[row[0]]);
-    useButton.setAttribute('aria-label', `Use ${row.join(', ')} for a new entry`);
-    useButton.addEventListener('click', () => {
+    const preparePath = () => {
       editingEntry = null;
       selectedInner = row[0];
       selectedMiddle = row[1];
@@ -2064,11 +2178,21 @@ function renderFullEmotionTable() {
       renderAll();
       liveStatus.textContent = `Prepared ${row.join(' then ')}. Add optional reflection details or a note, then record.`;
       focusNextRecordingControl();
+    };
+    row.forEach(value => {
+      const td = document.createElement('td');
+      const useButton = document.createElement('button');
+      useButton.type = 'button';
+      useButton.textContent = value;
+      useButton.className = 'table-path-button';
+      useButton.setAttribute('aria-label', `Use ${value} to prepare ${row.join(', ')} as a new entry`);
+      useButton.addEventListener('click', preparePath);
+      td.appendChild(useButton);
+      tr.appendChild(td);
     });
-    actionCell.appendChild(useButton);
-    tr.appendChild(actionCell);
     wheelTableBody.appendChild(tr);
   }
+  labelTableCells(wheelTableBody);
 }
 
 function renderAll() {
@@ -2247,7 +2371,7 @@ function inlineDisplayedStyles(element) {
     'margin', 'padding', 'border', 'border-radius', 'background', 'background-color',
     'color', 'font', 'font-family', 'font-size', 'font-weight', 'line-height',
     'text-align', 'list-style', 'grid-template-columns', 'grid-template-areas', 'grid-area',
-    'gap', 'align-items', 'justify-content', 'flex', 'fill', 'stroke',
+    'gap', 'align-items', 'justify-content', 'flex', 'flex-wrap', 'fill', 'stroke',
     'stroke-width', 'stroke-opacity', 'stroke-linecap', 'stroke-linejoin',
     'opacity', 'overflow-wrap', 'white-space'
   ];
@@ -2625,7 +2749,9 @@ innerSeriesCheckboxes.forEach(input => {
     renderCharts();
   });
 });
-themeMode.addEventListener('change', () => applyTheme(themeMode.value, true));
+[themeMode, mobileThemeMode].forEach(control => {
+  control.addEventListener('change', () => applyTheme(control.value, true));
+});
 
 [emptyLogEntryButton, emptyChartEntryButton, newEntryButton].forEach(button => {
   button.addEventListener('click', startNewEntry);

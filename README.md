@@ -46,7 +46,7 @@ The interface follows Tim Dixon's design system: Roboto type, navy card hierarch
 - Muted Light
 - Muted Dark
 
-Choose a theme from the top-right control. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
+Choose a theme from the top-right control on wider screens or from the Menu on smaller screens. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
 
 The rendered design and accessibility notes are in [docs/accessibility.html](docs/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
 
@@ -58,9 +58,9 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 - Secondary content uses native collapsed sections, reducing noise while keeping every feature reachable by keyboard.
 - Focus follows the visible entry sequence: emotion levels, optional reflection fields, optional note, then Record.
 - Mobile recording uses the same Record control in a sticky action area, avoiding duplicated controls for screen readers.
-- The wheel has a text-based selector and a full reference table.
-- Charts have plain-language summaries, accessible line or bar visuals, and matching data tables.
-- Tables have captions and column headings, and wide tables remain horizontally scrollable on smaller screens.
+- The wheel has a text-based selector and a full reference table; choosing any word in a table row prepares that complete emotion path.
+- Charts have plain-language summaries, visible keys, accessible line or bar visuals, and matching data tables. Shared chart images capture the displayed chart and its key.
+- Tables have captions and column headings, and become labelled row cards on smaller screens to avoid sideways scrolling.
 - Focus indicators and controls work in every colour mode.
 
 ## Data and backups
