@@ -55,12 +55,14 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 - A skip link takes keyboard and screen reader users directly to the main content.
 - App navigation follows the normal keyboard Tab order, identifies the current section, and moves focus to the selected content.
 - On smaller screens, the Menu button exposes its expanded state and Escape closes the navigation and returns focus to the button.
-- Secondary content uses native collapsed sections, reducing noise while keeping every feature reachable by keyboard.
-- Focus follows the visible entry sequence: emotion levels, optional reflection fields, optional note, then Record.
-- Mobile recording uses the same Record control in a sticky action area, avoiding duplicated controls for screen readers.
+- Secondary Entry reference content uses native collapsed sections, while sections in Logs, Charts, and Maintenance expand whenever their tab opens. The optional entry note remains expanded.
+- Focus follows the visible entry sequence: emotion levels, optional reflection fields, the always-visible optional note, then Record. Reset returns focus to the Step 1 heading.
+- Intensity uses labelled decrease and increase buttons with announced values, avoiding reliance on a screen-reader slider gesture.
+- Mobile recording uses the same Record control in an in-flow action area, avoiding overlays and duplicated controls for screen readers.
 - The wheel has a text-based selector and a full reference table; choosing any word in a table row prepares that complete emotion path.
 - Charts have plain-language summaries, visible keys, accessible line or bar visuals, and matching data tables. Shared chart images capture the displayed chart and its key.
 - Tables have captions and column headings, and become labelled row cards on smaller screens to avoid sideways scrolling.
+- Dense log tables use labelled horizontal scrolling instead of cramped wrapping, include text/date/emotion/level filters, and pair emotion names with supplementary category colours.
 - Focus indicators and controls work in every colour mode.
 
 ## Data and backups

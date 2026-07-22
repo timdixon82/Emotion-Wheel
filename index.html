@@ -161,7 +161,12 @@
     label { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; }
     .stacked-label { display: inline-flex; align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
     input[type="checkbox"], input[type="radio"] { width: 1.4rem; height: 1.4rem; flex: 0 0 auto; }
-    input[type="range"] { width: min(100%, 16rem); }
+    .intensity-control {
+      display: grid; grid-template-columns: 3rem minmax(7rem, auto) 3rem;
+      gap: .5rem; align-items: center;
+    }
+    .intensity-control button { justify-content: center; padding: .5rem; font-size: 1.35rem; }
+    .intensity-value { font-weight: 700; min-width: 7rem; text-align: center; }
     textarea {
       width: 100%; min-height: 12rem; padding: .75rem; border: 2px solid var(--border);
       border-radius: .5rem; background: var(--bg); color: var(--text); font: inherit;
@@ -173,7 +178,6 @@
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
     }
-    .range-value { font-weight: 700; min-width: 2ch; }
     .optional-panel[hidden] { display: none; }
     .copy-panel[hidden] { display: none; }
     .result { font-size: 1.1rem; font-weight: 700; }
@@ -235,6 +239,26 @@
     th { background: var(--nav-bg); color: var(--nav-active); }
     caption { text-align: left; font-weight: 700; margin-bottom: .5rem; }
     .scroll-table { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .log-table { overscroll-behavior-inline: contain; }
+    .log-table table { min-width: 88rem; }
+    .log-table.tally-table table { min-width: 52rem; }
+    .log-table th, .log-table td { overflow-wrap: normal; white-space: nowrap; }
+    .log-table th:nth-child(10), .log-table td:nth-child(10),
+    .log-table th:nth-child(11), .log-table td:nth-child(11) {
+      min-width: 14rem; max-width: 22rem; white-space: normal;
+    }
+    .emotion-cell-content { display: inline-flex; align-items: center; gap: .45rem; }
+    .emotion-cell-swatch {
+      width: .85rem; height: .85rem; flex: 0 0 auto; border-radius: 50%;
+      background: var(--emotion-colour); border: 1px solid var(--border);
+    }
+    .log-filters { margin: 1rem 0; }
+    .log-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+    .log-filter-grid label { align-items: stretch; flex-direction: column; }
+    .log-filter-grid input {
+      min-height: 3rem; padding: .5rem; border: 2px solid var(--border); border-radius: .5rem;
+      background: var(--button); color: var(--text); font: inherit;
+    }
     .table-actions { display: flex; flex-wrap: wrap; gap: .5rem; min-width: 12rem; }
     .table-actions button { min-height: 2.75rem; padding: .5rem .75rem; }
     .mobile-cell-label { display: none; }
@@ -302,13 +326,20 @@
       .scroll-table tbody td[colspan] { display: block; }
       .table-actions { min-width: 0; }
       .table-actions button { width: 100%; }
-      body.has-selection { padding-bottom: 5.5rem; }
-      .status.has-selection .actions {
-        position: fixed; z-index: 8; left: .75rem; right: .75rem; bottom: .5rem;
-        margin: 0; padding: .5rem; background: var(--panel); border: 2px solid var(--focus);
-        border-radius: .625rem; box-shadow: 0 4px 18px rgb(0 0 0 / 35%);
+      .scroll-table.log-table { overflow-x: auto; }
+      .scroll-table.log-table table { display: table; width: 100%; }
+      .scroll-table.log-table caption { display: table-caption; width: auto; }
+      .scroll-table.log-table thead { position: static; width: auto; height: auto; margin: 0; overflow: visible; clip: auto; white-space: normal; }
+      .scroll-table.log-table tbody { display: table-row-group; width: auto; }
+      .scroll-table.log-table tr { display: table-row; width: auto; }
+      .scroll-table.log-table tbody tr { border: 0; background: transparent; }
+      .scroll-table.log-table tbody td { display: table-cell; width: auto; border: 1px solid var(--border); }
+      .scroll-table.log-table .mobile-cell-label { display: none; }
+      .entry-actions {
+        display: grid; grid-template-columns: minmax(0, 1fr); padding-top: 1rem;
+        border-top: 2px solid var(--border);
       }
-      .status.has-selection .actions > button { width: auto; flex: 1; justify-content: center; }
+      .entry-actions > button { justify-content: center; }
       .bar-row {
         grid-template-columns: minmax(0, 1fr) auto;
         grid-template-areas: "label value" "bar bar";
@@ -434,7 +465,7 @@
     </details>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
-    <h2 id="inner-heading">Step 1: Inner circle</h2>
+    <h2 id="inner-heading" tabindex="-1">Step 1: Inner circle</h2>
     <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
   </section>
 
@@ -468,18 +499,29 @@
     <div id="intensityPanel" class="optional-panel" hidden>
       <fieldset>
         <legend>Intensity</legend>
-        <p id="intensityScaleHelp" class="visually-hidden">Intensity is measured from 1 out of 10 to 10 out of 10.</p>
+        <p id="intensityScaleHelp">Use the decrease and increase buttons to choose an intensity from 1 to 10.</p>
         <div class="field-row">
-          <span class="stacked-label">
-            <label for="expectedIntensity">Expected intensity</label>
-            <span><input type="range" id="expectedIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="expectedIntensityValue" class="range-value" for="expectedIntensity">5</output></span>
-          </span>
-          <span class="stacked-label">
-            <label for="actualIntensity">Actual intensity</label>
-            <span><input type="range" id="actualIntensity" min="1" max="10" value="5" aria-describedby="intensityScaleHelp"> <output id="actualIntensityValue" class="range-value" for="actualIntensity">5</output></span>
-          </span>
+          <div class="stacked-label" role="group" aria-labelledby="expectedIntensityLabel" aria-describedby="intensityScaleHelp">
+            <span id="expectedIntensityLabel">Expected intensity</span>
+            <div class="intensity-control">
+              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="-1" aria-label="Decrease expected intensity">−</button>
+              <output id="expectedIntensityValue" class="intensity-value" for="expectedIntensity">5 out of 10</output>
+              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="1" aria-label="Increase expected intensity">+</button>
+              <input type="hidden" id="expectedIntensity" value="5">
+            </div>
+          </div>
+          <div class="stacked-label" role="group" aria-labelledby="actualIntensityLabel" aria-describedby="intensityScaleHelp">
+            <span id="actualIntensityLabel">Actual intensity</span>
+            <div class="intensity-control">
+              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="-1" aria-label="Decrease actual intensity">−</button>
+              <output id="actualIntensityValue" class="intensity-value" for="actualIntensity">5 out of 10</output>
+              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="1" aria-label="Increase actual intensity">+</button>
+              <input type="hidden" id="actualIntensity" value="5">
+            </div>
+          </div>
         </div>
-        <p id="intensityAlignment" class="alignment" aria-live="polite">Aligned</p>
+        <p id="intensityAlignment" class="alignment">Aligned</p>
+        <p id="intensityValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
       </fieldset>
     </div>
 
@@ -492,16 +534,14 @@
       </fieldset>
     </div>
 
-    <details id="entryNoteDetails" class="inline-details">
-      <summary>Add an optional note</summary>
-      <div class="details-content comment-field">
-        <label for="entryComment">Note</label>
-        <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
-        <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
-      </div>
-    </details>
+    <section id="entryNoteSection" class="comment-field" aria-labelledby="entryNoteHeading">
+      <h3 id="entryNoteHeading">Add an optional note</h3>
+      <label for="entryComment">Note</label>
+      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
+      <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
+    </section>
 
-    <div class="actions">
+    <div class="actions entry-actions" role="group" aria-label="Entry actions">
       <button type="button" id="recordButton" disabled>Record this emotion</button>
       <button type="button" id="resetButton">Reset selection</button>
     </div>
@@ -543,14 +583,44 @@
       <button type="button" id="undoDeleteButton">Undo delete</button>
     </div>
 
-    <details>
+    <fieldset class="log-filters">
+      <legend>Filter log tables</legend>
+      <div class="log-filter-grid">
+        <label>
+          Search entries
+          <input type="search" id="logSearch" placeholder="Emotion, note, or sensation">
+        </label>
+        <label>
+          Inner-circle emotion
+          <select id="logInnerFilter">
+            <option value="">All emotions</option>
+            <option>Anger</option><option>Disgust</option><option>Sad</option>
+            <option>Happy</option><option>Surprise</option><option>Fear</option>
+          </select>
+        </label>
+        <label>
+          Recorded level
+          <select id="logLevelFilter">
+            <option value="">All levels</option>
+            <option>Inner circle</option><option>Middle circle</option><option>Outer circle</option>
+          </select>
+        </label>
+        <label>From date <input type="date" id="logDateFrom"></label>
+        <label>To date <input type="date" id="logDateTo"></label>
+      </div>
+      <div class="actions"><button type="button" id="clearLogFilters">Clear filters</button></div>
+      <p id="logFilterStatus" class="help" role="status" aria-live="polite"></p>
+    </fieldset>
+
+    <details open>
       <summary>Emotion tally</summary>
       <div class="details-content">
       <div class="actions">
         <button type="button" id="shareTallyButton" disabled>Share tally data</button>
         <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
       </div>
-      <section class="scroll-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded">
+      <p class="help">Swipe or scroll the table horizontally to see every column.</p>
+      <section class="scroll-table log-table tally-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded. Scroll horizontally to see all columns.">
       <table>
         <caption>Number of times each emotion selection has been recorded</caption>
         <thead>
@@ -571,14 +641,15 @@
       </div>
     </details>
 
-    <details>
+    <details open>
       <summary>Recent entries</summary>
       <div class="details-content">
       <div class="actions">
         <button type="button" id="shareLogButton" disabled>Share recent entries</button>
         <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
       </div>
-      <section class="scroll-table" tabindex="0" aria-label="Most recent recorded emotions">
+      <p class="help">Swipe or scroll the table horizontally to see every column.</p>
+      <section class="scroll-table log-table" tabindex="0" aria-label="Most recent recorded emotions. Scroll horizontally to see all columns.">
       <table>
         <caption>Most recent recorded emotions</caption>
         <thead>
@@ -641,7 +712,7 @@
       </label>
     </div>
 
-    <details class="chart-card">
+    <details class="chart-card" open>
       <summary>Most recorded emotions</summary>
       <div class="details-content">
       <div class="section-heading">
@@ -661,7 +732,7 @@
       </div>
     </details>
 
-    <details class="chart-card">
+    <details class="chart-card" open>
       <summary>Recorded level mix</summary>
       <div class="details-content">
       <div class="section-heading">
@@ -681,7 +752,7 @@
       </div>
     </details>
 
-    <details class="chart-card">
+    <details class="chart-card" open>
       <summary>Records over time</summary>
       <div class="details-content">
       <div class="section-heading">
@@ -731,7 +802,7 @@
       </div>
     </details>
 
-    <details class="chart-card">
+    <details class="chart-card" open>
       <summary>Reflection summary</summary>
       <div class="details-content">
       <div class="section-heading">
@@ -790,7 +861,7 @@
   </section>
 
   <section id="maintenancePanel" class="workspace-panel" aria-label="Maintenance" tabindex="-1" hidden>
-  <details id="export-data" class="export-panel">
+  <details id="export-data" class="export-panel" open>
     <summary>Save, load, and manage data</summary>
     <div class="details-content">
     <p class="help">CSV files are for reading and sharing. Backup files are JSON so they can be loaded back into this page. Clearing the local log only affects this browser.</p>
@@ -877,9 +948,9 @@ const selectionText = document.getElementById('selectionText');
 const liveStatus = document.getElementById('liveStatus');
 const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
+const innerHeading = document.getElementById('inner-heading');
 const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
-const recordStatus = recordButton.closest('.status');
 const captureSettingsDetails = document.getElementById('capture-settings');
 const captureModeSummary = document.getElementById('captureModeSummary');
 const phaseOneButton = document.getElementById('phaseOneButton');
@@ -900,6 +971,7 @@ const actualIntensity = document.getElementById('actualIntensity');
 const expectedIntensityValue = document.getElementById('expectedIntensityValue');
 const actualIntensityValue = document.getElementById('actualIntensityValue');
 const intensityAlignment = document.getElementById('intensityAlignment');
+const intensityValueStatus = document.getElementById('intensityValueStatus');
 const copyFallbackPanel = document.getElementById('copyFallbackPanel');
 const copyFallbackHeading = document.getElementById('copyFallbackHeading');
 const copyFallbackHelp = document.getElementById('copyFallbackHelp');
@@ -927,6 +999,13 @@ const emptyLogEntryButton = document.getElementById('emptyLogEntryButton');
 const logActionNotice = document.getElementById('logActionNotice');
 const logActionText = document.getElementById('logActionText');
 const undoDeleteButton = document.getElementById('undoDeleteButton');
+const logSearch = document.getElementById('logSearch');
+const logInnerFilter = document.getElementById('logInnerFilter');
+const logLevelFilter = document.getElementById('logLevelFilter');
+const logDateFrom = document.getElementById('logDateFrom');
+const logDateTo = document.getElementById('logDateTo');
+const clearLogFilters = document.getElementById('clearLogFilters');
+const logFilterStatus = document.getElementById('logFilterStatus');
 const wheelTableBody = document.getElementById('wheelTableBody');
 const chartsSummary = document.getElementById('chartsSummary');
 const emptyChartEntryButton = document.getElementById('emptyChartEntryButton');
@@ -964,7 +1043,6 @@ const innerSeriesControls = document.getElementById('innerSeriesControls');
 const showAllInnerSeries = document.getElementById('showAllInnerSeries');
 const innerSeriesCheckboxes = [...document.querySelectorAll('.inner-series')];
 const entryComment = document.getElementById('entryComment');
-const entryNoteDetails = document.getElementById('entryNoteDetails');
 const recordConfirmation = document.getElementById('recordConfirmation');
 const recordConfirmationHeading = document.getElementById('recordConfirmationHeading');
 const recordConfirmationText = document.getElementById('recordConfirmationText');
@@ -1064,7 +1142,11 @@ function selectAppView(selectedButton, focusContent = false) {
   logsPanel.hidden = currentAppView !== 'logs';
   chartsPanel.hidden = currentAppView !== 'charts';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
-  document.body.classList.toggle('has-selection', currentAppView === 'entry' && Boolean(selectedInner));
+  if (currentAppView !== 'entry') {
+    selectedView.panel.querySelectorAll('details').forEach(details => {
+      details.open = true;
+    });
+  }
   setMenuOpen(false);
 
   if (focusContent) requestAnimationFrame(() => selectedView.panel.focus());
@@ -1211,9 +1293,13 @@ function focusNextRecordingControl(fallback = recordButton) {
   if (focusFirstVisibleControl(appropriatePanel)) return;
   if (focusFirstVisibleControl(intensityPanel)) return;
   if (focusFirstVisibleControl(sensationsPanel)) return;
-  const noteSummary = entryNoteDetails.querySelector('summary');
-  if (noteSummary) return noteSummary.focus();
+  if (entryComment) return entryComment.focus();
   fallback.focus();
+}
+
+function focusEntryStart(announcement) {
+  if (announcement) liveStatus.textContent = announcement;
+  requestAnimationFrame(() => innerHeading.focus());
 }
 
 function renderInner() {
@@ -1269,8 +1355,6 @@ function renderOuter() {
 function renderSelection() {
   recordButton.disabled = !selectedInner;
   recordButton.textContent = editingEntry ? 'Save changes' : 'Record this emotion';
-  recordStatus.classList.toggle('has-selection', Boolean(selectedInner));
-  document.body.classList.toggle('has-selection', currentAppView === 'entry' && Boolean(selectedInner));
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -1291,7 +1375,6 @@ function clearEntryForm() {
   });
   expectedIntensity.value = expectedIntensity.defaultValue;
   actualIntensity.value = actualIntensity.defaultValue;
-  entryNoteDetails.open = false;
   entryComment.value = '';
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
     input.checked = false;
@@ -1311,7 +1394,6 @@ function prepareEntry(entry, announcement, edit = false) {
   if (appropriateInput) appropriateInput.checked = true;
   if (entry.expectedIntensity) expectedIntensity.value = entry.expectedIntensity;
   if (entry.actualIntensity) actualIntensity.value = entry.actualIntensity;
-  entryNoteDetails.open = Boolean(entry.comment);
   entryComment.value = entry.comment || '';
   const sensations = new Set(entry.physicalSensations || []);
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
@@ -1385,10 +1467,13 @@ function getSelectedSensations() {
 }
 
 function renderIntensityAlignment() {
-  expectedIntensityValue.textContent = expectedIntensity.value;
-  actualIntensityValue.textContent = actualIntensity.value;
-  expectedIntensity.setAttribute('aria-valuetext', `${expectedIntensity.value} out of 10`);
-  actualIntensity.setAttribute('aria-valuetext', `${actualIntensity.value} out of 10`);
+  expectedIntensityValue.textContent = `${expectedIntensity.value} out of 10`;
+  actualIntensityValue.textContent = `${actualIntensity.value} out of 10`;
+  document.querySelectorAll('[data-intensity-target]').forEach(button => {
+    const input = document.getElementById(button.dataset.intensityTarget);
+    const nextValue = Number(input.value) + Number(button.dataset.intensityChange);
+    button.disabled = nextValue < 1 || nextValue > 10;
+  });
   const comparison = getIntensityComparison(Number(expectedIntensity.value), Number(actualIntensity.value));
   intensityAlignment.textContent = comparison;
   intensityAlignment.className = `alignment ${comparison === 'Aligned' ? 'good' : 'warn'}`;
@@ -1422,14 +1507,43 @@ function getTally(entries = logEntries) {
   });
 }
 
-function getTallyRows() {
+function getTallyRows(entries = logEntries) {
   const rows = [
     ['Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
   ];
-  for (const item of getTally()) {
+  for (const item of getTally(entries)) {
     rows.push([item.level, item.inner, displayValue(item.middle), displayValue(item.outer), item.count, formatDateTime(item.lastRecorded)]);
   }
   return rows;
+}
+
+function getFilteredLogEntries() {
+  const search = logSearch.value.trim().toLowerCase();
+  return logEntries.filter(entry => {
+    if (logInnerFilter.value && entry.inner !== logInnerFilter.value) return false;
+    if (logLevelFilter.value && getRecordedLevel(entry) !== logLevelFilter.value) return false;
+    const dateKey = getDateKey(entry.timestamp);
+    if (logDateFrom.value && dateKey < logDateFrom.value) return false;
+    if (logDateTo.value && dateKey > logDateTo.value) return false;
+    if (!search) return true;
+    const searchable = [
+      getEntryPathLabel(entry), entry.appropriate, entry.expectedIntensity,
+      entry.actualIntensity, entry.intensityAlignment, entry.comment,
+      ...(entry.physicalSensations || [])
+    ].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
+    return searchable.includes(search);
+  });
+}
+
+function appendEmotionCellContent(cell, emotion) {
+  const content = document.createElement('span');
+  content.className = 'emotion-cell-content';
+  const swatch = document.createElement('span');
+  swatch.className = 'emotion-cell-swatch';
+  swatch.setAttribute('aria-hidden', 'true');
+  swatch.style.setProperty('--emotion-colour', emotionColours[emotion] || 'var(--focus)');
+  content.append(swatch, document.createTextNode(emotion));
+  cell.appendChild(content);
 }
 
 function getEntryPathLabel(entry) {
@@ -2067,11 +2181,13 @@ function formatRowsAsHtmlTable(caption, rows) {
 
 function renderLog() {
   const hasEntries = logEntries.length > 0;
+  const filteredEntries = getFilteredLogEntries();
+  const hasFilteredEntries = filteredEntries.length > 0;
   emptyLogEntryButton.hidden = hasEntries;
-  shareTallyButton.disabled = !hasEntries;
-  shareLogButton.disabled = !hasEntries;
-  copyTallyHtmlButton.disabled = !hasEntries;
-  copyLogHtmlButton.disabled = !hasEntries;
+  shareTallyButton.disabled = !hasFilteredEntries;
+  shareLogButton.disabled = !hasFilteredEntries;
+  copyTallyHtmlButton.disabled = !hasFilteredEntries;
+  copyLogHtmlButton.disabled = !hasFilteredEntries;
   exportTallyButton.disabled = !hasEntries;
   exportLogButton.disabled = !hasEntries;
   saveBackupButton.disabled = !hasEntries;
@@ -2080,17 +2196,21 @@ function renderLog() {
   logSummary.textContent = hasEntries
     ? `${logEntries.length} emotion record${logEntries.length === 1 ? '' : 's'} stored locally.`
     : 'No emotions recorded yet.';
+  logFilterStatus.textContent = hasEntries
+    ? `Showing ${filteredEntries.length} of ${logEntries.length} record${logEntries.length === 1 ? '' : 's'}.`
+    : '';
 
   clearNode(tallyBody);
-  const tally = getTally();
-  if (!hasEntries) {
-    tallyBody.innerHTML = '<tr><td colspan="6">No emotions recorded yet.</td></tr>';
+  const tally = getTally(filteredEntries);
+  if (!hasFilteredEntries) {
+    tallyBody.innerHTML = `<tr><td colspan="6">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
   } else {
     for (const item of tally) {
       const tr = document.createElement('tr');
-      [item.level, item.inner, displayValue(item.middle), displayValue(item.outer), String(item.count), formatDateTime(item.lastRecorded)].forEach(value => {
+      [item.level, item.inner, displayValue(item.middle), displayValue(item.outer), String(item.count), formatDateTime(item.lastRecorded)].forEach((value, index) => {
         const td = document.createElement('td');
-        td.textContent = value;
+        if (index === 1) appendEmotionCellContent(td, value);
+        else td.textContent = value;
         tr.appendChild(td);
       });
       tallyBody.appendChild(tr);
@@ -2098,10 +2218,10 @@ function renderLog() {
   }
 
   clearNode(logBody);
-  if (!hasEntries) {
-    logBody.innerHTML = '<tr><td colspan="12">No emotions recorded yet.</td></tr>';
+  if (!hasFilteredEntries) {
+    logBody.innerHTML = `<tr><td colspan="12">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
   } else {
-    const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+    const recent = [...filteredEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
       const tr = document.createElement('tr');
       [
@@ -2116,9 +2236,10 @@ function renderLog() {
         displayValue(entry.intensityAlignment),
         entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
         displayValue(entry.comment)
-      ].forEach(value => {
+      ].forEach((value, index) => {
         const td = document.createElement('td');
-        td.textContent = value;
+        if (index === 2) appendEmotionCellContent(td, value);
+        else td.textContent = value;
         tr.appendChild(td);
       });
       const actionCell = document.createElement('td');
@@ -2718,6 +2839,18 @@ function copyHtmlWithSelection(html, text) {
 [entryTab, logsTab, chartsTab, maintenanceTab].forEach(button => {
   button.addEventListener('click', () => selectAppView(button, true));
 });
+[logSearch, logInnerFilter, logLevelFilter, logDateFrom, logDateTo].forEach(control => {
+  control.addEventListener(control === logSearch ? 'input' : 'change', renderLog);
+});
+clearLogFilters.addEventListener('click', () => {
+  logSearch.value = '';
+  logInnerFilter.value = '';
+  logLevelFilter.value = '';
+  logDateFrom.value = '';
+  logDateTo.value = '';
+  renderLog();
+  logSearch.focus();
+});
 menuToggle.addEventListener('click', () => {
   setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true');
 });
@@ -2828,8 +2961,15 @@ includeAllSensations.addEventListener('change', () => {
   setSettings({ includeAllSensations: includeAllSensations.checked });
 });
 
-[expectedIntensity, actualIntensity].forEach(input => {
-  input.addEventListener('input', renderIntensityAlignment);
+document.querySelectorAll('[data-intensity-target]').forEach(button => {
+  button.addEventListener('click', () => {
+    const input = document.getElementById(button.dataset.intensityTarget);
+    const change = Number(button.dataset.intensityChange);
+    input.value = String(Math.min(10, Math.max(1, Number(input.value) + change)));
+    renderIntensityAlignment();
+    const label = input === expectedIntensity ? 'Expected intensity' : 'Actual intensity';
+    intensityValueStatus.textContent = `${label}, ${input.value} out of 10.`;
+  });
 });
 
 selectFallbackTextButton.addEventListener('click', selectFallbackText);
@@ -2894,16 +3034,16 @@ resetButton.addEventListener('click', () => {
   editingEntry = null;
   clearEntryForm();
   renderAll();
-  innerButtons.querySelector('button')?.focus();
+  focusEntryStart('Selection reset. Start again at Step 1: Inner circle.');
 });
 
 shareTallyButton.addEventListener('click', () => {
-  shareRows('Emotion tally', getTallyRows());
+  shareRows('Filtered emotion tally', getTallyRows(getFilteredLogEntries()));
 });
 
 shareLogButton.addEventListener('click', () => {
-  const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
-  shareRows('Recent emotion entries', getLogRows(recent));
+  const recent = [...getFilteredLogEntries()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+  shareRows('Filtered recent emotion entries', getLogRows(recent));
 });
 
 shareWheelButton.addEventListener('click', () => {
@@ -2945,12 +3085,12 @@ shareReflectionChartButton.addEventListener('click', () => {
 });
 
 copyTallyHtmlButton.addEventListener('click', () => {
-  copyRowsAsHtmlTable('Emotion tally', 'Number of times each emotion selection has been recorded', getTallyRows());
+  copyRowsAsHtmlTable('Filtered emotion tally', 'Filtered number of times each emotion selection has been recorded', getTallyRows(getFilteredLogEntries()));
 });
 
 copyLogHtmlButton.addEventListener('click', () => {
-  const recent = [...logEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
-  copyRowsAsHtmlTable('Recent emotion entries', 'Most recent recorded emotions', getLogRows(recent));
+  const recent = [...getFilteredLogEntries()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
+  copyRowsAsHtmlTable('Filtered recent emotion entries', 'Most recent recorded emotions matching the current filters', getLogRows(recent));
 });
 
 copyWheelHtmlButton.addEventListener('click', () => {
