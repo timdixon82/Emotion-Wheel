@@ -20,9 +20,9 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 
 ## Privacy
 
-Your entries, optional notes, and settings are stored only in local storage in the browser on the device you are using. The app has no server and does not send data anywhere.
+Your entries, optional notes, and settings are stored only in local storage in the browser on the device you are using. They are not sent to a server unless you deliberately export, copy, or share them. The site uses GoatCounter for anonymous pageview statistics; it does not receive your emotion records or track actions within an entry.
 
-Data only leaves the browser when you deliberately export a CSV or JSON backup, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
+Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
 
 Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
 
