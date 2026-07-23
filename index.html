@@ -450,7 +450,7 @@
     <details id="full-table">
       <summary>Emotion reference table</summary>
       <div class="details-content">
-        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry, then add any reflection details or note before recording.</p>
+        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The round colour marker identifies the inner-circle emotion category; the written label carries the same information without relying on colour.</p>
         <div class="actions">
           <button type="button" id="shareWheelButton">Share full table</button>
           <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
@@ -2301,11 +2301,12 @@ function renderFullEmotionTable() {
       liveStatus.textContent = `Prepared ${row.join(' then ')}. Add optional reflection details or a note, then record.`;
       focusNextRecordingControl();
     };
-    row.forEach(value => {
+    row.forEach((value, index) => {
       const td = document.createElement('td');
       const useButton = document.createElement('button');
       useButton.type = 'button';
-      useButton.textContent = value;
+      if (index === 0) appendEmotionCellContent(useButton, value);
+      else useButton.textContent = value;
       useButton.className = 'table-path-button';
       useButton.setAttribute('aria-label', `Use ${value} to prepare ${row.join(', ')} as a new entry`);
       useButton.addEventListener('click', preparePath);
