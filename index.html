@@ -163,7 +163,7 @@
     .stacked-label { display: inline-flex; align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
     input[type="checkbox"], input[type="radio"] { width: 1.4rem; height: 1.4rem; flex: 0 0 auto; }
     .intensity-control {
-      display: grid; grid-template-columns: 3rem minmax(7rem, auto) 3rem;
+      display: grid; width: fit-content; grid-template-columns: 3rem minmax(7rem, auto) 3rem;
       gap: .5rem; align-items: center;
     }
     .intensity-control button { justify-content: center; padding: .5rem; font-size: 1.35rem; }
@@ -578,12 +578,17 @@
       </fieldset>
     </div>
     <div id="bucketPanel" class="optional-panel" hidden>
-      <label for="bucketLevel">Emotion bucket level</label>
-      <p id="bucketHelp" class="help">How full does your emotional bucket feel? Choose 1–10, where 1 is the lowest level and 10 is full. This is separate from emotion intensity and is optional.</p>
-      <select id="bucketLevel" aria-describedby="bucketHelp">
-        <option value="">Not recorded</option>
-        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10 — Full</option>
-      </select>
+      <input type="hidden" id="bucketLevel" value="">
+      <fieldset aria-describedby="bucketHelp">
+        <legend>Emotion bucket level</legend>
+        <p id="bucketHelp" class="help">How full does your emotional bucket feel? Choose 1–10, where 1 is the lowest level and 10 is full. This is separate from emotion intensity. It starts at 5 when enabled for capture.</p>
+        <div class="intensity-control" role="group" aria-label="Choose emotion bucket level">
+          <button type="button" id="decreaseBucketLevel" aria-label="Decrease emotion bucket level">−</button>
+          <output id="bucketLevelValue" class="intensity-value" for="bucketLevel">5 out of 10</output>
+          <button type="button" id="increaseBucketLevel" aria-label="Increase emotion bucket level">+</button>
+        </div>
+        <p id="bucketValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+      </fieldset>
     </div>
 
     <section id="entryNoteSection" class="comment-field" aria-labelledby="entryNoteHeading">
@@ -1504,6 +1509,26 @@ newTag.addEventListener('keydown', event => {
   if (event.key === 'Enter') { event.preventDefault(); document.getElementById('addTagButton').click(); }
 });
 
+function renderBucketLevel() {
+  if (captureSettings.collectBucketLevel && !bucketLevel.value) bucketLevel.value = '5';
+  const value = Number(bucketLevel.value);
+  document.getElementById('bucketLevelValue').textContent = `${value || 5} out of 10${value === 10 ? ' — Full' : ''}`;
+  document.getElementById('decreaseBucketLevel').setAttribute('aria-disabled', !bucketLevel.value || value <= 1 ? 'true' : 'false');
+  document.getElementById('increaseBucketLevel').setAttribute('aria-disabled', value >= 10 ? 'true' : 'false');
+}
+
+function changeBucketLevel(change) {
+  const value = Number(bucketLevel.value);
+  if (change < 0 && (!bucketLevel.value || value <= 1) || change > 0 && value >= 10) return;
+  bucketLevel.value = String(Math.min(10, Math.max(1, value + change)));
+  renderBucketLevel();
+  document.getElementById('bucketValueStatus').textContent = `Emotion bucket level, ${bucketLevel.value} out of 10${bucketLevel.value === '10' ? ', full' : ''}.`;
+}
+
+document.getElementById('decreaseBucketLevel').addEventListener('click', () => changeBucketLevel(-1));
+document.getElementById('increaseBucketLevel').addEventListener('click', () => changeBucketLevel(1));
+
+
 function renderSettings() {
   const modeLabels = {
     phase1: 'Phase 1: Emotion only',
@@ -1519,6 +1544,7 @@ function renderSettings() {
   collectBucketLevel.checked = captureSettings.collectBucketLevel;
   tagsPanel.hidden = !captureSettings.collectTags;
   bucketPanel.hidden = !captureSettings.collectBucketLevel;
+  renderBucketLevel();
   renderTags();
   includeAllSensations.checked = captureSettings.includeAllSensations;
   appropriatePanel.hidden = !captureSettings.collectAppropriate;
@@ -1558,7 +1584,7 @@ function focusFirstButton(container, fallback) {
 
 function focusFirstVisibleControl(panel) {
   if (panel.hidden) return false;
-  const control = panel.querySelector('input, button, textarea, select');
+  const control = panel.querySelector('input:not([type="hidden"]), button, textarea, select');
   if (!control) return false;
   control.focus();
   return true;
@@ -1654,6 +1680,7 @@ function clearEntryForm() {
   actualIntensity.value = actualIntensity.defaultValue;
   entryComment.value = '';
   bucketLevel.value = '';
+  renderBucketLevel();
   tagsButtons.querySelectorAll('input').forEach(input => { input.checked = false; });
   newTag.value = '';
   tagStatus.textContent = '';
@@ -1678,6 +1705,7 @@ function prepareEntry(entry, announcement, edit = false) {
   if (entry.actualIntensity) actualIntensity.value = entry.actualIntensity;
   entryComment.value = entry.comment || '';
   bucketLevel.value = entry.bucketLevel || '';
+  renderBucketLevel();
   renderTags(entry.tags || []);
   renderSensations(entry.physicalSensations || []);
   const sensations = new Set(entry.physicalSensations || []);
@@ -1749,7 +1777,7 @@ function renderIntensityAlignment() {
   document.querySelectorAll('[data-intensity-target]').forEach(button => {
     const input = document.getElementById(button.dataset.intensityTarget);
     const nextValue = Number(input.value) + Number(button.dataset.intensityChange);
-    button.disabled = nextValue < 1 || nextValue > 10;
+    button.setAttribute('aria-disabled', nextValue < 1 || nextValue > 10 ? 'true' : 'false');
   });
   const comparison = getIntensityComparison(Number(expectedIntensity.value), Number(actualIntensity.value));
   intensityAlignment.textContent = comparison;
@@ -3557,6 +3585,7 @@ includeAllSensations.addEventListener('change', () => {
 
 document.querySelectorAll('[data-intensity-target]').forEach(button => {
   button.addEventListener('click', () => {
+    if (button.getAttribute('aria-disabled') === 'true') return;
     const input = document.getElementById(button.dataset.intensityTarget);
     const change = Number(button.dataset.intensityChange);
     input.value = String(Math.min(10, Math.max(1, Number(input.value) + change)));
