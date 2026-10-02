@@ -253,8 +253,18 @@
       width: .85rem; height: .85rem; flex: 0 0 auto; border-radius: 50%;
       background: var(--emotion-colour); border: 1px solid var(--border);
     }
+    .backup-version { white-space: pre-wrap; overflow-wrap: anywhere; }
+    #dataUpgradeDialog { background: var(--panel); color: var(--text); border: 2px solid var(--border); border-radius: .625rem; padding: 1.25rem; margin-bottom: 1.25rem; }
+    #backupConflictDialog { max-width: min(48rem, 90vw); max-height: 85vh; overflow: auto; background: var(--bg); color: var(--text); border: 2px solid var(--border); border-radius: .625rem; padding: 1.25rem; }
     .log-filters { margin: 1rem 0; }
-    .log-filter-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
+    .log-filter-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: .75rem; }
+    .log-filter-grid details { margin: 0; box-shadow: none; }
+    .log-filter-grid details fieldset { margin: .75rem 0; padding: 0; border: 0; min-width: 0; }
+    .log-filter-grid details fieldset legend { padding: 0; font-weight: 700; }
+    .tag-match-row { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem; margin-top: .75rem; }
+    .log-filter-grid .tag-match-row label { display: flex; flex-direction: row; align-items: center; gap: .75rem; flex-wrap: wrap; }
+    .log-filter-grid .checkbox-grid label { flex-direction: row; align-items: center; min-height: 2.75rem; }
+    .log-filter-grid input[type="checkbox"] { min-height: auto; padding: 0; flex: 0 0 auto; }
     .log-filter-grid label { align-items: stretch; flex-direction: column; }
     .log-filter-grid input {
       min-height: 3rem; padding: .5rem; border: 2px solid var(--border); border-radius: .5rem;
@@ -406,7 +416,25 @@
   </nav>
 </header>
 <main id="main-content" tabindex="-1">
-  <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 when you want guided reflection.</p>
+  <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
+    <h2 id="dataUpgradeHeading">New features are here!</h2>
+    <p id="dataUpgradeDescription">We’re updating the app to bring you new features and more ways to explore your emotions. To make this possible, your data schema needs updating. Let’s back up your data before we start.</p>
+    <p>Download your backup below, then confirm it has saved to complete the update. All editing and data imports are disabled until the update is complete. You can still review and export your existing records.</p>
+    <section aria-labelledby="dataUpgradeWhatsNewHeading">
+      <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
+      <ul>
+        <li>More ways to capture context: select multiple tags, create your own tags and record how full your emotion bucket feels from 1 to 10.</li>
+        <li>Improved charts to explore your most recorded tags and how emotions relate to tags and bucket levels.</li>
+        <li>Improved Logs and filters: combine dates, search, multiple emotions, tags, bucket levels, expected and actual intensity, and alignment.</li>
+        <li>Choose Custom on Charts to use the same filters for your analysis.</li>
+      </ul>
+      <p>These extra capture fields are optional. Your existing records and older backups remain supported.</p>
+    </section>
+    <button type="button" id="downloadBeforeUpgrade">Download original data backup</button>
+    <button type="button" id="continueDataUpgrade" disabled>Backup saved — update</button>
+    <p id="dataUpgradeStatus" role="status"></p>
+  </section>
+  <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 for guided reflection or Phase 3 for tags and your emotion bucket level.</p>
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
     <details id="capture-settings" class="settings-panel">
@@ -416,6 +444,7 @@
         <div class="actions" role="group" aria-label="Capture presets">
           <button type="button" id="phaseOneButton">Phase 1</button>
           <button type="button" id="phaseTwoButton">Phase 2</button>
+          <button type="button" id="phaseThreeButton">Phase 3</button>
           <button type="button" id="customButton">Custom</button>
         </div>
         <div id="customSettingsPanel" class="optional-panel" hidden>
@@ -425,6 +454,8 @@
               <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
               <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
               <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
+              <label><input type="checkbox" id="collectTags"> Tags</label>
+              <label><input type="checkbox" id="collectBucketLevel"> Emotion bucket level</label>
             </div>
           </fieldset>
         </div>
@@ -535,6 +566,26 @@
       </fieldset>
     </div>
 
+    <div id="tagsPanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Tags</legend>
+        <p id="tagsHelp" class="help">Choose any number of tags for the context of this entry. Tags are optional and saved on this device.</p>
+        <div id="tagsButtons" class="checkbox-grid" aria-describedby="tagsHelp"></div>
+        <label for="newTag">Create a tag</label>
+        <input type="text" id="newTag" maxlength="60" placeholder="New tag name">
+        <button type="button" id="addTagButton">Add and select tag</button>
+        <p id="tagStatus" role="status" aria-live="polite"></p>
+      </fieldset>
+    </div>
+    <div id="bucketPanel" class="optional-panel" hidden>
+      <label for="bucketLevel">Emotion bucket level</label>
+      <p id="bucketHelp" class="help">How full does your emotional bucket feel? Choose 1–10, where 1 is the lowest level and 10 is full. This is separate from emotion intensity and is optional.</p>
+      <select id="bucketLevel" aria-describedby="bucketHelp">
+        <option value="">Not recorded</option>
+        <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10 — Full</option>
+      </select>
+    </div>
+
     <section id="entryNoteSection" class="comment-field" aria-labelledby="entryNoteHeading">
       <h3 id="entryNoteHeading">Add an optional note</h3>
       <label for="entryComment">Note</label>
@@ -589,16 +640,13 @@
       <div class="log-filter-grid">
         <label>
           Search entries
-          <input type="search" id="logSearch" placeholder="Emotion, note, or sensation">
+          <input type="search" id="logSearch" placeholder="Emotion, note, sensation, tag, or bucket level">
         </label>
-        <label>
-          Inner-circle emotion
-          <select id="logInnerFilter">
-            <option value="">All emotions</option>
-            <option>Anger</option><option>Disgust</option><option>Sad</option>
-            <option>Happy</option><option>Surprise</option><option>Fear</option>
-          </select>
-        </label>
+        <label>From date <input type="date" id="logDateFrom"></label>
+        <label>To date <input type="date" id="logDateTo"></label>
+        <details id="advancedLogFilters"><summary>Advanced filters</summary>
+          <div class="log-filter-grid details-content">
+<fieldset><legend>Emotions</legend><p class="help">No selection means all values. Choose any number.</p><div id="logInnerFilter" class="checkbox-grid"><label><input type="checkbox" value="Anger"> Anger</label><label><input type="checkbox" value="Disgust"> Disgust</label><label><input type="checkbox" value="Sad"> Sad</label><label><input type="checkbox" value="Happy"> Happy</label><label><input type="checkbox" value="Surprise"> Surprise</label><label><input type="checkbox" value="Fear"> Fear</label></div><button type="button" data-clear-filter="logInnerFilter">Clear emotions</button></fieldset>
         <label>
           Recorded level
           <select id="logLevelFilter">
@@ -606,8 +654,14 @@
             <option>Inner circle</option><option>Middle circle</option><option>Outer circle</option>
           </select>
         </label>
-        <label>From date <input type="date" id="logDateFrom"></label>
-        <label>To date <input type="date" id="logDateTo"></label>
+        <label>Recorded emotion path <select id="logPathFilter"><option value="">All paths</option></select></label>
+        <fieldset><legend>Tags</legend><p class="help">No selection means all values. Choose any number.</p><div id="logTagFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logTagFilter">Clear tags</button><label>Tag matching <select id="logTagMatch"><option value="any">Any selected tag</option><option value="all">All selected tags</option></select></label></div></fieldset>
+        <fieldset><legend>Bucket levels</legend><p class="help">No selection means all values. Choose any number.</p><div id="logBucketFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10 — Full</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logBucketFilter">Clear bucket levels</button></fieldset>
+<fieldset><legend>Expected intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logExpectedFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logExpectedFilter">Clear expected intensity</button></fieldset>
+<fieldset><legend>Actual intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logActualFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logActualFilter">Clear actual intensity</button></fieldset>
+<fieldset><legend>Intensity alignment</legend><p class="help">No selection means all values. Choose any number.</p><div id="logAlignmentFilter" class="checkbox-grid"><label><input type="checkbox" value="Aligned"> Aligned</label><label><input type="checkbox" value="Not aligned"> Not aligned</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logAlignmentFilter">Clear intensity alignment</button></fieldset>
+          </div>
+        </details>
       </div>
       <div class="actions"><button type="button" id="clearLogFilters">Clear filters</button></div>
       <p id="logFilterStatus" class="help" role="status" aria-live="polite"></p>
@@ -665,12 +719,14 @@
             <th scope="col">Actual intensity</th>
             <th scope="col">Alignment</th>
             <th scope="col">Physical sensations</th>
+            <th scope="col">Tags</th>
+            <th scope="col">Emotion bucket level</th>
             <th scope="col">Note</th>
             <th scope="col">Actions</th>
           </tr>
         </thead>
         <tbody id="logBody">
-          <tr><td colspan="12">No emotions recorded yet.</td></tr>
+          <tr><td colspan="14">No emotions recorded yet.</td></tr>
         </tbody>
       </table>
       </section>
@@ -692,6 +748,7 @@
           <option value="day">A day</option>
           <option value="week">A week</option>
           <option value="month">A month</option>
+          <option value="custom">Custom</option>
         </select>
       </label>
       <div class="period-navigator">
@@ -713,6 +770,40 @@
       </label>
     </div>
 
+    <section id="chartAdvancedFilters" aria-labelledby="chartAdvancedHeading" hidden>
+      <h3 id="chartAdvancedHeading">Advanced filters</h3>
+      <p class="help">Filter all charts using search, dates and any combination of the fields below.</p>
+      <div id="chartFilterControls"></div>
+    </section>
+
+    <details class="chart-card" open>
+      <summary>Most recorded tags</summary><div class="details-content">
+      <h3>Most recorded tags</h3>
+      <p id="tagRankingSummary" class="help" aria-live="polite"></p>
+      <p class="help">Counts and percentages use all entries in the selected period. Each tag counts once per entry; totals can exceed 100%. Select a bar to review matching logs.</p>
+      <ul id="tagRankingChart" class="bar-list" aria-label="Tag ranking"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Tag ranking data"><table><caption>Entries by tag</caption><thead><tr><th scope="col">Tag</th><th scope="col">Entries</th><th scope="col">Percentage of entries</th></tr></thead><tbody id="tagRankingBody"></tbody></table></section>
+      </div>
+    </details>
+    <details class="chart-card" open>
+      <summary>Emotions by tag</summary><div class="details-content">
+      <h3>Emotions by tag</h3>
+      <label>Choose tag <select id="analysisTag"><option value="">All tags</option></select></label>
+      <label>Emotion detail <select id="analysisDetail"><option value="inner">Inner-circle categories</option><option value="path">Recorded emotion paths</option></select></label>
+      <p id="tagEmotionSummary" class="help" aria-live="polite"></p>
+      <ul id="tagEmotionChart" class="bar-list" aria-label="Emotions for selected tag"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Emotions by tag data"><table><caption>Emotions for selected tag</caption><thead><tr><th scope="col">Emotion</th><th scope="col">Entries</th><th scope="col">Percentage of matching entries</th></tr></thead><tbody id="tagEmotionBody"></tbody></table></section>
+      </div>
+    </details>
+    <details class="chart-card" open>
+      <summary>Emotions by bucket level</summary><div class="details-content">
+      <h3>Emotions by bucket level</h3>
+      <label>Filter by tag <select id="bucketAnalysisTag"><option value="">All tags</option></select></label>
+      <p id="bucketEmotionSummary" class="help" aria-live="polite"></p>
+      <p class="help">Cell numbers show entry counts; darker cells mean more entries. 10 is full. Select a cell to review matching logs. Detailed emotions are grouped under their inner-circle category.</p>
+      <section class="scroll-table log-table" tabindex="0" aria-label="Emotion and bucket level heatmap. Scroll horizontally to see every level."><table><caption>Emotion counts at each bucket level</caption><thead id="bucketEmotionHead"></thead><tbody id="bucketEmotionBody"></tbody></table></section>
+      </div>
+    </details>
     <details class="chart-card" open>
       <summary>Most recorded emotions</summary>
       <div class="details-content">
@@ -845,6 +936,20 @@
         </table>
       </section>
 
+      <h4>Tags</h4>
+      <p class="help">Each selected tag counts once per entry, so tag totals can exceed the number of records.</p>
+      <p id="tagsChartSummary" class="help" aria-live="polite"></p>
+      <ul id="tagsChart" class="bar-list" aria-label="Tags" aria-describedby="tagsChartSummary"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Tags">
+        <table><caption>Tags</caption><thead><tr><th scope="col">Tag</th><th scope="col">Records</th></tr></thead><tbody id="tagsChartBody"></tbody></table>
+      </section>
+      <h4>Emotion bucket levels</h4>
+      <p class="help">Levels use a scale from 1 to 10, where 10 is full. Missing levels are excluded from the average.</p>
+      <p id="bucketChartSummary" class="help" aria-live="polite"></p>
+      <ul id="bucketChart" class="bar-list" aria-label="Emotion bucket levels" aria-describedby="bucketChartSummary"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Emotion bucket levels">
+        <table><caption>Emotion bucket levels</caption><thead><tr><th scope="col">Level</th><th scope="col">Records</th></tr></thead><tbody id="bucketChartBody"></tbody></table>
+      </section>
       <h4>Most common physical sensations</h4>
       <p id="sensationsChartSummary" class="help" aria-live="polite">No physical sensations recorded yet.</p>
       <ul id="sensationsChart" class="bar-list" aria-label="Physical sensation counts" aria-describedby="sensationsChartSummary"></ul>
@@ -880,6 +985,19 @@
     </div>
   </details>
   </section>
+
+  <dialog id="backupConflictDialog" aria-labelledby="backupConflictHeading">
+    <h2 id="backupConflictHeading">Choose which record to keep</h2>
+    <p>This backup contains different data for the same record. Review both versions before continuing.</p>
+    <h3>Current record</h3><p id="backupCurrentVersion" class="backup-version"></p>
+    <h3>Backup record</h3><p id="backupIncomingVersion" class="backup-version"></p>
+    <form method="dialog" class="actions">
+      <button type="submit" value="local">Keep current record</button>
+      <button type="submit" value="incoming">Use backup record</button>
+      <button type="submit" value="both">Keep both records</button>
+      <button type="submit" value="cancel">Cancel import</button>
+    </form>
+  </dialog>
 </main>
 
 <footer class="site-footer">
@@ -899,6 +1017,8 @@
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
+const dataSchemaVersion = 2;
+const schemaVersionKey = `${storageKey}SchemaVersion`;
 const settingsKey = 'emotionWheelCaptureSettingsV1';
 const emotionColours = {
   Anger: '#7f1d1d',
@@ -934,11 +1054,15 @@ const sensationAliases = {
   Terrified: 'Fear'
 };
 
+const defaultTags = ['Work', 'Family', 'Relationship', 'Friends', 'Health', 'Sleep', 'Money', 'Home', 'Exercise', 'Social', 'Study', 'Travel', 'Caring responsibilities'];
+
 const defaultSettings = {
   captureMode: 'phase1',
   collectAppropriate: false,
   collectIntensity: false,
   collectSensations: false,
+  collectTags: false,
+  collectBucketLevel: false,
   includeAllSensations: false
 };
 
@@ -956,6 +1080,15 @@ const captureSettingsDetails = document.getElementById('capture-settings');
 const captureModeSummary = document.getElementById('captureModeSummary');
 const phaseOneButton = document.getElementById('phaseOneButton');
 const phaseTwoButton = document.getElementById('phaseTwoButton');
+const phaseThreeButton = document.getElementById('phaseThreeButton');
+const collectTags = document.getElementById('collectTags');
+const collectBucketLevel = document.getElementById('collectBucketLevel');
+const tagsPanel = document.getElementById('tagsPanel');
+const tagsButtons = document.getElementById('tagsButtons');
+const newTag = document.getElementById('newTag');
+const tagStatus = document.getElementById('tagStatus');
+const bucketPanel = document.getElementById('bucketPanel');
+const bucketLevel = document.getElementById('bucketLevel');
 const customButton = document.getElementById('customButton');
 const customSettingsPanel = document.getElementById('customSettingsPanel');
 const collectAppropriate = document.getElementById('collectAppropriate');
@@ -1000,6 +1133,13 @@ const emptyLogEntryButton = document.getElementById('emptyLogEntryButton');
 const logActionNotice = document.getElementById('logActionNotice');
 const logActionText = document.getElementById('logActionText');
 const undoDeleteButton = document.getElementById('undoDeleteButton');
+const logPathFilter = document.getElementById('logPathFilter');
+const logExpectedFilter = document.getElementById('logExpectedFilter');
+const logActualFilter = document.getElementById('logActualFilter');
+const logAlignmentFilter = document.getElementById('logAlignmentFilter');
+const logTagMatch = document.getElementById('logTagMatch');
+const logTagFilter = document.getElementById('logTagFilter');
+const logBucketFilter = document.getElementById('logBucketFilter');
 const logSearch = document.getElementById('logSearch');
 const logInnerFilter = document.getElementById('logInnerFilter');
 const logLevelFilter = document.getElementById('logLevelFilter');
@@ -1083,6 +1223,8 @@ let selectedMiddle = null;
 let selectedOuter = null;
 let captureSettings = loadSettings();
 let logEntries = loadLog();
+const upgradeDisabledControls = new Map();
+let upgradeEditingObserver;
 let pendingLoadMode = 'merge';
 let lastRecordedEntry = null;
 let deletedEntryForUndo = null;
@@ -1144,7 +1286,7 @@ function selectAppView(selectedButton, focusContent = false) {
   chartsPanel.hidden = currentAppView !== 'charts';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
   if (currentAppView !== 'entry') {
-    selectedView.panel.querySelectorAll('details').forEach(details => {
+    selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters)').forEach(details => {
       details.open = true;
     });
   }
@@ -1157,13 +1299,87 @@ function loadLog() {
   try {
     const raw = localStorage.getItem(storageKey);
     const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed;
   } catch (error) {
     return [];
   }
 }
 
+function migrateLocalDataset() {
+  const raw = localStorage.getItem(storageKey);
+  const entries = raw ? JSON.parse(raw) : [];
+  if (!Array.isArray(entries)) throw new Error('Unrecognised local data format');
+  const migrated = entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
+  // Preserve the exact original before any write; a failed snapshot blocks migration.
+  if (!localStorage.getItem(`${storageKey}BeforeSchemaMigration`)) localStorage.setItem(`${storageKey}BeforeSchemaMigration`, JSON.stringify({ schemaVersion: Number(localStorage.getItem(schemaVersionKey)) || 1, rawEntries: raw, rawSettings: localStorage.getItem(settingsKey) }));
+  localStorage.setItem(storageKey, JSON.stringify(migrated));
+  localStorage.setItem(schemaVersionKey, String(dataSchemaVersion));
+  logEntries = migrated;
+}
+
+function dataSchemaMatches() {
+  try { return localStorage.getItem(schemaVersionKey) === String(dataSchemaVersion); }
+  catch (error) { return false; }
+}
+
+function lockDataEditing() {
+  if (dataSchemaMatches()) return;
+  const selector = '#entryPanel input, #entryPanel select, #entryPanel textarea, #entryPanel button, #logBody .table-actions button, #loadMergeButton, #loadReplaceButton, #loadBackupInput, #clearLogButton, #undoDeleteButton';
+  document.querySelectorAll(selector).forEach(control => {
+    if (!upgradeDisabledControls.has(control)) upgradeDisabledControls.set(control, control.disabled);
+    if (!control.disabled) control.disabled = true;
+  });
+}
+
+function checkLocalDataSchema() {
+  const raw = localStorage.getItem(storageKey);
+  const version = Number(localStorage.getItem(schemaVersionKey)) || 1;
+  if (!raw) { localStorage.setItem(schemaVersionKey, String(dataSchemaVersion)); return; }
+  if (dataSchemaMatches()) {
+    if (new URLSearchParams(window.location.search).get('preview') === 'upgrade-banner') {
+      document.getElementById('dataUpgradeDialog').hidden = false;
+      document.getElementById('downloadBeforeUpgrade').addEventListener('click', saveBackupFile);
+      document.getElementById('continueDataUpgrade').disabled = true;
+      document.getElementById('dataUpgradeStatus').textContent = 'Banner preview only. Your data is already up to date; no upgrade will run and editing remains available.';
+    }
+    return;
+  }
+  const dialog = document.getElementById('dataUpgradeDialog');
+  const download = document.getElementById('downloadBeforeUpgrade');
+  const proceed = document.getElementById('continueDataUpgrade');
+  const status = document.getElementById('dataUpgradeStatus');
+  if (version > dataSchemaVersion) {
+    status.textContent = 'This dataset was saved by a newer version of the app. Please use that version to avoid changing it.';
+    download.hidden = true;
+  }
+  lockDataEditing();
+  upgradeEditingObserver = new MutationObserver(lockDataEditing);
+  upgradeEditingObserver.observe(document.getElementById('main-content'), { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
+  download.addEventListener('click', () => {
+    const originalEntries = JSON.parse(raw);
+    downloadText('emotion-wheel-before-update.json', JSON.stringify({ version: 2, schemaVersion: version, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
+    proceed.disabled = false;
+    status.textContent = 'Backup download requested. Check the file has saved before selecting “Backup saved — update”.';
+  });
+  proceed.addEventListener('click', () => {
+    try {
+      migrateLocalDataset();
+      if (!dataSchemaMatches()) throw new Error('Data schema version did not match after migration');
+      upgradeEditingObserver.disconnect();
+      upgradeDisabledControls.forEach((disabled, control) => { control.disabled = disabled; });
+      upgradeDisabledControls.clear();
+      renderAll();
+      dialog.hidden = true;
+      liveStatus.textContent = 'Data upgrade complete. Editing is now available.';
+    }
+    catch (error) { status.textContent = 'The update could not complete. Your original data is retained in the local recovery snapshot if a write occurred. Keep your downloaded backup and free some browser storage before trying again.'; }
+  });
+  dialog.hidden = false;
+}
+
 function saveLog() {
+  if (!dataSchemaMatches()) throw new Error('Complete the data upgrade before changing records.');
   localStorage.setItem(storageKey, JSON.stringify(logEntries));
 }
 
@@ -1177,6 +1393,7 @@ function loadSettings() {
 }
 
 function saveSettings() {
+  if (!dataSchemaMatches()) throw new Error('Complete the data upgrade before changing capture settings.');
   localStorage.setItem(settingsKey, JSON.stringify(captureSettings));
 }
 
@@ -1191,6 +1408,7 @@ function normalizeSettings(settings) {
       normalized.captureMode = 'custom';
     }
   }
+  normalized.tags = normalizeTags(normalized.tags);
   return normalized;
 }
 
@@ -1237,16 +1455,71 @@ function makeButton(label, onClick, selected, category) {
   return button;
 }
 
+function normalizeTags(tags) {
+  const unique = new Map();
+  (Array.isArray(tags) ? tags : []).forEach(tag => {
+    if (typeof tag !== 'string') return;
+    const name = tag.trim();
+    if (name && !unique.has(name.toLocaleLowerCase())) unique.set(name.toLocaleLowerCase(), name);
+  });
+  return [...unique.values()];
+}
+
+function getAvailableTags() {
+  return normalizeTags([...defaultTags, ...normalizeTags(captureSettings.tags), ...logEntries.flatMap(entry => normalizeTags(entry.tags))]);
+}
+
+function getSelectedTags() {
+  return [...tagsButtons.querySelectorAll('input:checked')].map(input => input.value);
+}
+
+function renderTags(selected = getSelectedTags()) {
+  const names = normalizeTags([...getAvailableTags(), ...selected]);
+  const selectedNames = new Set(selected.map(tag => tag.toLocaleLowerCase()));
+  tagsButtons.replaceChildren();
+  names.forEach(name => {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.value = name;
+    input.checked = selectedNames.has(name.toLocaleLowerCase());
+    label.append(input, document.createTextNode(` ${name}`));
+    tagsButtons.append(label);
+  });
+}
+
+document.getElementById('addTagButton').addEventListener('click', () => {
+  const name = newTag.value.trim();
+  if (!name) { tagStatus.textContent = 'Enter a tag name first.'; newTag.focus(); return; }
+  const existing = getAvailableTags().find(tag => tag.toLocaleLowerCase() === name.toLocaleLowerCase());
+  const selected = [...getSelectedTags(), existing || name];
+  captureSettings.tags = normalizeTags([...getAvailableTags(), existing || name]);
+  saveSettings();
+  renderTags(selected);
+  newTag.value = '';
+  tagStatus.textContent = existing ? `${existing} selected. That tag already exists.` : `${name} created and selected.`;
+  newTag.focus();
+});
+newTag.addEventListener('keydown', event => {
+  if (event.key === 'Enter') { event.preventDefault(); document.getElementById('addTagButton').click(); }
+});
+
 function renderSettings() {
   const modeLabels = {
     phase1: 'Phase 1: Emotion only',
     phase2: 'Phase 2: Guided reflection',
+    phase3: 'Phase 3: Context and bucket level',
     custom: 'Custom fields'
   };
   captureModeSummary.textContent = `Capture settings — ${modeLabels[captureSettings.captureMode] || modeLabels.phase1}`;
   collectAppropriate.checked = captureSettings.collectAppropriate;
   collectIntensity.checked = captureSettings.collectIntensity;
   collectSensations.checked = captureSettings.collectSensations;
+  collectTags.checked = captureSettings.collectTags;
+  collectBucketLevel.checked = captureSettings.collectBucketLevel;
+  tagsPanel.hidden = !captureSettings.collectTags;
+  bucketPanel.hidden = !captureSettings.collectBucketLevel;
+  renderTags();
   includeAllSensations.checked = captureSettings.includeAllSensations;
   appropriatePanel.hidden = !captureSettings.collectAppropriate;
   intensityPanel.hidden = !captureSettings.collectIntensity;
@@ -1254,17 +1527,18 @@ function renderSettings() {
   customSettingsPanel.hidden = captureSettings.captureMode !== 'custom';
   phaseOneButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase1' ? 'true' : 'false');
   phaseTwoButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase2' ? 'true' : 'false');
+  phaseThreeButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase3' ? 'true' : 'false');
   customButton.setAttribute('aria-pressed', captureSettings.captureMode === 'custom' ? 'true' : 'false');
   renderIntensityAlignment();
   renderSensations();
 }
 
 function isPhaseOneSettings(settings) {
-  return !settings.collectAppropriate && !settings.collectIntensity && !settings.collectSensations;
+  return !settings.collectAppropriate && !settings.collectIntensity && !settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
 }
 
 function isPhaseTwoSettings(settings) {
-  return settings.collectAppropriate && settings.collectIntensity && settings.collectSensations;
+  return settings.collectAppropriate && settings.collectIntensity && settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
 }
 
 function setSettings(settings) {
@@ -1294,6 +1568,8 @@ function focusNextRecordingControl(fallback = recordButton) {
   if (focusFirstVisibleControl(appropriatePanel)) return;
   if (focusFirstVisibleControl(intensityPanel)) return;
   if (focusFirstVisibleControl(sensationsPanel)) return;
+  if (focusFirstVisibleControl(tagsPanel)) return;
+  if (focusFirstVisibleControl(bucketPanel)) return;
   if (entryComment) return entryComment.focus();
   fallback.focus();
 }
@@ -1377,12 +1653,17 @@ function clearEntryForm() {
   expectedIntensity.value = expectedIntensity.defaultValue;
   actualIntensity.value = actualIntensity.defaultValue;
   entryComment.value = '';
+  bucketLevel.value = '';
+  tagsButtons.querySelectorAll('input').forEach(input => { input.checked = false; });
+  newTag.value = '';
+  tagStatus.textContent = '';
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
     input.checked = false;
   });
 }
 
 function prepareEntry(entry, announcement, edit = false) {
+  clearEntryForm();
   editingEntry = edit ? entry : null;
   selectedInner = entry.inner;
   selectedMiddle = entry.middle || null;
@@ -1396,6 +1677,9 @@ function prepareEntry(entry, announcement, edit = false) {
   if (entry.expectedIntensity) expectedIntensity.value = entry.expectedIntensity;
   if (entry.actualIntensity) actualIntensity.value = entry.actualIntensity;
   entryComment.value = entry.comment || '';
+  bucketLevel.value = entry.bucketLevel || '';
+  renderTags(entry.tags || []);
+  renderSensations(entry.physicalSensations || []);
   const sensations = new Set(entry.physicalSensations || []);
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
     input.checked = sensations.has(input.value);
@@ -1423,29 +1707,21 @@ function getActiveSensationType() {
   return null;
 }
 
-function renderSensations() {
+function renderSensations(selected = getSelectedSensations()) {
   clearNode(sensationsButtons);
   if (!captureSettings.collectSensations) return;
-
-  if (captureSettings.includeAllSensations) {
-    const options = getAllSensations();
-    sensationsHelp.textContent = `${options.length} optional physical sensations are available. Choose any that apply.`;
-    options.forEach(sensation => {
-      sensationsButtons.appendChild(makeSensationCheckbox(sensation, sensation));
-    });
-    return;
-  }
-
   const sensationType = getActiveSensationType();
-  if (!sensationType) {
-    sensationsHelp.textContent = 'Choose an emotion to see suggested sensations. This field is optional.';
-    return;
-  }
-
-  const options = sensationGuides[sensationType];
-  sensationsHelp.textContent = `${options.length} optional physical sensations suggested for ${sensationType}.`;
+  const suggested = captureSettings.includeAllSensations ? getAllSensations() : (sensationGuides[sensationType] || []);
+  const options = unique([...suggested, ...selected]);
+  sensationsHelp.textContent = captureSettings.includeAllSensations
+    ? `${options.length} optional physical sensations are available. Choose any that apply.`
+    : sensationType
+      ? `${suggested.length} optional physical sensations suggested for ${sensationType}. Previously selected sensations are also retained.`
+      : 'Choose an emotion to see suggested sensations. This field is optional.';
   options.forEach(sensation => {
-    sensationsButtons.appendChild(makeSensationCheckbox(sensation, sensation));
+    const label = makeSensationCheckbox(sensation, sensation);
+    label.querySelector('input').checked = selected.includes(sensation);
+    sensationsButtons.appendChild(label);
   });
 }
 
@@ -1518,18 +1794,31 @@ function getTallyRows(entries = logEntries) {
   return rows;
 }
 
-function getFilteredLogEntries() {
-  const search = logSearch.value.trim().toLowerCase();
-  return logEntries.filter(entry => {
-    if (logInnerFilter.value && entry.inner !== logInnerFilter.value) return false;
-    if (logLevelFilter.value && getRecordedLevel(entry) !== logLevelFilter.value) return false;
+function getFilteredLogEntries(entries = logEntries, filters = { logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo }) {
+  const search = filters.logSearch.value.trim().toLowerCase();
+  return entries.filter(entry => {
+    const selectedEmotions = getCheckedFilterValues(filters.logInnerFilter);
+    if (selectedEmotions.length && !selectedEmotions.includes(entry.inner)) return false;
+    if (filters.logLevelFilter.value && getRecordedLevel(entry) !== filters.logLevelFilter.value) return false;
+    if (filters.logPathFilter.value && getEntryPathLabel(entry) !== filters.logPathFilter.value) return false;
+    const tags = normalizeTags(entry.tags);
+    const selectedTags = getCheckedFilterValues(filters.logTagFilter);
+    const tagMatches = value => value === '__missing' ? !tags.length : tags.some(tag => `tag:${tag.toLocaleLowerCase()}` === value);
+    if (selectedTags.length && !(filters.logTagMatch.value === 'all' ? selectedTags.every(tagMatches) : selectedTags.some(tagMatches))) return false;
+    const selectedBuckets = getCheckedFilterValues(filters.logBucketFilter);
+    if (selectedBuckets.length && !selectedBuckets.includes(entry.bucketLevel == null ? '__missing' : String(entry.bucketLevel))) return false;
+    for (const [container, value] of [[filters.logExpectedFilter, entry.expectedIntensity], [filters.logActualFilter, entry.actualIntensity], [filters.logAlignmentFilter, entry.intensityAlignment]]) {
+      const selected = getCheckedFilterValues(container);
+      if (selected.length && !selected.includes(value == null || value === '' ? '__missing' : String(value))) return false;
+    }
     const dateKey = getDateKey(entry.timestamp);
-    if (logDateFrom.value && dateKey < logDateFrom.value) return false;
-    if (logDateTo.value && dateKey > logDateTo.value) return false;
+    if (filters.logDateFrom.value && dateKey < filters.logDateFrom.value) return false;
+    if (filters.logDateTo.value && dateKey > filters.logDateTo.value) return false;
     if (!search) return true;
     const searchable = [
       getEntryPathLabel(entry), entry.appropriate, entry.expectedIntensity,
       entry.actualIntensity, entry.intensityAlignment, entry.comment,
+      ...(entry.tags || []), entry.bucketLevel,
       ...(entry.physicalSensations || [])
     ].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
     return searchable.includes(search);
@@ -1641,6 +1930,15 @@ function setSelectedChartDate(date) {
 }
 
 function renderChartPeriodControls() {
+  const advanced = chartUsesAdvancedFilters();
+  document.getElementById('chartAdvancedFilters').hidden = !advanced;
+  document.getElementById('chartFilterControls').querySelectorAll('input, select, button').forEach(control => { control.disabled = !advanced; });
+  if (advanced) {
+    chartDayLabel.hidden = true; chartWeekLabel.hidden = true; chartMonthLabel.hidden = true;
+    previousChartPeriod.hidden = true; nextChartPeriod.hidden = true;
+    chartPeriodRange.textContent = 'Using advanced filters';
+    return;
+  }
   const period = chartPeriod.value;
   const isAllTime = period === 'all';
   chartDayLabel.hidden = period !== 'day';
@@ -1655,7 +1953,7 @@ function renderChartPeriodControls() {
 
 function moveChartPeriod(direction) {
   const selectedDate = getSelectedChartDate();
-  if (!selectedDate || chartPeriod.value === 'all') return;
+  if (!selectedDate || chartPeriod.value === 'all' || chartUsesAdvancedFilters()) return;
   const nextDate = direction === 'previous'
     ? (() => {
       const prior = new Date(selectedDate);
@@ -1669,7 +1967,17 @@ function moveChartPeriod(direction) {
   renderCharts();
 }
 
+function chartUsesAdvancedFilters() {
+  return chartPeriod.value === 'custom';
+}
+
+function getChartFilterValues() {
+  const names = ['logSearch', 'logInnerFilter', 'logLevelFilter', 'logPathFilter', 'logTagFilter', 'logTagMatch', 'logBucketFilter', 'logExpectedFilter', 'logActualFilter', 'logAlignmentFilter', 'logDateFrom', 'logDateTo'];
+  return Object.fromEntries(names.map(name => [name, document.getElementById(`chart${name}`)]));
+}
+
 function getChartEntries() {
+  if (chartUsesAdvancedFilters()) return getFilteredLogEntries(logEntries, getChartFilterValues());
   if (chartPeriod.value === 'all') return logEntries;
   const selectedDate = getSelectedChartDate();
   if (!selectedDate || Number.isNaN(selectedDate.getTime())) return logEntries;
@@ -1682,6 +1990,7 @@ function getChartEntries() {
 }
 
 function getPreviousChartEntries() {
+  if (chartUsesAdvancedFilters()) return [];
   if (chartPeriod.value === 'all') return [];
   const selectedDate = getSelectedChartDate();
   if (!selectedDate || Number.isNaN(selectedDate.getTime())) return [];
@@ -1697,6 +2006,10 @@ function getPreviousChartEntries() {
 }
 
 function getChartPeriodLabel() {
+  if (chartUsesAdvancedFilters()) {
+    const filters = getChartFilterValues();
+    return `advanced filters (${filters.logDateFrom.value || 'any start date'} to ${filters.logDateTo.value || 'any end date'})`;
+  }
   if (chartPeriod.value === 'all') return 'all time';
   const date = getSelectedChartDate();
   if (!date || Number.isNaN(date.getTime())) return 'the selected period';
@@ -1789,11 +2102,11 @@ function getTopEmotionRows(entries = logEntries) {
 }
 
 function getVisibleAppropriateRows(entries = logEntries) {
-  return getAppropriateCounts(entries).filter(row => row.count > 0);
+  return sortCountRows(getAppropriateCounts(entries).filter(row => row.count > 0));
 }
 
 function getVisibleAlignmentRows(entries = logEntries) {
-  return getAlignmentCounts(entries).filter(row => row.count > 0);
+  return sortCountRows(getAlignmentCounts(entries).filter(row => row.count > 0));
 }
 
 function addTableRows(tbody, rows, emptyText, buildCells, columnCount) {
@@ -2038,7 +2351,7 @@ function renderCharts() {
   const chartEntries = getChartEntries();
   const topEmotions = getTopEmotionRows(chartEntries);
   const previousTopEmotions = getTopEmotionRows(getPreviousChartEntries());
-  const levelRows = getLevelCounts(chartEntries).filter(row => row.count > 0);
+  const levelRows = sortCountRows(getLevelCounts(chartEntries).filter(row => row.count > 0));
   const timeRows = getRecordsOverTime(chartEntries);
   const timeSeries = timeMeasure.value === 'inner'
     ? getInnerEmotionSeries(chartEntries)
@@ -2050,7 +2363,7 @@ function renderCharts() {
   const hasReflectionData = appropriateRows.some(row => row.label !== 'Not recorded' && row.count > 0)
     || alignmentRows.some(row => row.label !== 'Not recorded' && row.count > 0)
     || intensityAverages
-    || sensationRows.length > 0;
+    || sensationRows.length > 0 || chartEntries.some(entry => entry.tags?.length || entry.bucketLevel);
 
   renderChartPeriodControls();
   innerSeriesControls.hidden = timeMeasure.value !== 'inner';
@@ -2065,7 +2378,7 @@ function renderCharts() {
   const previousTopMatch = topEmotions.length
     ? previousTopEmotions.find(row => row.label === topEmotions[0].label)
     : null;
-  const comparisonText = chartPeriod.value !== 'all' && topEmotions.length
+  const comparisonText = !chartUsesAdvancedFilters() && chartPeriod.value !== 'all' && topEmotions.length
     ? ` It had ${previousTopMatch?.count || 0} in the previous ${chartPeriod.value}.`
     : '';
   emotionChartSummary.textContent = topEmotions.length
@@ -2106,7 +2419,7 @@ function renderCharts() {
   renderLineChart(timeChart, timeSeries);
   renderTimeTable(timeRows, timeSeries);
 
-  const reflectedEntries = chartEntries.filter(entry => entry.appropriate || entry.expectedIntensity || entry.actualIntensity || entry.physicalSensations?.length);
+  const reflectedEntries = chartEntries.filter(entry => entry.appropriate || entry.expectedIntensity || entry.actualIntensity || entry.physicalSensations?.length || entry.tags?.length || entry.bucketLevel);
   reflectionChartSummary.textContent = hasReflectionData
     ? `${reflectedEntries.length} of ${chartEntries.length} record${chartEntries.length === 1 ? '' : 's'} include optional reflection information.`
     : hasEntries
@@ -2128,12 +2441,41 @@ function renderCharts() {
     : 'No physical sensations recorded yet.';
   renderBarChart(sensationsChart, sensationsChartSummary, sensationRows, 'No physical sensations recorded yet.');
   addTableRows(sensationsChartBody, sensationRows, 'No physical sensations recorded yet.', row => [row.label, String(row.count)], 2);
+  ['tags', 'bucket'].forEach(key => {
+    const rows = getContextCounts(chartEntries, key === 'tags' ? 'tags' : 'bucketLevel');
+    const summary = document.getElementById(`${key}ChartSummary`);
+    if (key === 'tags') summary.textContent = rows.length ? `${rows.length} tags recorded in ${getChartPeriodLabel()}.` : 'No tags recorded in this period.';
+    else {
+      const count = rows.reduce((total, row) => total + row.count, 0);
+      const average = count ? rows.reduce((total, row) => total + Number(row.label) * row.count, 0) / count : 0;
+      summary.textContent = count ? `Average bucket level: ${average.toFixed(1)} out of 10, from ${count} records. 10 is full.` : 'No bucket levels recorded in this period.';
+    }
+    renderBarChart(document.getElementById(`${key}Chart`), summary, rows, 'Not recorded in this period.');
+    addTableRows(document.getElementById(`${key}ChartBody`), rows, 'Not recorded in this period.', row => [row.label, String(row.count)], 2);
+  });
+  renderContextAnalysis();
+  const chartStatus = document.getElementById('chartlogFilterStatus');
+  if (chartStatus) chartStatus.textContent = `Showing ${chartEntries.length} of ${logEntries.length} records in charts.`;
   queueDisplayedChartImages();
+}
+
+function getContextCounts(entries, field) {
+  const counts = new Map();
+  entries.forEach(entry => {
+    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= 10 ? [entry.bucketLevel] : []);
+    values.forEach(value => {
+      const key = String(value).toLocaleLowerCase();
+      const row = counts.get(key) || { label: String(value), count: 0 };
+      row.count += 1;
+      counts.set(key, row);
+    });
+  });
+  return [...counts.values()].sort((a, b) => field === 'tags' ? b.count - a.count || a.label.localeCompare(b.label) : Number(a.label) - Number(b.label));
 }
 
 function getLogRows(entries = logEntries) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations', 'Note']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations', 'Tags', 'Emotion bucket level', 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -2147,6 +2489,8 @@ function getLogRows(entries = logEntries) {
       displayValue(entry.actualIntensity),
       displayValue(entry.intensityAlignment),
       entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
+      entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
+      displayValue(entry.bucketLevel),
       displayValue(entry.comment)
     ]);
   }
@@ -2220,7 +2564,7 @@ function renderLog() {
 
   clearNode(logBody);
   if (!hasFilteredEntries) {
-    logBody.innerHTML = `<tr><td colspan="12">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
+    logBody.innerHTML = `<tr><td colspan="14">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
   } else {
     const recent = [...filteredEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
@@ -2236,7 +2580,9 @@ function renderLog() {
         displayValue(entry.actualIntensity),
         displayValue(entry.intensityAlignment),
         entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
-        displayValue(entry.comment)
+        entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
+      displayValue(entry.bucketLevel),
+      displayValue(entry.comment)
       ].forEach((value, index) => {
         const td = document.createElement('td');
         if (index === 2) appendEmotionCellContent(td, value);
@@ -2318,7 +2664,152 @@ function renderFullEmotionTable() {
   labelTableCells(wheelTableBody);
 }
 
+function getCheckedFilterValues(container) {
+  return [...container.querySelectorAll('input:checked')].map(input => input.value);
+}
+
+function setCheckedFilterValues(container, values) {
+  container.querySelectorAll('input').forEach(input => { input.checked = values.includes(input.value); });
+  if (values.length) container.closest('details').open = true;
+}
+
+function renderLogTagFilters() {
+  const selected = getCheckedFilterValues(logTagFilter);
+  logTagFilter.replaceChildren();
+  [['__missing', 'Not recorded'], ...getAvailableTags().map(tag => [`tag:${tag.toLocaleLowerCase()}`, tag])].forEach(([value, text]) => {
+    const label = document.createElement('label');
+    const input = document.createElement('input'); input.type = 'checkbox'; input.value = value;
+    input.checked = selected.includes(value);
+    label.append(input, document.createTextNode(` ${text}`)); logTagFilter.append(label);
+  });
+}
+
+function updateTagOptions(select, includeMissing = true) {
+  const selected = select.value;
+  select.replaceChildren(new Option('All tags', ''));
+  if (includeMissing) select.add(new Option('Not recorded', '__missing'));
+  getAvailableTags().forEach(tag => select.add(new Option(tag, `tag:${tag.toLocaleLowerCase()}`)));
+  select.value = selected;
+}
+
+function entriesForTag(entries, value) {
+  return entries.filter(entry => value === '__missing' ? !normalizeTags(entry.tags).length : !value || normalizeTags(entry.tags).some(tag => `tag:${tag.toLocaleLowerCase()}` === value));
+}
+
+function openAnalysisLogs(tag = '', emotion = '', bucket = '') {
+  clearLogFilters.click();
+  if (chartUsesAdvancedFilters()) {
+    const source = getChartFilterValues();
+    Object.entries(source).forEach(([name, control]) => {
+      const target = document.getElementById(name);
+      if (control.matches('div')) setCheckedFilterValues(target, getCheckedFilterValues(control));
+      else target.value = control.value;
+    });
+    document.getElementById('advancedLogFilters').open = true;
+  }
+  if (tag || !chartUsesAdvancedFilters()) setCheckedFilterValues(logTagFilter, tag ? [tag] : []);
+  if (emotion || !chartUsesAdvancedFilters()) setCheckedFilterValues(logInnerFilter, emotion ? [emotion] : []);
+  if (bucket || !chartUsesAdvancedFilters()) setCheckedFilterValues(logBucketFilter, bucket ? [bucket] : []);
+  if (!chartUsesAdvancedFilters() && chartPeriod.value !== 'all') {
+    const start = startOfPeriod(getSelectedChartDate(), chartPeriod.value);
+    const end = addPeriod(start, chartPeriod.value);
+    end.setUTCDate(end.getUTCDate() - 1);
+    logDateFrom.value = getPeriodKey(start);
+    logDateTo.value = getPeriodKey(end);
+  }
+  renderLog();
+  selectAppView(logsTab, true);
+}
+
+function interactiveBars(container, summary, rows, onSelect, colour) {
+  renderBarChart(container, summary, rows, 'No matching entries in this period.', colour);
+  [...container.children].forEach((item, index) => {
+    if (!rows[index]) return;
+    const label = item.querySelector('.bar-label');
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'bar-label';
+    button.textContent = rows[index].label;
+    button.setAttribute('aria-label', `View logs: ${rows[index].label}, ${rows[index].count} entries`);
+    button.addEventListener('click', () => onSelect(rows[index]));
+    label.replaceWith(button);
+  });
+}
+
+function renderContextAnalysis() {
+  const entries = getChartEntries();
+  let ranking = getContextCounts(entries, 'tags');
+  const missing = entries.filter(entry => !normalizeTags(entry.tags).length).length;
+  if (missing) ranking.push({ label: 'Not recorded', count: missing, missing: true });
+  ranking = sortCountRows(ranking);
+  const percent = (count, total) => total ? `${(100 * count / total).toFixed(1)}%` : '0.0%';
+  const summary = document.getElementById('tagRankingSummary');
+  summary.textContent = `${entries.length} entries in ${getChartPeriodLabel()}; ${missing} without tags.`;
+  interactiveBars(document.getElementById('tagRankingChart'), summary, ranking, row => openAnalysisLogs(row.missing ? '__missing' : `tag:${row.label.toLocaleLowerCase()}`));
+  addTableRows(document.getElementById('tagRankingBody'), ranking, 'No entries in this period.', row => [row.label, String(row.count), percent(row.count, entries.length)], 3);
+  const tag = document.getElementById('analysisTag').value;
+  const tagged = entriesForTag(entries, tag);
+  const paths = document.getElementById('analysisDetail').value === 'path';
+  const counts = new Map();
+  tagged.forEach(entry => {
+    const label = paths ? getEntryPathLabel(entry) : entry.inner;
+    const row = counts.get(label) || { label, count: 0, category: entry.inner };
+    row.count++; counts.set(label, row);
+  });
+  const rows = [...counts.values()].sort((a,b) => b.count - a.count || a.label.localeCompare(b.label));
+  const tagSummary = document.getElementById('tagEmotionSummary');
+  tagSummary.textContent = `${tagged.length} matching entries in ${getChartPeriodLabel()}.`;
+  interactiveBars(document.getElementById('tagEmotionChart'), tagSummary, rows, row => {
+    openAnalysisLogs(tag, row.category);
+    if (paths) { logPathFilter.value = row.label; renderLog(); }
+  }, row => emotionColours[row.category]);
+  addTableRows(document.getElementById('tagEmotionBody'), rows, 'No matching entries.', row => [row.label, String(row.count), percent(row.count, tagged.length)], 3);
+  const bucketTag = document.getElementById('bucketAnalysisTag').value;
+  const bucketEntries = entriesForTag(entries, bucketTag);
+  document.getElementById('bucketEmotionSummary').textContent = `${bucketEntries.length} matching entries; ${bucketEntries.filter(entry => entry.bucketLevel == null).length} without a recorded bucket level.`;
+  const levels = [...Array.from({length:10}, (_,i) => String(i+1)), '__missing'];
+  const head = document.getElementById('bucketEmotionHead');
+  head.replaceChildren();
+  const header = document.createElement('tr');
+  ['Emotion', ...levels.map(level => level === '__missing' ? 'Not recorded' : level === '10' ? '10 — Full' : level), 'Total'].forEach(label => {
+    const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
+  }); head.append(header);
+  const body = document.getElementById('bucketEmotionBody'); body.replaceChildren();
+  const categories = [...new Set([...emotions.map(row => row[0]), ...bucketEntries.map(entry => entry.inner)])].sort((a,b) => bucketEntries.filter(entry => entry.inner === b).length - bucketEntries.filter(entry => entry.inner === a).length || a.localeCompare(b));
+  const matrix = categories.map(category => levels.map(level => bucketEntries.filter(entry => entry.inner === category && (level === '__missing' ? entry.bucketLevel == null : String(entry.bucketLevel) === level)).length));
+  const max = Math.max(1, ...matrix.flat());
+  categories.forEach((category,index) => {
+    const tr = document.createElement('tr'); const th = document.createElement('th'); th.scope = 'row'; th.textContent = category; tr.append(th);
+    matrix[index].forEach((count,column) => {
+      const td = document.createElement('td'); const button = document.createElement('button'); button.type = 'button'; button.textContent = String(count); button.disabled = !count;
+      button.style.backgroundColor = `color-mix(in srgb, var(--focus) ${Math.round(35 * count / max)}%, var(--button))`;
+      button.setAttribute('aria-label', `${category}, bucket level ${levels[column] === '__missing' ? 'not recorded' : levels[column]}, ${count} entries. View logs.`);
+      button.addEventListener('click', () => openAnalysisLogs(bucketTag, category, levels[column])); td.append(button); tr.append(td);
+    });
+    const total = document.createElement('td'); total.textContent = String(matrix[index].reduce((a,b)=>a+b,0)); tr.append(total); body.append(tr);
+  });
+  const totals = document.createElement('tr'); const totalHeading = document.createElement('th'); totalHeading.scope = 'row'; totalHeading.textContent = 'Total entries'; totals.append(totalHeading);
+  levels.forEach((level,index) => { const td = document.createElement('td'); td.textContent = String(matrix.reduce((sum,row) => sum + row[index],0)); totals.append(td); });
+  const grand = document.createElement('td'); grand.textContent = String(bucketEntries.length); totals.append(grand); body.append(totals);
+}
+
+['analysisTag', 'analysisDetail', 'bucketAnalysisTag'].forEach(id => document.getElementById(id).addEventListener('change', renderContextAnalysis));
+
 function renderAll() {
+  const selectedPath = logPathFilter.value;
+  logPathFilter.replaceChildren(new Option('All paths', ''));
+  [...new Set(logEntries.map(getEntryPathLabel))].sort().forEach(path => logPathFilter.add(new Option(path, path)));
+  logPathFilter.value = selectedPath;
+  [document.getElementById('analysisTag'), document.getElementById('bucketAnalysisTag')].forEach(select => updateTagOptions(select));
+  renderLogTagFilters();
+  const chartTags = document.getElementById('chartlogTagFilter');
+  if (chartTags) {
+    const selected = getCheckedFilterValues(chartTags);
+    chartTags.replaceChildren(...[...logTagFilter.children].map(label => label.cloneNode(true)));
+    chartTags.querySelectorAll('input').forEach(input => { input.checked = selected.includes(input.value); });
+    const chartPath = document.getElementById('chartlogPathFilter'); const path = chartPath.value;
+    chartPath.replaceChildren(...[...logPathFilter.children].map(option => option.cloneNode(true))); chartPath.value = path;
+  }
   renderSettings();
   renderInner();
   renderMiddle();
@@ -2659,13 +3150,70 @@ async function shareChartImage(type) {
 
 function saveBackupFile() {
   const backup = {
-    version: 1,
+    version: 2,
+    schemaVersion: dataSchemaVersion,
     exportedAt: new Date().toISOString(),
+    tags: getAvailableTags(),
     entries: logEntries
   };
   downloadText('emotion-wheel-backup.json', `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
   liveStatus.textContent = 'Backup file saved.';
   loadBackupStatus.textContent = 'Backup file saved to this device.';
+}
+
+function describeBackupRecord(entry) {
+  return [
+    `Recorded: ${formatDateTime(entry.timestamp)}`,
+    `Created: ${displayValue(entry.createdAt)}`,
+    `Modified: ${displayValue(entry.modifiedAt)}`,
+    `Emotion: ${getEntryPathLabel(entry)}`,
+    `Tags: ${normalizeTags(entry.tags).join(', ') || 'Not recorded'}`,
+    `Bucket level: ${displayValue(entry.bucketLevel)}`,
+    `Expected intensity: ${displayValue(entry.expectedIntensity)}`,
+    `Actual intensity: ${displayValue(entry.actualIntensity)}`,
+    `Alignment: ${displayValue(entry.intensityAlignment)}`,
+    `Appropriate: ${displayValue(entry.appropriate)}`,
+    `Physical sensations: ${(entry.physicalSensations || []).join(', ') || 'Not recorded'}`,
+    `Note: ${displayValue(entry.comment)}`
+  ].join('\n');
+}
+
+function promptBackupConflict(current, incoming) {
+  return new Promise(resolve => {
+    const dialog = document.getElementById('backupConflictDialog');
+    document.getElementById('backupCurrentVersion').textContent = describeBackupRecord(current);
+    document.getElementById('backupIncomingVersion').textContent = describeBackupRecord(incoming);
+    dialog.returnValue = 'cancel';
+    dialog.addEventListener('close', () => resolve(dialog.returnValue || 'cancel'), { once: true });
+    dialog.showModal();
+  });
+}
+
+function ensureEntryIdentity(entry) {
+  const validId = typeof entry.id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(entry.id);
+  return { ...entry, id: validId ? entry.id : crypto.randomUUID(),
+    createdAt: entry.createdAt || entry.timestamp,
+    modifiedAt: entry.modifiedAt || entry.createdAt || entry.timestamp };
+}
+
+async function mergeBackupEntries(existing, incoming, resolveConflict = promptBackupConflict) {
+  const entries = [...existing];
+  let added = 0, duplicates = 0, conflicts = 0;
+  for (const candidate of incoming) {
+    const content = getEntryKey(candidate);
+    const sameId = entries.find(entry => entry.id === candidate.id);
+    const sameContent = entries.find(entry => getEntryKey(entry) === content &&
+      (entry.id === candidate.id || entry.conflictOf === candidate.id || candidate.legacyIdentity));
+    if (sameContent) { duplicates++; continue; }
+    if (sameId) {
+      const choice = await resolveConflict(sameId, candidate);
+      if (choice === 'cancel') return { cancelled: true };
+      if (choice === 'incoming') entries[entries.indexOf(sameId)] = candidate;
+      else if (choice === 'both') entries.push({ ...candidate, id: crypto.randomUUID(), conflictOf: candidate.id });
+      conflicts++;
+    } else { entries.push(candidate); added++; }
+  }
+  return { entries, added, duplicates, conflicts };
 }
 
 function getEntryKey(entry) {
@@ -2680,7 +3228,11 @@ function getEntryKey(entry) {
     actualIntensity: entry.actualIntensity ?? '',
     intensityAlignment: entry.intensityAlignment || '',
     physicalSensations: entry.physicalSensations || [],
-    comment: entry.comment || ''
+    tags: normalizeTags(entry.tags).sort(),
+    bucketLevel: entry.bucketLevel ?? '',
+    comment: entry.comment || '',
+    sensationGuide: entry.sensationGuide || '',
+    extra: Object.fromEntries(Object.keys(entry).sort().filter(key => !['id', 'createdAt', 'modifiedAt', 'legacyIdentity', 'conflictOf', 'timestamp', 'level', 'inner', 'middle', 'outer', 'appropriate', 'expectedIntensity', 'actualIntensity', 'intensityAlignment', 'physicalSensations', 'tags', 'bucketLevel', 'comment', 'sensationGuide'].includes(key)).map(key => [key, entry[key]]))
   });
 }
 
@@ -2690,6 +3242,7 @@ function normalizeLoadedEntry(entry) {
   if (typeof entry.inner !== 'string' || !entry.inner.trim()) return null;
 
   const normalized = {
+    ...entry,
     timestamp: entry.timestamp,
     level: typeof entry.level === 'string' && entry.level.trim() ? entry.level : getRecordedLevel(entry),
     inner: entry.inner,
@@ -2701,8 +3254,8 @@ function normalizeLoadedEntry(entry) {
     normalized.appropriate = entry.appropriate;
   }
 
-  const expected = Number(entry.expectedIntensity);
-  const actual = Number(entry.actualIntensity);
+  const expected = entry.expectedIntensity == null || entry.expectedIntensity === '' ? NaN : Number(entry.expectedIntensity);
+  const actual = entry.actualIntensity == null || entry.actualIntensity === '' ? NaN : Number(entry.actualIntensity);
   if (Number.isFinite(expected)) {
     normalized.expectedIntensity = expected;
   }
@@ -2721,11 +3274,16 @@ function normalizeLoadedEntry(entry) {
   if (typeof entry.sensationGuide === 'string') {
     normalized.sensationGuide = entry.sensationGuide;
   }
+  if (Array.isArray(entry.tags)) normalized.tags = normalizeTags(entry.tags);
+  const bucket = Number(entry.bucketLevel);
+  if (Number.isInteger(bucket) && bucket >= 1 && bucket <= 10) normalized.bucketLevel = bucket;
   if (typeof entry.comment === 'string') {
     normalized.comment = entry.comment;
   }
 
-  return normalized;
+  const identified = ensureEntryIdentity(normalized);
+  if (!entry.id) identified.legacyIdentity = true;
+  return identified;
 }
 
 function getBackupEntriesFromText(text) {
@@ -2743,13 +3301,14 @@ function getBackupEntriesFromText(text) {
       skipped += 1;
     }
   });
-  return { validEntries, skipped };
+  return { validEntries, skipped, tags: normalizeTags(parsed.tags) };
 }
 
 async function loadBackupFile(file, mode) {
+  if (!dataSchemaMatches()) { loadBackupStatus.textContent = 'Complete the data upgrade before loading a backup.'; return; }
   try {
-    const { validEntries, skipped } = getBackupEntriesFromText(await file.text());
-    if (!validEntries.length) {
+    const { validEntries, skipped, tags } = getBackupEntriesFromText(await file.text());
+    if (!validEntries.length && (skipped || mode !== 'replace')) {
       loadBackupStatus.textContent = `No valid records found in ${file.name}. ${skipped} record${skipped === 1 ? '' : 's'} skipped.`;
       liveStatus.textContent = 'No valid backup records were loaded.';
       return;
@@ -2761,23 +3320,32 @@ async function loadBackupFile(file, mode) {
         loadBackupStatus.textContent = 'Load and replace cancelled. Existing records were kept.';
         return;
       }
+      localStorage.setItem(`${storageKey}BeforeReplacement`, JSON.stringify({ version: 2, entries: logEntries, tags: getAvailableTags() }));
+      captureSettings.tags = normalizeTags([...getAvailableTags(), ...tags]);
+      saveSettings();
+      localStorage.setItem(storageKey, JSON.stringify(validEntries));
       logEntries = validEntries;
-      saveLog();
       renderAll();
       loadBackupStatus.textContent = `Loaded ${validEntries.length} record${validEntries.length === 1 ? '' : 's'} and replaced the current log. ${skipped} invalid record${skipped === 1 ? '' : 's'} skipped.`;
       liveStatus.textContent = 'Backup file loaded and current log replaced.';
       return;
     }
 
-    const existingKeys = new Set(logEntries.map(getEntryKey));
-    const newEntries = validEntries.filter(entry => !existingKeys.has(getEntryKey(entry)));
-    logEntries = [...logEntries, ...newEntries];
-    saveLog();
+    const result = await mergeBackupEntries(logEntries, validEntries);
+    if (result.cancelled) {
+      loadBackupStatus.textContent = 'Import cancelled. Existing records were kept.';
+      liveStatus.textContent = 'Backup import cancelled.';
+      return;
+    }
+    captureSettings.tags = normalizeTags([...getAvailableTags(), ...tags]);
+    saveSettings();
+    localStorage.setItem(storageKey, JSON.stringify(result.entries));
+    logEntries = result.entries;
     renderAll();
-    loadBackupStatus.textContent = `Merged ${newEntries.length} new record${newEntries.length === 1 ? '' : 's'} from ${file.name}. ${validEntries.length - newEntries.length} duplicate record${validEntries.length - newEntries.length === 1 ? '' : 's'} ignored. ${skipped} invalid record${skipped === 1 ? '' : 's'} skipped.`;
+    loadBackupStatus.textContent = `Merged ${result.added} new records from ${file.name}. ${result.duplicates} duplicates ignored. ${result.conflicts} conflicts resolved using your choices. ${skipped} invalid records skipped.`;
     liveStatus.textContent = 'Backup file merged into the local log.';
   } catch (error) {
-    loadBackupStatus.textContent = `Could not load ${file.name}. Choose a valid Emotion Wheel backup JSON file.`;
+    loadBackupStatus.textContent = `Could not load ${file.name}. The file may be invalid or browser storage unavailable. Existing records were kept.`;
     liveStatus.textContent = 'Backup file was not loaded.';
   }
 }
@@ -2841,13 +3409,22 @@ function copyHtmlWithSelection(html, text) {
 [entryTab, logsTab, chartsTab, maintenanceTab].forEach(button => {
   button.addEventListener('click', () => selectAppView(button, true));
 });
-[logSearch, logInnerFilter, logLevelFilter, logDateFrom, logDateTo].forEach(control => {
+[logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo].forEach(control => {
   control.addEventListener(control === logSearch ? 'input' : 'change', renderLog);
 });
+document.querySelectorAll('[data-clear-filter]').forEach(button => button.addEventListener('click', () => {
+  setCheckedFilterValues(document.getElementById(button.dataset.clearFilter), []);
+  renderLog();
+}));
 clearLogFilters.addEventListener('click', () => {
   logSearch.value = '';
-  logInnerFilter.value = '';
+  setCheckedFilterValues(logInnerFilter, []);
   logLevelFilter.value = '';
+  logPathFilter.value = '';
+  setCheckedFilterValues(logTagFilter, []);
+  logTagMatch.value = 'any';
+  setCheckedFilterValues(logBucketFilter, []);
+  [logExpectedFilter, logActualFilter, logAlignmentFilter].forEach(container => setCheckedFilterValues(container, []));
   logDateFrom.value = '';
   logDateTo.value = '';
   renderLog();
@@ -2864,8 +3441,12 @@ document.addEventListener('keydown', event => {
 window.matchMedia('(min-width: 601px)').addEventListener?.('change', () => setMenuOpen(false));
 
 setSelectedChartDate(new Date());
-[chartPeriod, chartDayInput, chartWeekInput, chartMonthInput, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {
+[chartDayInput, chartWeekInput, chartMonthInput, timeGrouping, timeMeasure, includeEmptyPeriods].forEach(control => {
   control.addEventListener('change', renderCharts);
+});
+chartPeriod.addEventListener('change', () => {
+  resetChartFilters();
+  renderCharts();
 });
 previousChartPeriod.addEventListener('click', () => moveChartPeriod('previous'));
 nextChartPeriod.addEventListener('click', () => moveChartPeriod('next'));
@@ -2927,6 +3508,8 @@ phaseOneButton.addEventListener('click', () => {
     collectAppropriate: false,
     collectIntensity: false,
     collectSensations: false,
+    collectTags: false,
+    collectBucketLevel: false,
     includeAllSensations: false
   });
   liveStatus.textContent = 'Phase 1 selected. Only the emotion selection will be recorded.';
@@ -2938,9 +3521,16 @@ phaseTwoButton.addEventListener('click', () => {
     collectAppropriate: true,
     collectIntensity: true,
     collectSensations: true,
+    collectTags: false,
+    collectBucketLevel: false,
     includeAllSensations: false
   });
   liveStatus.textContent = 'Phase 2 selected. Extra reflection fields are available.';
+});
+
+phaseThreeButton.addEventListener('click', () => {
+  setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectSensations: true, collectTags: true, collectBucketLevel: true, includeAllSensations: false });
+  liveStatus.textContent = 'Phase 3 selected. Tags and emotion bucket level are available alongside guided reflection.';
 });
 
 customButton.addEventListener('click', () => {
@@ -2948,13 +3538,15 @@ customButton.addEventListener('click', () => {
   liveStatus.textContent = 'Custom capture selected. Choose which fields to collect.';
 });
 
-[collectAppropriate, collectIntensity, collectSensations].forEach(input => {
+[collectAppropriate, collectIntensity, collectSensations, collectTags, collectBucketLevel].forEach(input => {
   input.addEventListener('change', () => {
     setSettings({
       captureMode: 'custom',
       collectAppropriate: collectAppropriate.checked,
       collectIntensity: collectIntensity.checked,
-      collectSensations: collectSensations.checked
+      collectSensations: collectSensations.checked,
+      collectTags: collectTags.checked,
+      collectBucketLevel: collectBucketLevel.checked
     });
   });
 });
@@ -2988,6 +3580,9 @@ recordButton.addEventListener('click', () => {
   const previousEntry = editingEntry;
   const entry = {
     ...(previousEntry || {}),
+    id: previousEntry?.id || crypto.randomUUID(),
+    createdAt: previousEntry?.createdAt || previousEntry?.timestamp || new Date().toISOString(),
+    modifiedAt: new Date().toISOString(),
     timestamp: previousEntry?.timestamp || new Date().toISOString(),
     level: getSelectionLevel(),
     inner: selectedInner,
@@ -3006,6 +3601,11 @@ recordButton.addEventListener('click', () => {
   if (captureSettings.collectSensations) {
     entry.physicalSensations = getSelectedSensations();
     entry.sensationGuide = captureSettings.includeAllSensations ? 'All sensations' : getActiveSensationType();
+  }
+  if (captureSettings.collectTags) entry.tags = getSelectedTags();
+  if (captureSettings.collectBucketLevel) {
+    if (bucketLevel.value) entry.bucketLevel = Number(bucketLevel.value);
+    else delete entry.bucketLevel;
   }
   if (entryComment.value.trim()) {
     entry.comment = entryComment.value.trim();
@@ -3136,8 +3736,45 @@ clearLogButton.addEventListener('click', () => {
   liveStatus.textContent = 'Local emotion log cleared.';
 });
 
+function resetChartFilters() {
+  const controls = document.getElementById('chartFilterControls');
+  controls.querySelectorAll('input').forEach(input => { if (input.type === 'checkbox') input.checked = false; else input.value = ''; });
+  controls.querySelectorAll('select').forEach(select => { select.selectedIndex = 0; });
+}
+
+function initializeChartFilters() {
+  const clone = document.querySelector('.log-filters').cloneNode(true);
+  clone.querySelector('legend').textContent = 'Chart filters';
+  const nested = clone.querySelector('#advancedLogFilters');
+  nested.replaceWith(...nested.querySelector('.details-content').children);
+  clone.querySelectorAll('[id]').forEach(element => { element.id = `chart${element.id}`; });
+  clone.querySelectorAll('[data-clear-filter]').forEach(button => { button.dataset.clearFilter = `chart${button.dataset.clearFilter}`; });
+  document.getElementById('chartFilterControls').append(clone);
+  clone.addEventListener('input', renderCharts);
+  clone.addEventListener('change', renderCharts);
+  clone.addEventListener('click', event => {
+    const button = event.target.closest('button'); if (!button) return;
+    if (button.dataset.clearFilter) setCheckedFilterValues(document.getElementById(button.dataset.clearFilter), []);
+    else if (button.id === 'chartclearLogFilters') {
+      resetChartFilters();
+    }
+    renderCharts();
+  });
+}
+['click', 'change', 'input'].forEach(type => {
+  document.addEventListener(type, event => {
+    if (dataSchemaMatches()) return;
+    const target = event.target.closest('#entryPanel input, #entryPanel select, #entryPanel textarea, #entryPanel button, #logBody .table-actions button, #loadMergeButton, #loadReplaceButton, #loadBackupInput, #clearLogButton, #undoDeleteButton');
+    if (target) { event.preventDefault(); event.stopImmediatePropagation(); }
+  }, true);
+});
+window.addEventListener('storage', event => {
+  if ((event.key === schemaVersionKey || event.key === null) && !dataSchemaMatches()) window.location.reload();
+});
+initializeChartFilters();
 applyTheme(getInitialTheme());
 renderAll();
+checkLocalDataSchema();
 </script>
 </body>
 </html>

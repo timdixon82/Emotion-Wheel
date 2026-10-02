@@ -7,7 +7,7 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 ## What it does
 
 - Record an emotion from the inner, middle, or outer level of the wheel. You never need to complete every level before recording.
-- Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, or use Custom to choose the fields that suit you.
+- Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, Phase 3 for context and bucket level, or use Custom to choose the fields that suit you.
 - Add an optional private note to each entry, such as what happened, a thought, or useful context.
 - See the active capture mode without opening settings, and use the compact mobile recording action without adding a duplicate screen-reader control.
 - Move directly between Entry, Review Logs, Review Charts, and Maintenance using responsive app navigation that collapses into a menu on smaller screens.
@@ -29,7 +29,7 @@ Read the fuller [privacy notes](docs/privacy.html) before using this for sensiti
 ## Getting started
 
 1. Open Entry from the app navigation.
-2. Choose Phase 1, Phase 2, or Custom in Capture settings if you want to change the recording fields.
+2. Choose Phase 1, Phase 2, Phase 3, or Custom in Capture settings if you want to change the recording fields.
 3. Select an emotion at any level and add an optional note if helpful.
 4. Select **Record this emotion**.
 5. After saving, undo the entry, prepare another like it, or start a clean entry.
@@ -81,3 +81,29 @@ This is a static HTML, CSS, and JavaScript app. There is no build step.
 ## Licence
 
 This project is available under the [MIT Licence](LICENSE).
+
+## Phase 3: tags and emotion bucket level
+
+Phase 3 includes Phase 2 reflection plus optional multiple tags and an emotion bucket level from 1 to 10 (10 means full). Custom can enable either field independently. Bucket level describes overall emotional capacity and is separate from emotion intensity; it starts as Not recorded rather than an assumed value.
+
+Tags start with Work, Family, Relationship, Friends, Health, Sleep, Money, Home, Exercise, Social, Study, Travel and Caring responsibilities. Create more tags in Entry; names are trimmed and duplicates are matched without regard to case. New tags are selected immediately and saved for reuse. Logs and shared/exported tables include both fields, and log search matches them. Reflection charts show tag counts, bucket-level counts and the average recorded bucket level for the selected period. Multiple tags can make tag counts exceed entry counts; missing bucket levels are excluded from averages.
+
+Existing records and storage keys are retained. Backups include both new fields and the reusable tag list; older backups remain supported. Editing with a field disabled preserves its existing value. With the field enabled, deselecting all tags or choosing Not recorded clears that field on the edited entry.
+
+### Analysing tags and bucket levels
+
+Charts now include ranked tag counts and percentages, emotions for a selected tag (inner categories or recorded paths), and an emotion-by-bucket-level heatmap with totals and missing values. All use the selected chart period. Select a bar or heatmap cell to open matching logs with the same period, tag, emotion and bucket filters. Logs also offer independent tag and bucket filters. No records are changed by analysis.
+
+Log filters support multiple emotions, tags and bucket levels using native checkboxes. Within emotions and bucket levels, any selected value matches; tags offer any/all matching. The groups combine with each other and the inclusive date range. Empty groups mean all values. Chart drill-down selects the corresponding checkboxes.
+
+### Record identity and backup compatibility
+
+Records now carry a permanent UUID in `id`, plus `createdAt` and `modifiedAt`. The existing `timestamp` remains the recorded date used by logs and charts. Legacy records receive an ID once; missing metadata dates use their recorded timestamp because historical edit dates are unknown. The original local JSON is retained before migration. No storage keys change.
+
+Version 2 JSON backups contain these fields. Version 1 backups remain importable; legacy content matching prevents repeat imports creating duplicates. Records with the same GUID but different contents prompt a review: keep current, use backup, keep both, or cancel the entire merge. Keeping both assigns a new GUID to the additional record. Replacement still requires confirmation and saves the previous log locally first. Failed imports keep existing records.
+
+Charts offer the same filters as Logs. Choose Custom in View chart period to show Advanced filters below the period controls and apply them to every chart. Choose All time, A day, A week or A month to return to normal period navigation. Advanced filters reset whenever the chart period selection changes. Chart drill-down carries the advanced criteria into Logs.
+
+Run `node tests/context-analysis.cjs` for data, filtering, record identity and backup lifecycle regression checks.
+
+Local data has a separate schema version marker (currently 2), while the existing browser storage key and array format remain compatible. On opening an older local dataset, a top banner requires an original-data backup download and confirmation that it has saved before migration. The app retains an exact local recovery snapshot of records and settings before writing. Adding, editing, deleting and importing data, including capture settings, are blocked throughout the app until the upgrade completes. Review, filtering and exports remain available. Closing the page before confirmation leaves the dataset unchanged. Backups include the schema version; older backup files remain supported.
