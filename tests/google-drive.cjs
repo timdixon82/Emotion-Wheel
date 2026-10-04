@@ -32,7 +32,9 @@ async function main() {
   assert.deepEqual(loaded.backup, backup);
   assert.equal(loaded.metadata.capabilities.canEdit, false);
   assert(calls.every(call => call.options.method === undefined), 'Read-only access must make only GET requests');
-  assert(calls.every(call => call.options.credentials === 'omit' && call.options.redirect === 'error'));
+  assert(calls.every(call => call.options.credentials === 'omit'));
+  assert.equal(calls[0].options.redirect, 'error');
+  assert.equal(calls[1].options.redirect, 'follow');
   assert(calls.every(call => !call.url.includes('synthetic-test-token')));
   assert(calls.every(call => call.options.headers.get('Authorization') === 'Bearer synthetic-test-token'));
   assert.equal(JSON.stringify(backup), original);
@@ -42,6 +44,7 @@ async function main() {
   await client.createBackup(backup);
   const upload = calls.at(-1);
   assert.equal(upload.options.method, 'POST');
+  assert.equal(upload.options.redirect, 'error');
   assert(upload.options.body.includes(original));
   assert(!upload.options.body.includes('synthetic-test-token'));
   assert.equal(JSON.stringify(backup), original);

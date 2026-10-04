@@ -9,8 +9,20 @@ Current Google project: `emotion-wheel-510615`, project number `391356585675`.
 Drive and Picker APIs have been enabled. OAuth branding is created with
 `tjdixon@gmail.com` for support and developer contact. Tim approved Google's
 User Data Policy; the OAuth configuration is created in External / Testing mode,
-with `tjdixon@gmail.com` added as the initial test user. The localhost-only client
-form is prepared. Credential creation and real-account tests are pending.
+with `tjdixon@gmail.com` and `tim@dixon-net.com` added as test users. The approved Web client
+is created with only `http://localhost:8765` authorised. The approved Picker key
+is created with website restrictions `http://localhost:8765/*` and
+`https://docs.google.com/*`, and API restrictions for Drive and Picker only.
+The consent configuration declares only `drive.file`.
+
+The browser credentials are configured in ignored
+`assets/google-drive-config.local.json`; no OAuth client secret is stored. Local
+configuration checks passed and the real Google sign-in library loaded. Tim
+selected `tjdixon@gmail.com` and completed Google's prompt; the app received the
+Drive connection and enabled its controls. The owner upload/download round-trip
+passed with one synthetic Happy record; separate-account permission tests are
+in progress. The in-app browser did not expose Google's
+account popup to automation, so Tim completed account selection directly.
 
 The local preview now has explicit connection, saving and shared-preview controls.
 The current transport only creates new backup files; protected updates and
@@ -107,9 +119,10 @@ Before release verify:
 - HTML validation, existing regression checks, keyboard use, narrow viewport,
   screen-reader announcements, and Tim's iOS VoiceOver confirmation.
 
-The local adapter tests do not establish that OAuth, Picker, or real Drive
-permissions work. Those remain unverified until the Google project is configured
-and tested with separate accounts. Keep the live release unchanged throughout.
+The local adapter tests alone do not establish that OAuth, Picker, or real Drive
+permissions work. Owner OAuth and Picker have now passed a real round-trip;
+recipient permissions still need separate-account verification. Keep the live
+release unchanged throughout.
 
 ## Local test results — 4 October 2026
 
@@ -125,9 +138,30 @@ reported that localhost pageviews were not counted. A chart instruction that
 incorrectly fixed the full bucket level at 10 was changed to refer to the highest
 level of the configured scale.
 
-The local browser is available for manual testing. Real Google sign-in, uploads,
-Picker selection and cross-account sharing remain untested. Automatic sync is
-not implemented; this preview creates an explicit new backup on each save.
+The local browser is available for manual testing. Real owner Google sign-in,
+upload, Picker selection, download and refresh passed. Cross-account sharing is
+still in progress. Automatic sync is not implemented; this preview creates an
+explicit new backup on each save.
+
+Tim approved uploading only the single synthetic Happy record and test settings.
+One `Emotion Wheel backup.json` was created privately in the owner account.
+The JSON read back from Drive matched the local backup's version, schema, scale,
+settings, tags and entries exactly, including the note, ID and timestamps.
+Opening it in the app showed a separate read-only preview. Refresh succeeded;
+closing the preview left the original local log at exactly one entry.
+
+The real download initially failed because the adapter rejected redirects.
+Google's [download example](https://developers.google.com/workspace/drive/api/guides/manage-downloads)
+follows them. Only the media GET now follows redirects; metadata and uploads
+still reject them, and cookies are omitted on every request. The
+[Fetch standard](https://fetch.spec.whatwg.org/#http-redirect-fetch) removes the
+Authorization header on a cross-origin redirect. Regression checks cover this
+distinction and passed after the fix.
+
+The synthetic file was then shared with `tim@dixon-net.com` as Viewer with
+Notify people unchecked. Drive confirmed access updated, the recipient's Viewer
+role and Restricted general access. Reading through the app as that recipient,
+and revocation, remain pending; assigning a role alone does not prove them.
 
 Additional preparation: regression checks now cover Picker selection, cancellation,
 duplicate callbacks, wrong-file selection from a sharing link, denied refresh,

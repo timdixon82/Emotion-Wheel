@@ -66,7 +66,7 @@
       const headers = new Headers(options.headers);
       headers.set('Authorization', `Bearer ${this.#token}`);
       const response = await this.#fetch(url, {
-        ...options, headers, credentials: 'omit', cache: 'no-store', redirect: 'error'
+        ...options, headers, credentials: 'omit', cache: 'no-store', redirect: options.redirect || 'error'
       });
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       if (!response.ok) {
@@ -124,7 +124,10 @@
       }
       if (Number(metadata.size) > MAX_BACKUP_BYTES) throw new Error('The Drive file is too large to load.');
       if (metadata.capabilities?.canDownload === false) throw new Error('The file owner has disabled downloads.');
-      const contentResponse = await this.#request(`${API}files/${fileId}?alt=media`);
+      // Google's download example follows redirects. Fetch removes the bearer
+      // header on cross-origin redirects; cookies remain omitted throughout.
+      // Metadata and uploads retain redirect:error.
+      const contentResponse = await this.#request(`${API}files/${fileId}?alt=media`, { redirect: 'follow' });
       const text = await this.#readText(contentResponse);
       const backup = JSON.parse(text);
       if (!backup || !Array.isArray(backup.entries)) throw new Error('The file is not an Emotion Wheel backup.');
