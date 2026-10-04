@@ -118,6 +118,9 @@
     .connected-account { font-size: .875rem; margin: .5rem 0 0; overflow-wrap: anywhere; }
     .drive-task { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
     .drive-task h2 { margin-top: 0; }
+    .table-scroll { max-width: 100%; overflow-x: auto; }
+    #sharedDriveFilesTable { min-width: 42rem; }
+    #sharedDriveFilesTable button { margin: .25rem; }
 
     details {
       border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
@@ -1049,79 +1052,88 @@
         <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
         <button type="button" id="disconnectGoogleDriveButton" disabled>Disconnect Google Drive</button>
       </div>
+      <section id="googleDriveLinkPrompt" aria-labelledby="googleDriveLinkHeading" hidden>
+        <h2 id="googleDriveLinkHeading" tabindex="-1">Open a shared file</h2>
+        <p id="googleDriveLinkMessage">Sign in to Google so we can check your access to this file. Your own records will be kept.</p>
+        <button type="button" id="googleDriveLinkSignInButton">Continue with Google</button>
+        <button type="button" id="googleDriveLinkPickerButton" hidden>Choose the shared file</button>
+        <a id="googleDriveLinkAccessPage" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer" hidden>Open in Google Drive to request access</a>
+      </section>
       <p id="googleDriveStatus" class="help" role="status">Google Drive is disconnected. Records are saved only in this browser.</p>
       <section class="drive-task" aria-labelledby="myDriveDataHeading">
-        <h2 id="myDriveDataHeading">Your data in Google Drive</h2>
-        <p>Save a new backup, or turn on sync to keep one file up to date across your devices. Saving a backup once does not turn on sync.</p>
-        <button type="button" id="saveGoogleDriveButton" disabled>Save a new Drive backup</button>
-      <div id="googleDriveSavedPanel" hidden>
-        <p>To share this backup, choose who can view it, then copy its link.</p>
+        <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
+        <p>Automatic sync keeps your current Drive file and this device up to date while the page is open and connected. If changes clash, it pauses for review. Your current file keeps the same sharing link.</p>
         <div class="actions">
-          <a id="googleDriveFileLink" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer">Open saved copy in Drive</a>
-          <button type="button" id="copyGoogleDriveLinkButton">Copy Emotion Wheel sharing link</button>
-          <button type="button" id="shareGoogleDriveCopyButton">Share this saved copy read-only</button>
+          <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
+          <button type="button" id="syncGoogleDriveNowButton" disabled>Sync Now</button>
+          <button type="button" id="pauseGoogleDriveSyncButton" disabled>Pause Sync</button>
         </div>
-      </div>
-      <section aria-labelledby="googleDriveSyncHeading">
-        <h3 id="googleDriveSyncHeading">Keep your data in sync</h3>
-        <p>Use a saved backup or select a file you own below. Sync combines changes from your devices, including deletions after setup. If changes clash, sync pauses so you can review them. Keep this page open and connected for sync to run.</p>
-        <button type="button" id="startGoogleDriveSyncButton" disabled>Set up sync</button>
-        <button type="button" id="syncGoogleDriveNowButton" disabled>Sync now</button>
-        <button type="button" id="pauseGoogleDriveSyncButton" disabled>Pause sync</button>
         <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
-        <p id="googleDriveSyncStatus" role="status">Two-way sync is off.</p>
-        <div id="googleDriveSyncConfirmation" hidden>
-          <p id="googleDriveSyncReview"></p>
-          <button type="button" id="confirmGoogleDriveSyncButton">Turn on sync</button>
-          <button type="button" id="cancelGoogleDriveSyncButton">Cancel sync setup</button>
+        <p id="googleDriveSyncStatus" role="status">Automatic sync is off.</p>
+        <p class="help">You can also save your current file now or keep a separate dated backup.</p>
+        <div class="actions">
+          <button type="button" id="saveGoogleDriveButton" disabled>Save current to Drive</button>
+          <button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button>
+          <span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Share my data</button></span>
         </div>
+        <details id="googleDriveBackupSettings">
+          <summary>Backup settings</summary>
+          <div class="details-content">
+            <label for="googleDriveBackupName">Backup file name</label><input id="googleDriveBackupName" type="text" maxlength="80" value="Emotion Wheel backup">
+            <label for="googleDriveBackupLimit">Backups to keep</label><input id="googleDriveBackupLimit" type="number" min="1" max="100" step="1" value="5">
+            <p class="help">Extra backups are listed oldest first. You choose whether to move them to Trash; your current file is always kept.</p>
+            <p class="help">Current file: Emotion Wheel / Emotion Wheel current.json<br>Backups: Emotion Wheel / Backups / your named, dated backups</p>
+          </div>
+        </details>
+        <section id="googleDriveBackupCleanup" aria-labelledby="googleDriveCleanupHeading" hidden>
+          <h3 id="googleDriveCleanupHeading" tabindex="-1">Review older backups</h3>
+          <p id="googleDriveCleanupSummary"></p><ul id="googleDriveCleanupList"></ul>
+          <button type="button" id="confirmGoogleDriveCleanupButton">Move these backups to Trash</button><button type="button" id="cancelGoogleDriveCleanupButton">Keep all backups</button>
+        </section>
+      <section id="googleDriveSharingResult" aria-labelledby="googleDriveShareLinkHeading" hidden>
+        <h3 id="googleDriveShareLinkHeading" tabindex="-1">Send this link</h3>
+        <p id="googleDriveShareLinkMessage"></p>
+        <label for="googleDriveShareLink">Emotion Wheel sharing link</label>
+        <input id="googleDriveShareLink" type="url" readonly>
+        <div class="actions"><button type="button" id="shareGoogleDriveLinkButton">Share link</button><button type="button" id="copyGoogleDriveResultLinkButton">Copy link</button><button type="button" id="closeGoogleDriveSharingResultButton">Done</button></div>
+        <p id="googleDriveShareSheetStatus" role="status"></p>
       </section>
       <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
-        <h2 id="googleDriveSharingHeading" tabindex="-1">Choose who can view this file</h2>
-        <p class="help">The person you choose can read every record, including notes, and download a copy. Removing their access later cannot remove copies they have already saved.</p>
-        <label for="googleDriveRecipientEmail">Recipient’s Google account email</label>
-        <input id="googleDriveRecipientEmail" type="email" maxlength="254" required>
-        <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification</label>
+        <h3 id="googleDriveSharingHeading" tabindex="-1">Share your data</h3>
+        <p id="googleDriveSharingSelectedFile"></p>
+        <p class="help">They can view and download all records, including notes. They cannot edit your Drive file.</p>
+        <label for="googleDriveRecipientEmail">Their Google account email</label>
+        <input id="googleDriveRecipientEmail" type="email" maxlength="254" required autocomplete="email">
         <div class="actions">
-          <button type="button" id="reviewGoogleDriveSharingButton">Review sharing</button>
-          <button type="button" id="cancelGoogleDriveSharingButton">Cancel sharing</button>
+          <button type="button" id="giveGoogleDriveAccessButton">Give access and get link</button>
+          <button type="button" id="cancelGoogleDriveSharingButton">Cancel</button>
         </div>
-        <section id="googleDriveSharingConfirmation" aria-labelledby="googleDriveSharingConfirmHeading" hidden>
-          <h3 id="googleDriveSharingConfirmHeading" tabindex="-1">Confirm read-only sharing</h3>
-          <p id="googleDriveSharingReview"></p>
-          <button type="button" id="confirmGoogleDriveSharingButton">Confirm Viewer access</button>
-        </section>
+        <details id="googleDriveShareOptions">
+          <summary>Share options</summary>
+          <div class="details-content">
+            <button type="button" id="chooseGoogleDriveSharingFileButton">Choose another file I own</button>
+            <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification</label>
+            <p class="help">Removing access later cannot remove copies they have already downloaded.</p>
+          </div>
+        </details>
       </section>
       </section>
       <section class="drive-task" aria-labelledby="manageDriveFilesHeading">
         <h2 id="manageDriveFilesHeading">Files you can view</h2>
-        <p>Add a shared file, then choose it here to rename it, copy its link or remove it from your list. Removing it here keeps the file in Google Drive.</p>
-        <label for="manageDatasetSelect">Choose a file</label>
-        <select id="manageDatasetSelect"><option value="local">My local data</option></select>
+        <p>View shared data in Logs and Charts. Names are saved only in this browser. Removing a file from this list keeps it in Google Drive.</p>
         <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
-    <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
-    <div id="selectedDriveFileActions" class="actions" hidden>
-      <button type="button" id="refreshReviewDatasetButton" disabled>Refresh file</button>
-      <button type="button" id="copyReviewDatasetLinkButton" disabled>Copy file link</button>
-      <button type="button" id="shareReviewDatasetButton" disabled>Share a file you own</button>
-      <button type="button" id="removeReviewDatasetButton" disabled>Remove from this list</button>
-    </div>
-    <div id="reviewDatasetNameControls" hidden>
-      <label for="reviewDatasetName">Name in your file list</label>
-      <input id="reviewDatasetName" type="text" maxlength="120">
-      <button type="button" id="renameReviewDatasetButton">Save name</button>
-    </div>
-    <p id="reviewDatasetStatus" role="status" aria-live="polite">Viewing my local data.</p>
-      <section id="googleDriveSharedPreview" aria-labelledby="googleDriveSharedHeading" hidden>
-        <h3 id="googleDriveSharedHeading" class="visually-hidden">View selected file</h3>
+        <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
+        <p id="sharedDriveFilesEmpty">No shared files added yet.</p>
+        <div class="table-scroll"><table id="sharedDriveFilesTable" hidden>
+          <caption>Files you can view</caption><thead><tr><th scope="col">Name</th><th scope="col">Owner</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="sharedDriveFilesBody"></tbody>
+        </table></div>
+    <p id="reviewDatasetStatus" hidden>Viewing my local data.</p>
+      <div id="googleDriveSharedPreview" hidden>
         <p id="googleDriveSharedSummary" hidden></p>
         <button type="button" id="refreshGoogleDrivePreviewButton" hidden>Refresh shared backup</button>
-        <div class="actions">
-          <button type="button" id="viewSharedLogsButton">View Logs</button>
-          <button type="button" id="viewSharedChartsButton">View Charts</button>
-          <button type="button" id="closeGoogleDrivePreviewButton" hidden>Return to my local data</button>
-        </div>
-      </section>
+        <button type="button" id="closeGoogleDrivePreviewButton" hidden>Return to my local data</button>
+      </div>
       </section>
     </div>
   </details>
@@ -1453,6 +1465,7 @@ function selectAppView(selectedButton, focusContent = false) {
   ];
   const selectedView = views.find(view => view.button === selectedButton) || views[0];
   currentAppView = selectedView.name;
+  document.dispatchEvent(new Event('appviewchange'));
 
   views.forEach(view => {
     if (view === selectedView) view.button.setAttribute('aria-current', 'page');
@@ -1464,7 +1477,7 @@ function selectAppView(selectedButton, focusContent = false) {
   chartsPanel.hidden = currentAppView !== 'charts';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
   if (currentAppView !== 'entry') {
-    selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters)').forEach(details => {
+    selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters):not(#googleDriveBackupSettings):not(#googleDriveShareOptions)').forEach(details => {
       details.open = true;
     });
   }

@@ -135,7 +135,7 @@
     async readBackup(fileId) {
       validFileId(fileId);
       const generation = this.#generation;
-      const fields = 'id,name,mimeType,size,modifiedTime,version,owners(displayName,emailAddress),capabilities(canDownload,canEdit,canShare)';
+      const fields = 'id,name,mimeType,size,modifiedTime,version,parents,appProperties,trashed,owners(displayName,emailAddress),capabilities(canDownload,canEdit,canShare)';
       const metadataResponse = await this.#request(`${API}files/${fileId}?fields=${encodeURIComponent(fields)}`);
       const metadata = JSON.parse(await this.#readText(metadataResponse));
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
@@ -183,6 +183,90 @@
       return permission;
     }
 
+    async listManagedFiles(query) {
+      const generation = this.#generation;
+      const files = [];
+      let pageToken;
+      do {
+        const params = new URLSearchParams({ q: `trashed = false and 'me' in owners and appProperties has { key='application' and value='emotion-wheel' } and (${query})`,
+          fields: 'incompleteSearch,nextPageToken,files(id,name,mimeType,createdTime,parents,appProperties,owners(emailAddress))', pageSize: '100', orderBy: 'createdTime asc,name' });
+        if (pageToken) params.set('pageToken',pageToken);
+        const response = await this.#request(`${API}files?${params}`);
+        const result = JSON.parse(await this.#readText(response));
+        if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+        if (result.incompleteSearch) throw new Error('Drive returned an incomplete file list. Review the folder before saving or cleaning up.');
+        if (!Array.isArray(result.files)) throw new Error('Drive did not return a valid file list.');
+        files.push(...result.files); pageToken = result.nextPageToken;
+        if (files.length > 10000) throw new Error('Too many managed files. Review your Drive folder.');
+      } while (pageToken);
+      return files;
+    }
+
+    async ensureFolder(name, role, parentId) {
+      if (!['root-folder','backups-folder'].includes(role)) throw new Error('Invalid Drive folder role.');
+      if (parentId) validFileId(parentId);
+      const matches = await this.listManagedFiles(`mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='role' and value='${role}' } and '${parentId || 'root'}' in parents`);
+      if (matches.length > 1) throw new Error('More than one Emotion Wheel folder was found. Review them in Drive before saving.');
+      if (matches.length) return matches[0];
+      const generation = this.#generation;
+      const response = await this.#request(`${API}files?fields=id,name`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({
+        name, mimeType:'application/vnd.google-apps.folder', parents:[parentId || 'root'], appProperties:{application:'emotion-wheel',role}
+      }) }, 'creating the backup folder');
+      const result = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      validFileId(result.id); return result;
+    }
+
+    async getFolderTree() {
+      const folder = await this.ensureFolder('Emotion Wheel','root-folder');
+      const backups = await this.ensureFolder('Backups','backups-folder',folder.id);
+      return { folderId:folder.id, backupsId:backups.id };
+    }
+
+    async findCurrent(folderId) {
+      validFileId(folderId);
+      const files = await this.listManagedFiles(`'${folderId}' in parents and appProperties has { key='role' and value='current' }`);
+      if (files.length > 1) throw new Error('More than one current file was found. Review them in Drive before saving.');
+      return files[0] || null;
+    }
+
+    async adoptCurrent(fileId, folderId, ownerEmail) {
+      validFileId(fileId); validFileId(folderId);
+      const generation = this.#generation;
+      const remote = await this.readBackup(fileId);
+      if (remote.metadata.trashed || !remote.metadata.owners?.some(owner=>owner.emailAddress===ownerEmail) || remote.metadata.capabilities?.canEdit !== true) throw new Error('Choose an editable file you own for the current file.');
+      const params = new URLSearchParams({fields:'id,name,parents,appProperties'});
+      if (!remote.metadata.parents?.includes(folderId)) {
+        params.set('addParents',folderId);
+        if (remote.metadata.parents?.length) params.set('removeParents',remote.metadata.parents.join(','));
+      }
+      const response = await this.#request(`${API}files/${fileId}?${params}`, {method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'Emotion Wheel current.json',appProperties:{...remote.metadata.appProperties,application:'emotion-wheel',role:'current'}})}, 'organising the current file');
+      const result = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (result.id !== fileId) throw new Error('Drive did not confirm the current file.');
+      return result;
+    }
+
+    async listBackups(folderId) {
+      validFileId(folderId);
+      return this.listManagedFiles(`'${folderId}' in parents and mimeType = 'application/json' and appProperties has { key='role' and value='backup' }`);
+    }
+
+    async trashBackup(fileId, folderId, ownerEmail) {
+      validFileId(fileId); validFileId(folderId);
+      const generation = this.#generation;
+      const before = await this.getUpdateState(fileId);
+      const remote = await this.readBackup(fileId);
+      const after = await this.getUpdateState(fileId);
+      if (before.etag !== after.etag) throw new Error('The backup changed. Review the backup list again before moving it to Trash.');
+      if (remote.metadata.appProperties?.application !== 'emotion-wheel' || remote.metadata.appProperties?.role !== 'backup' || !remote.metadata.parents?.includes(folderId) || !remote.metadata.owners?.some(owner=>owner.emailAddress===ownerEmail)) throw new Error('Only your managed backups in the Backups folder can be moved to Trash.');
+      const response = await this.#request(`${API}files/${fileId}?fields=id,trashed`, { method:'PATCH',headers:{'Content-Type':'application/json','If-Match':after.etag},body:JSON.stringify({trashed:true}) }, 'moving the confirmed backup to Trash');
+      const result = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (result.id !== fileId || result.trashed !== true) throw new Error('Drive did not confirm the move to Trash.');
+      return result;
+    }
+
     // v2 exposes the file ETag in JSON, avoiding reliance on CORS-exposed headers.
     // Live stale-ETag rejection must pass before automatic updates are released.
     async getUpdateState(fileId) {
@@ -216,7 +300,7 @@
       return result;
     }
 
-    async createBackup(backup) {
+    async createBackup(backup, { name = 'Emotion Wheel backup.json', parentId, role = 'backup' } = {}) {
       const generation = this.#generation;
       if (!backup || !Array.isArray(backup.entries)) throw new Error('No valid backup to save.');
       const content = JSON.stringify(backup);
@@ -224,8 +308,10 @@
         throw new Error('The backup is too large to save to Drive. Use a file backup.');
       }
       const boundary = `emotion_wheel_${root.crypto.randomUUID()}`;
-      const metadata = { name: 'Emotion Wheel backup.json', mimeType: 'application/json',
-        appProperties: { application: 'emotion-wheel' } };
+      if (typeof name !== 'string' || !name.trim() || name.length > 180) throw new Error('Enter a file name of up to 180 characters.');
+      if (parentId) validFileId(parentId);
+      const metadata = { name: name.trim(), mimeType: 'application/json',
+        appProperties: { application: 'emotion-wheel', role }, ...(parentId ? { parents: [parentId] } : {}) };
       const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
         `${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
         `${content}\r\n--${boundary}--\r\n`;

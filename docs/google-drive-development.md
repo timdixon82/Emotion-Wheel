@@ -335,3 +335,19 @@ Browser checks confirmed the single review selector, hidden management actions
 on review screens, the Maintenance selector staying on that page, and both
 selectors returning to local data. Existing controller and review regressions
 and HTML validation pass.
+
+## Current-file and simplified controls (local branch)
+
+Maintenance prepares Google Identity Services; Connect opens account selection in one click. Ordinary app opening without a shared link makes no Google request. Picker loads only when choosing a file. Tokens remain in memory.
+
+Current data uses Emotion Wheel/Emotion Wheel current.json. Saving updates the same file, preserving its ID and Viewer permissions. Separate named, dated backups use Emotion Wheel/Backups. Folder/file app markers distinguish managed files; ambiguous duplicate folders or current files stop saving. The default limit is five backups. The oldest excess copies are shown for explicit Trash confirmation; current and unmanaged files are excluded.
+
+Start Sync uses the current file and becomes Sync Now plus Pause Sync. Shared files are listed in Maintenance with View data, Edit name, Refresh and Remove; no link copying or sharing controls are offered there. View data opens Logs, with Entry and log editing disabled. Logs and Charts keep only the dataset dropdown.
+
+These changes supersede the earlier snapshot-only and two-click connection notes. Live owner testing saved the existing synthetic file as current while preserving its ID, created six dated backups, prompted for only the oldest, and moved that one to Trash after explicit approval. Sync completed with the simplified controls and was paused afterwards. Alternate owned-file sharing and denied ownership are covered by mocked checks. Real second-device/offline testing remains a release gate. Nothing has been released.
+
+Sharing now starts with one Share my data button. It defaults to the managed current file; Choose another file I own within the sharing form uses Picker and verifies ownership and sharing capability before enabling recipient confirmation. The selected filename is shown before granting access. After confirmation, a visible URL and Share link button use the browser share sheet where available, with a copy fallback.
+
+Saving and automatic sync now share one section. Backup name, retention limit and folder details are inside collapsed Backup settings. Cleanup confirmation stays outside that disclosure so it is visible when needed.
+
+The final sharing flow removes separate Review/Confirm screens: Share my data, enter a Google email, Give access and get link, then Share link or Copy link. The access button is the explicit Viewer grant. File choice and optional notifications are in collapsed Share options. The current filename and read-only scope are shown before that action. Existing current files reopen for sharing without a preliminary sync/upload. Done closes the result.
