@@ -6,9 +6,11 @@ Tim authorises release. Google Drive remains optional; the local app and file
 backups must keep working without a Google account or Google scripts.
 
 Current Google project: `emotion-wheel-510615`, project number `391356585675`.
-Drive and Picker APIs have been enabled. OAuth branding is prepared with
-`tjdixon@gmail.com` for support and developer contact. Acceptance of Google's
-User Data Policy, client credentials and real-account tests are pending.
+Drive and Picker APIs have been enabled. OAuth branding is created with
+`tjdixon@gmail.com` for support and developer contact. Tim approved Google's
+User Data Policy; the OAuth configuration is created in External / Testing mode,
+with `tjdixon@gmail.com` added as the initial test user. The localhost-only client
+form is prepared. Credential creation and real-account tests are pending.
 
 The local preview now has explicit connection, saving and shared-preview controls.
 The current transport only creates new backup files; protected updates and
