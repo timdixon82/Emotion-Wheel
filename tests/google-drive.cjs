@@ -66,6 +66,23 @@ async function main() {
   }
   console.log('PASS: expired credentials block calls; unauthorised tokens are cleared; denied, missing, busy and failed requests preserve local input.');
 
+  for (const failedStage of ['metadata', 'download', 'upload']) {
+    const failedClient = new DriveClient({ fetch: async url => {
+      if (failedStage === 'download' && !url.includes('?alt=media')) return json({ mimeType: 'application/json' });
+      throw new TypeError('Failed to fetch: synthetic-secret');
+    } });
+    failedClient.setAccessToken({ access_token: 'synthetic-secret', expires_in: 60 });
+    await assert.rejects(failedStage === 'upload' ? failedClient.createBackup(backup) : failedClient.readBackup(fileId), error => {
+      assert.equal(error.code, 'drive-network');
+      assert.match(error.message, new RegExp(failedStage === 'metadata' ? 'checking file access' :
+        failedStage === 'download' ? 'downloading the backup' : 'saving the backup'));
+      assert(!error.message.includes('synthetic-secret'));
+      return true;
+    });
+    assert.equal(JSON.stringify(backup), original);
+  }
+  console.log('PASS: connection failures identify the failed operation without exposing credential details or changing local data.');
+
   for (const metadata of [{ mimeType: 'text/html' }, { mimeType: 'application/json', size: MAX_BACKUP_BYTES + 1 },
     { mimeType: 'application/json', capabilities: { canDownload: false } }]) {
     replies = [json(metadata)];

@@ -65,9 +65,19 @@
       const generation = this.#generation;
       const headers = new Headers(options.headers);
       headers.set('Authorization', `Bearer ${this.#token}`);
-      const response = await this.#fetch(url, {
-        ...options, headers, credentials: 'omit', cache: 'no-store', redirect: options.redirect || 'error'
-      });
+      let response;
+      try {
+        response = await this.#fetch(url, {
+          ...options, headers, credentials: 'omit', cache: 'no-store', redirect: options.redirect || 'error'
+        });
+      } catch {
+        if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+        const action = options.method === 'POST' ? 'saving the backup' :
+          url.includes('?alt=media') ? 'downloading the backup' : 'checking file access';
+        const error = new Error(`Google Drive connection failed while ${action}. Try again. Your local data is unchanged.`);
+        error.code = 'drive-network';
+        throw error;
+      }
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       if (!response.ok) {
         if (response.status === 401) {

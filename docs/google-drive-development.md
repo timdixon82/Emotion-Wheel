@@ -20,8 +20,8 @@ The browser credentials are configured in ignored
 configuration checks passed and the real Google sign-in library loaded. Tim
 selected `tjdixon@gmail.com` and completed Google's prompt; the app received the
 Drive connection and enabled its controls. The owner upload/download round-trip
-passed with one synthetic Happy record; separate-account permission tests are
-in progress. The in-app browser did not expose Google's
+passed with one synthetic Happy record. The second account opened and refreshed
+the shared backup, and a revocation test blocked further reading. The in-app browser did not expose Google's
 account popup to automation, so Tim completed account selection directly.
 
 The local preview now has explicit connection, saving and shared-preview controls.
@@ -121,7 +121,7 @@ Before release verify:
 
 The local adapter tests alone do not establish that OAuth, Picker, or real Drive
 permissions work. Owner OAuth and Picker have now passed a real round-trip;
-recipient permissions still need separate-account verification. Keep the live
+recipient Viewer reads and revocation have also been tested separately. Keep the live
 release unchanged throughout.
 
 ## Local test results — 4 October 2026
@@ -139,8 +139,8 @@ incorrectly fixed the full bucket level at 10 was changed to refer to the highes
 level of the configured scale.
 
 The local browser is available for manual testing. Real owner Google sign-in,
-upload, Picker selection, download and refresh passed. Cross-account sharing is
-still in progress. Automatic sync is not implemented; this preview creates an
+upload, Picker selection, download and refresh passed. Cross-account Viewer
+reading, refresh and revocation also passed. Automatic sync is not implemented; this preview creates an
 explicit new backup on each save.
 
 Tim approved uploading only the single synthetic Happy record and test settings.
@@ -160,8 +160,27 @@ distinction and passed after the fix.
 
 The synthetic file was then shared with `tim@dixon-net.com` as Viewer with
 Notify people unchecked. Drive confirmed access updated, the recipient's Viewer
-role and Restricted general access. Reading through the app as that recipient,
-and revocation, remain pending; assigning a role alone does not prove them.
+role and Restricted general access. After recipient sign-in, opening the link
+correctly requested per-file selection in Picker. Picker listed the shared
+synthetic file, but selecting it twice initially produced `Failed to fetch`.
+Network failures now identify
+whether checking access, downloading or saving failed, without including raw
+credential-bearing error details. After reload and another recipient sign-in,
+the link opened successfully without another Picker selection, and Refresh
+succeeded. The original cause of the earlier fetch failure was not established.
+
+Removing the recipient's Viewer grant made Refresh fail while checking access
+and cleared the shared preview. A direct Drive visit explicitly signed in as
+`tim@dixon-net.com` showed `Access denied` / `You need access`, independently
+confirming permission removal. Disconnecting retained exactly the one original
+synthetic local record. The app's denied refresh surfaced a network error rather
+than the tailored 403/404 message; do not claim that error classification is
+verified for every real denial response.
+
+Viewer access was restored for the controlled recipient after this test, with
+email notification disabled and general access still Restricted, so Tim can
+continue manual trials. A third, never-invited account and iOS VoiceOver still
+need manual verification before release.
 
 Additional preparation: regression checks now cover Picker selection, cancellation,
 duplicate callbacks, wrong-file selection from a sharing link, denied refresh,
