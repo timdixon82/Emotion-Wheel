@@ -6,8 +6,9 @@ Tim authorises release. Google Drive remains optional; the local app and file
 backups must keep working without a Google account or Google scripts.
 
 Current Google project: `emotion-wheel-510615`, project number `391356585675`.
-Drive and Picker APIs have been enabled. OAuth branding is being prepared;
-support/contact email, client credentials and real-account tests are pending.
+Drive and Picker APIs have been enabled. OAuth branding is prepared with
+`tjdixon@gmail.com` for support and developer contact. Acceptance of Google's
+User Data Policy, client credentials and real-account tests are pending.
 
 The local preview now has explicit connection, saving and shared-preview controls.
 The current transport only creates new backup files; protected updates and
@@ -107,3 +108,21 @@ Before release verify:
 The local adapter tests do not establish that OAuth, Picker, or real Drive
 permissions work. Those remain unverified until the Google project is configured
 and tested with separate accounts. Keep the live release unchanged throughout.
+
+## Local test results — 4 October 2026
+
+The three Node suites above, JavaScript syntax checks, HTML validation for
+`index.html` and `docs/privacy.html`, and `git diff --check` passed.
+
+At `http://localhost:8765`, a synthetic Happy entry with a note was recorded,
+retained after reload, found through log search, and counted correctly in charts.
+Connecting without credentials reported that Google Drive is not configured,
+kept upload/open/disconnect controls disabled, loaded no Google scripts, and
+preserved the synthetic local entry. No browser errors were observed; GoatCounter
+reported that localhost pageviews were not counted. A chart instruction that
+incorrectly fixed the full bucket level at 10 was changed to refer to the highest
+level of the configured scale.
+
+The local browser is available for manual testing. Real Google sign-in, uploads,
+Picker selection and cross-account sharing remain untested. Automatic sync is
+not implemented; this preview creates an explicit new backup on each save.
