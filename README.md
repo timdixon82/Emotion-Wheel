@@ -17,12 +17,13 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 - Correct entries, use an existing entry as the start of a new one, or delete with an immediate undo option.
 - Share an image captured from the chart currently displayed on screen through the device's native share sheet when supported, with clipboard and download fallbacks.
 - Save, load, merge, replace, share, export, and clear your local data.
+- Optional Google Drive connection is being developed on a local feature branch. The preview can save a new Drive backup and open a separate read-only shared preview after Google configuration and authorisation. Automatic sync is not yet available.
 
 ## Privacy
 
 Your entries, optional notes, and settings are stored only in local storage in the browser on the device you are using. They are not sent to a server unless you deliberately export, copy, or share them. The site uses GoatCounter for anonymous pageview statistics; it does not receive your emotion records or track actions within an entry.
 
-Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
+Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, save a copy to Google Drive, share a chart or table, or copy information. Browser data can be cleared by clearing the log in Maintenance, clearing the browser's site data, or using a different browser or device.
 
 Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
 
@@ -66,6 +67,12 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 - Focus indicators and controls work in every colour mode.
 
 ## Data and backups
+
+The optional Google Drive preview does not require a Google account during normal use. Google scripts and connection configuration load only after choosing Connect Google Drive. The first connection prepares Google; a second explicit Sign in to Google action selects the account and requests per-file access. Access tokens stay in memory. A sharing link contains a Drive file ID, never a token or the records themselves. Google permissions govern access to the original file; they cannot recall a previously downloaded copy.
+
+In this development preview, Save a copy creates a new private file each time; it does not update older files or synchronise subsequent changes. The owner can use Drive to give named recipients Viewer access. Opening a Drive backup displays its records and emotion counts separately, without importing them into the personal log or changing personal settings or rating scale. Disconnect clears the shared preview and in-memory token, while retaining local records and Drive files. Google account authorisation can be revoked separately through Google's account controls.
+
+See [Google Drive development and setup](docs/google-drive-development.md). Run `node tests/google-drive.cjs` and `node tests/google-drive-ui.cjs` alongside the existing regression checks. Mocked checks do not replace real owner/Viewer permission testing.
 
 All entries, including optional notes, are included in JSON backups and full-log CSV exports. Loading a backup can either merge new records into the current log or replace it after confirmation. Older backups without notes remain valid.
 

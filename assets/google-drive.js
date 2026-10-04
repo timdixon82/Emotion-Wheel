@@ -55,6 +55,11 @@
       return Boolean(this.#token) && this.#expiresAt > this.#now() + 5000;
     }
 
+    getPickerToken() {
+      if (!this.connected) throw new Error('Reconnect Google Drive to continue.');
+      return this.#token;
+    }
+
     async #request(url, options = {}) {
       if (!this.connected) throw new Error('Reconnect Google Drive to continue.');
       const generation = this.#generation;

@@ -6,6 +6,8 @@
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
   <script src="assets/version.js" defer></script>
+  <script src="assets/google-drive.js" defer></script>
+  <script src="assets/google-drive-ui.js" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
     @font-face {
@@ -1021,6 +1023,42 @@
     <label for="loadBackupInput" class="visually-hidden">Choose a backup file to load (JSON format)</label>
     <input type="file" id="loadBackupInput" class="visually-hidden" accept="application/json,.json">
     <p id="loadBackupStatus" class="help" aria-live="polite"></p>
+    </div>
+  </details>
+  <details id="google-drive" class="export-panel" open>
+    <summary>Google Drive (optional)</summary>
+    <div class="details-content">
+      <p class="help">You can use Emotion Wheel without a Google account. Connecting lets you save a copy to your Drive and open a shared backup. Your local records and file backups remain available.</p>
+      <p class="help">This preview saves a new Drive backup each time. Automatic sync is still being developed. Backups include notes and all recorded fields; review them before sharing.</p>
+      <div class="actions">
+        <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
+        <button type="button" id="saveGoogleDriveButton" disabled>Save a copy to Google Drive</button>
+        <button type="button" id="openGoogleDriveButton" disabled>Open a Drive backup</button>
+        <button type="button" id="disconnectGoogleDriveButton" disabled>Disconnect Google Drive</button>
+      </div>
+      <p id="googleDriveStatus" class="help" role="status">Google Drive is disconnected. Records are saved only in this browser.</p>
+      <div id="googleDriveSavedPanel" hidden>
+        <p>To share this copy, open it in Drive and give named people Viewer access, then copy the Emotion Wheel link.</p>
+        <div class="actions">
+          <a id="googleDriveFileLink" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer">Open saved copy in Drive</a>
+          <button type="button" id="copyGoogleDriveLinkButton">Copy Emotion Wheel sharing link</button>
+        </div>
+      </div>
+      <section id="googleDriveSharedPreview" aria-labelledby="googleDriveSharedHeading" tabindex="-1" hidden>
+        <h2 id="googleDriveSharedHeading">Shared backup — read-only preview</h2>
+        <p id="googleDriveSharedSummary" class="help"></p>
+        <p class="help">These records are separate from your personal log. Closing or disconnecting removes this preview; your own records and settings are kept.</p>
+        <div class="actions">
+          <button type="button" id="refreshGoogleDrivePreviewButton">Refresh shared backup</button>
+          <button type="button" id="closeGoogleDrivePreviewButton">Close shared preview</button>
+        </div>
+        <h3>Emotion counts</h3>
+        <p id="googleDriveSharedChartSummary" class="help"></p>
+        <ul id="googleDriveSharedChart" class="bar-list" aria-label="Shared emotion counts" aria-describedby="googleDriveSharedChartSummary"></ul>
+        <section id="googleDriveSharedTally" class="scroll-table" tabindex="0" aria-label="Shared emotion counts table"></section>
+        <h3>Shared records</h3>
+        <section id="googleDriveSharedRecords" class="scroll-table" tabindex="0" aria-label="Shared records table"></section>
+      </section>
     </div>
   </details>
   </section>
@@ -2719,9 +2757,9 @@ function getContextCounts(entries, field) {
   return [...counts.values()].sort((a, b) => field === 'tags' ? b.count - a.count || a.label.localeCompare(b.label) : Number(a.label) - Number(b.label));
 }
 
-function getLogRows(entries = logEntries) {
+function getLogRows(entries = logEntries, scale = ratingScale) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${ratingScale})`, `Actual intensity (1–${ratingScale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${ratingScale})`, 'Note']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${scale})`, 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -3394,8 +3432,8 @@ async function shareChartImage(type) {
   }
 }
 
-function saveBackupFile() {
-  const backup = {
+function getBackupSnapshot() {
+  return JSON.parse(JSON.stringify({
     version: 3,
     schemaVersion: dataSchemaVersion,
     ratingScale,
@@ -3403,7 +3441,11 @@ function saveBackupFile() {
     exportedAt: new Date().toISOString(),
     tags: getAvailableTags(),
     entries: logEntries
-  };
+  }));
+}
+
+function saveBackupFile() {
+  const backup = getBackupSnapshot();
   downloadText('emotion-wheel-backup.json', `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
   liveStatus.textContent = 'Backup file saved.';
   loadBackupStatus.textContent = 'Backup file saved to this device.';

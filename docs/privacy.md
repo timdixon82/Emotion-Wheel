@@ -16,11 +16,19 @@ Read [GoatCounter's privacy information](https://www.goatcounter.com/help/privac
 
 ## What is not collected
 
-Emotion Wheel does not require an account, use tracking cookies, or send your saved emotion records to a remote database. It does not track actions within an entry.
+Emotion Wheel does not require an account or use tracking cookies. Your saved records are kept locally unless you explicitly choose an export or the optional Google Drive connection. It does not track actions within an entry.
 
 ## When data leaves your browser
 
-Anonymous pageview information is sent automatically as described above. Your saved emotion content leaves your browser only when you choose to export a CSV file, save a JSON backup, share a chart or table, or copy information to the clipboard. Check the destination and the contents before sharing, particularly if your note includes sensitive information.
+Anonymous pageview information is sent automatically as described above. Your saved emotion content leaves your browser only when you choose to export a CSV file, save a JSON backup, save a copy to Google Drive, share a chart or table, or copy information to the clipboard. Check the destination and the contents before sharing, particularly if your note includes sensitive information.
+
+## Optional Google Drive preview
+
+Google Drive is optional. Google connection scripts are loaded only after you choose to connect or prepare access to a shared Drive backup. Google handles account selection and consent. The app requests access to files it creates or you explicitly select, rather than all your Drive files.
+
+Saving a copy uploads the complete JSON backup, including notes, recorded fields, tags, rating scale and capture settings, to your selected Google account's Drive. This preview creates a new file for each save; later recordings are not uploaded automatically. Share with named people through Drive's Viewer permissions. Anyone who retrieves a file can retain their own copy; removing their Drive access does not remove copies already downloaded.
+
+A Drive sharing link contains the file ID, without an access token or the emotion records. Opening a shared backup downloads it for an in-memory read-only preview, separate from your personal log and settings. Closing the preview, disconnecting or closing the page discards that preview. Access tokens are held in memory and cleared when you disconnect. Your local records and Drive files are retained. Disconnecting this browser does not revoke the application's Google account permission; manage or revoke that permission separately in your Google account.
 
 ## Keeping control of your data
 

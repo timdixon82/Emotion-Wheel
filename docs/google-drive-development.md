@@ -5,6 +5,18 @@ push a release, or change Pages deployment until local testing is complete and
 Tim authorises release. Google Drive remains optional; the local app and file
 backups must keep working without a Google account or Google scripts.
 
+Current Google project: `emotion-wheel-510615`, project number `391356585675`.
+Drive and Picker APIs have been enabled. OAuth branding is being prepared;
+support/contact email, client credentials and real-account tests are pending.
+
+The local preview now has explicit connection, saving and shared-preview controls.
+The current transport only creates new backup files; protected updates and
+automatic sync remain later work. Development credentials belong in ignored
+`assets/google-drive-config.local.json`, with `clientId`, `apiKey`, `appId` and
+`origins` (including `http://localhost:8765`). The committed configuration is
+blank. Only localhost checks for the ignored development file, and no
+configuration is requested until the user chooses Connect.
+
 ## Google setup
 
 Use a dedicated Google Cloud project owned by Tim. Begin in Testing with only
@@ -70,8 +82,10 @@ Google pages:
 ## Local verification and release gates
 
 Run the baseline with `node tests/context-analysis.cjs` and the Drive adapter
-checks with `node tests/google-drive.cjs`. Serve the repository on the registered
-origin using `python3 -m http.server 8765 --bind 127.0.0.1`, then open
+checks with `node tests/google-drive.cjs`. Run `node tests/google-drive-ui.cjs` for
+optional connection, shared preview isolation, explicit saving and cancelled
+sign-in checks. Serve the repository on the registered origin using
+`python3 -m http.server 8765 --bind 127.0.0.1`, then open
 `http://localhost:8765`. Local browser storage is separate from the live site's
 storage; use synthetic records for testing.
 

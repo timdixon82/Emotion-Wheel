@@ -137,7 +137,7 @@ console.log('PASS: expected/actual intensity combinations, alignment and missing
     promptBackupConflict: async () => 'both', renderAll: () => {}, getAvailableTags: () => context.captureSettings.tags,
     downloadText: (filename, text) => { savedBackup = JSON.parse(text); }
   });
-  for (const name of ['parseLocalDataset', 'serializeDataset', 'loadRatingScale', 'commitRatingScaleChange', 'dataSchemaMatches', 'loadLog', 'migrateLocalDataset', 'saveLog', 'saveSettings', 'saveBackupFile', 'loadBackupFile']) {
+  for (const name of ['parseLocalDataset', 'serializeDataset', 'loadRatingScale', 'commitRatingScaleChange', 'dataSchemaMatches', 'loadLog', 'migrateLocalDataset', 'saveLog', 'saveSettings', 'getBackupSnapshot', 'saveBackupFile', 'loadBackupFile']) {
     vm.runInContext(html.match(new RegExp(`(?:async )?function ${name}\\([\\s\\S]*?\\n}`))[0], context);
   }
   const legacy = { timestamp: '2026-09-01T10:00:00Z', inner: 'Fear', comment: 'Keep me', tags: ['Family'], bucketLevel: 10, extension: { kept: true } };
