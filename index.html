@@ -79,18 +79,18 @@
     .menu-toggle { display: none; }
     .app-navigation { max-width: 980px; margin: 0 auto; padding: 0 1rem .75rem; }
     .app-nav-list, .app-nav-sublist {
-      display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
+      flex-wrap: wrap; display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
     }
     .app-nav-group { display: flex; align-items: center; gap: .5rem; }
     .app-nav-label {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
     }
-    .menu-toggle, .app-navigation button {
+    .menu-toggle, .app-navigation button, .app-navigation a.button {
       min-height: 2.75rem; padding: .5rem .875rem; border-color: #ffffff80;
       background: transparent; color: var(--nav-active);
     }
-    .menu-toggle:hover, .app-navigation button:hover {
+    .menu-toggle:hover, .app-navigation button:hover, .app-navigation a.button:hover {
       background: rgb(255 255 255 / 12%); color: var(--nav-active);
     }
     .app-navigation button[aria-current="page"] {
@@ -112,15 +112,28 @@
     }
     .settings-panel, .status, .log-panel { background: var(--panel); }
     .workspace-panel { margin-top: 1rem; }
-    .dataset-picker { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
-    .dataset-picker label { font-weight: 700; }
+    .nav-data-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+    .nav-data-controls .dataset-picker { flex: 1 1 18rem; max-width: 26rem; margin: 0; }
+    .nav-drive-controls { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .dataset-picker { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin: .75rem 0 0; }
+    .dataset-picker label { font-weight: 700; color: var(--nav-active); }
     .dataset-picker select { flex: 1; min-width: 0; max-width: 100%; }
-    .connected-account { font-size: .875rem; margin: .5rem 0 0; overflow-wrap: anywhere; }
+    .mobile-dataset-indicator { display: none; }
     .drive-task { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
     .drive-task h2 { margin-top: 0; }
     .table-scroll { max-width: 100%; overflow-x: auto; }
     #sharedDriveFilesTable { min-width: 42rem; }
+    #sharedDriveFilesTable td[colspan="3"] { width: auto; }
+    .drive-feedback:focus, #googleDriveConflictHeading:focus, #googleMaintenanceAccountStatus:focus, #googleDriveLastSyncStatus:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     #sharedDriveFilesTable button { margin: .25rem; }
+    #sharedDriveFilesTable td:first-child { width: 45%; min-width: 20rem; }
+    .drive-name-input, #googleDriveBackupName, #googleDriveRecipientEmail, #googleDriveShareLink { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; min-height: 3.25rem; padding: .75rem; font-size: 1.1rem; }
+    .drive-name-editor { margin-top: .5rem; }
+    .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
+    .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
+    .drive-feedback { padding: .75rem; border-left: 4px solid var(--focus); overflow-wrap: anywhere; }
+    .sync-copy-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow-y: auto; }
+
 
     details {
       border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
@@ -297,11 +310,18 @@
     .site-footer .sep { color: var(--muted); }
     @media (max-width: 600px) {
       .app-header-inner { min-height: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .5rem; }
-      .header-actions { gap: .4rem; }
+      .app-brand { flex: 1; }
+      .app-brand-name { font-size: 1rem; }
+      .header-actions { flex: 0 0 auto; gap: .4rem; }
       .desktop-theme-control { display: none; }
       .menu-toggle { display: inline-flex; padding: .5rem .65rem; }
       .app-navigation { display: none; padding: .25rem .75rem .75rem; }
-      .app-navigation.is-open { display: block; }
+      .app-navigation.is-open { display: block; max-height: calc(100dvh - 4.25rem); overflow-y: auto; }
+      .mobile-dataset-indicator { display: block; width: calc(100% - 1.5rem); margin: 0 .75rem; padding: .25rem 0; min-height: 2rem; border: 0; font-size: .875rem; background: transparent; color: var(--nav-active); }
+      .nav-data-controls { flex-direction: column; align-items: stretch; }
+      .nav-data-controls .dataset-picker { flex: none; width: 100%; max-width: 100%; }
+      .nav-drive-controls { display: grid; grid-template-columns: 1fr 1fr; }
+      .dataset-picker { flex-direction: column; align-items: stretch; }
       .app-nav-list, .app-nav-sublist { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
       .app-nav-group { display: grid; gap: .35rem; }
       .app-nav-label {
@@ -309,13 +329,25 @@
         overflow: visible; clip: auto; white-space: normal; color: var(--nav-text); font-weight: 700;
       }
       .app-nav-sublist { padding-left: 1rem; }
-      .app-navigation button { width: 100%; }
+      .app-navigation button, .app-navigation a.button { width: 100%; }
       .mobile-theme-control {
         display: flex; align-items: stretch; flex-direction: column; gap: .25rem;
         margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #ffffff80;
       }
       .mobile-theme-control label { color: var(--nav-text); font-weight: 700; }
       .mobile-theme-control select { width: 100%; }
+      #sharedDriveFilesTable { min-width: 0; }
+      #sharedDriveFilesTable, #sharedDriveFilesTable tbody, #sharedDriveFilesTable tr { display: block; width: 100%; }
+      #sharedDriveFilesTable caption { display: block; }
+      #sharedDriveFilesTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+      #sharedDriveFilesTable tbody tr { margin: .75rem 0; border: 1px solid var(--border); border-radius: .5rem; }
+      #sharedDriveFilesTable td, #sharedDriveFilesTable td:first-child { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .5rem; width: 100%; min-width: 0; border: 0; }
+      #sharedDriveFilesTable td::before { content: attr(data-label); font-weight: 700; }
+      #sharedDriveFilesTable td.drive-file-actions, #sharedDriveFilesTable td[colspan="3"] { display: block; }
+      #sharedDriveFilesTable td.drive-file-actions::before { display: block; }
+      #sharedDriveFilesTable td[colspan="3"]::before { display: none; }
+      #sharedDriveFilesTable .drive-file-actions button { width: calc(50% - .5rem); justify-content: center; }
+      .drive-name-editor button { width: calc(50% - .5rem); margin-top: .5rem; }
       main { padding: .75rem; }
       h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
       .intro { margin: 0 0 .75rem; font-size: .95rem; }
@@ -415,8 +447,18 @@
           <li><button type="button" id="chartsTab" aria-controls="chartsPanel">Charts</button></li>
         </ul>
       </li>
-      <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">Maintenance</button></li>
+      <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">My Data</button></li>
+      <li><button type="button" id="sharedDataTab" aria-controls="sharedDataPanel">Data Shared with Me</button></li>
+      <li><a class="button" href="docs/help.html">Help</a></li>
     </ul>
+    <div class="nav-data-controls">
+  <div id="reviewDatasetPicker" class="dataset-picker">
+    <label for="reviewDatasetSelect">Data to view</label>
+    <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
+    <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Data Shared with Me.</p>
+  </div>
+  <div class="nav-drive-controls"><button type="button" id="googleAccountStatus">Google Disconnected</button><button type="button" id="googleDriveSyncSummaryButton">Sync Off</button></div>
+    </div>
     <div class="theme-control mobile-theme-control">
       <label for="mobileThemeMode">Theme</label>
       <select id="mobileThemeMode">
@@ -427,13 +469,17 @@
       </select>
     </div>
   </nav>
-  <p id="googleAccountStatus" class="connected-account" hidden>Google Drive is disconnected.</p>
+  <button type="button" id="reviewDatasetIndicator" class="mobile-dataset-indicator" hidden>Shared data · read only</button>
 </header>
 <main id="main-content" tabindex="-1">
+  <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
+    <p id="googleDriveSyncIssueMessage" role="alert"></p>
+    <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
+  </section>
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
     <h2 id="dataUpgradeHeading">New features are here!</h2>
     <p id="dataUpgradeDescription">Back up your records before updating.</p>
-    <p>Download a backup, check that it has saved, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
+    <p>Save an original backup to this device or Google Drive, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
     <section aria-labelledby="dataUpgradeWhatsNewHeading">
       <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
       <ul>
@@ -445,6 +491,7 @@
       <p>These extra capture fields are optional. Your existing records and older backups remain supported.</p>
     </section>
     <button type="button" id="downloadBeforeUpgrade">Download original data backup</button>
+    <button type="button" id="driveBeforeUpgrade">Connect Google and back up</button>
     <button type="button" id="continueDataUpgrade" disabled>Backup saved — update</button>
     <p id="dataUpgradeStatus" role="status"></p>
   </section>
@@ -496,8 +543,9 @@
               <p id="ratingScaleWarning"></p>
               <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
               <p id="ratingScaleExample"></p>
-              <p>Save a backup first so you can keep your original ratings. Check the file has saved before confirming below.</p>
+              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
               <button type="button" id="downloadBeforeScaleChange">Download backup</button>
+              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
               <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
               <p id="ratingScaleConversionStatus" role="status" aria-live="polite"></p>
               <div class="actions">
@@ -677,11 +725,7 @@
   </section>
 
   <section id="reviewPanel" class="workspace-panel" hidden>
-  <div class="dataset-picker">
-    <label for="reviewDatasetSelect">Data to view</label>
-    <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
-    <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Maintenance.</p>
-  </div>
+
 
   <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
@@ -1025,7 +1069,7 @@
   </section>
   </section>
 
-  <section id="maintenancePanel" class="workspace-panel" aria-label="Maintenance" tabindex="-1" hidden>
+  <section id="maintenancePanel" class="workspace-panel" aria-label="My Data" tabindex="-1" hidden>
   <details id="export-data" class="export-panel" open>
     <summary>Back up or load your own data</summary>
     <div class="details-content">
@@ -1046,36 +1090,36 @@
   <details id="google-drive" class="export-panel" open>
     <summary>Google Drive (optional)</summary>
     <div class="details-content">
-      <p id="googleMaintenanceAccountStatus" class="help">Google Drive is disconnected.</p>
+      <p id="googleMaintenanceAccountStatus" class="help" tabindex="-1">Google Drive is disconnected.</p>
       <p class="help">Connect your Google account to save your data online or open files people have shared with you. Google Drive is optional.</p>
       <div class="actions">
         <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
         <button type="button" id="disconnectGoogleDriveButton" disabled>Disconnect Google Drive</button>
       </div>
-      <section id="googleDriveLinkPrompt" aria-labelledby="googleDriveLinkHeading" hidden>
-        <h2 id="googleDriveLinkHeading" tabindex="-1">Open a shared file</h2>
-        <p id="googleDriveLinkMessage">Sign in to Google so we can check your access to this file. Your own records will be kept.</p>
-        <button type="button" id="googleDriveLinkSignInButton">Continue with Google</button>
-        <button type="button" id="googleDriveLinkPickerButton" hidden>Choose the shared file</button>
-        <a id="googleDriveLinkAccessPage" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer" hidden>Open in Google Drive to request access</a>
-      </section>
-      <p id="googleDriveStatus" class="help" role="status">Google Drive is disconnected. Records are saved only in this browser.</p>
+      <p id="googleDriveConnectionStatus" class="help" role="status"></p>
       <section class="drive-task" aria-labelledby="myDriveDataHeading">
         <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
-        <p>Automatic sync keeps your current Drive file and this device up to date while the page is open and connected. If changes clash, it pauses for review. Your current file keeps the same sharing link.</p>
+        <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
         <div class="actions">
           <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
-          <button type="button" id="syncGoogleDriveNowButton" disabled>Sync Now</button>
-          <button type="button" id="pauseGoogleDriveSyncButton" disabled>Pause Sync</button>
+          <button type="button" id="saveGoogleDriveButton" disabled>Save to Drive</button>
         </div>
         <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
-        <p id="googleDriveSyncStatus" role="status">Automatic sync is off.</p>
-        <p class="help">You can also save your current file now or keep a separate dated backup.</p>
+        <p id="googleDriveLastSyncStatus" tabindex="-1">Sync status: off. Not synced yet.</p>
+        <p id="googleDriveSyncStatus" tabindex="-1" class="drive-feedback" role="status" hidden></p>
+        <section id="googleDriveConflict" aria-labelledby="googleDriveConflictHeading" hidden>
+          <h3 id="googleDriveConflictHeading" tabindex="-1">Resolve conflicting changes</h3>
+          <p id="googleDriveConflictExplanation">Choose which version to keep for each conflicting record. Other changes are merged automatically. Both original copies will be saved as recovery backups first.</p>
+          <div id="googleDriveConflictRecords"></div>
+          <div class="actions"><button type="button" id="confirmGoogleDriveConflictButton">Save recovery backups and apply choices</button><button type="button" id="cancelGoogleDriveConflictButton">Keep sync paused</button></div>
+        </section>
+        <p class="help">Create a dated backup to keep a separate copy.</p>
         <div class="actions">
-          <button type="button" id="saveGoogleDriveButton" disabled>Save current to Drive</button>
           <button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button>
           <span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Share my data</button></span>
         </div>
+        <p id="googleDriveStatus" class="drive-feedback" role="status" hidden></p>
+        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
         <details id="googleDriveBackupSettings">
           <summary>Backup settings</summary>
           <div class="details-content">
@@ -1118,11 +1162,35 @@
         </details>
       </section>
       </section>
-      <section class="drive-task" aria-labelledby="manageDriveFilesHeading">
-        <h2 id="manageDriveFilesHeading">Files you can view</h2>
+    </div>
+  </details>
+  </section>
+
+
+
+  <section id="sharedDataPanel" class="workspace-panel" aria-label="Data Shared with Me" tabindex="-1" hidden>
+      <div>
+        <h2 id="manageDriveFilesHeading">Data Shared with Me</h2>
+  <section id="googleDriveLinkPrompt" hidden tabindex="-1" aria-labelledby="googleDriveLinkHeading" aria-describedby="googleDriveLinkMessage">
+    <h3 id="googleDriveLinkHeading">Open shared data</h3>
+    <p id="googleDriveLinkMessage">Connect your Google account to access the shared data.</p>
+    <p class="help">Shared logs and charts are read only. Your own records stay unchanged.</p>
+    <p id="googleDriveLinkStatus" class="drive-feedback" role="status"></p>
+    <div class="actions">
+      <button type="button" id="googleDriveLinkSignInButton">Connect Google</button>
+      <button type="button" id="googleDriveLinkPickerButton" hidden>Choose the shared file</button>
+      <button type="button" id="googleDriveLinkCancelButton">Use my own data</button>
+    </div>
+    <p><a id="googleDriveLinkAccessPage" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer" hidden>Request access in Google Drive</a></p>
+  </section>
+      <div id="sharedDataManagement">
+        <p id="sharedDataAccountStatus" class="help">Connect Google to open shared files.</p>
+        <button type="button" id="sharedDataConnectButton">Connect Google</button>
+        <p id="sharedDataConnectionStatus" class="drive-feedback" role="status" hidden></p>
         <p>View shared data in Logs and Charts. Names are saved only in this browser. Removing a file from this list keeps it in Google Drive.</p>
         <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
         <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
+        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
         <p id="sharedDriveFilesEmpty">No shared files added yet.</p>
         <div class="table-scroll"><table id="sharedDriveFilesTable" hidden>
           <caption>Files you can view</caption><thead><tr><th scope="col">Name</th><th scope="col">Owner</th><th scope="col">Actions</th></tr></thead>
@@ -1134,12 +1202,9 @@
         <button type="button" id="refreshGoogleDrivePreviewButton" hidden>Refresh shared backup</button>
         <button type="button" id="closeGoogleDrivePreviewButton" hidden>Return to my local data</button>
       </div>
-      </section>
-    </div>
-  </details>
+      </div>
+      </div>
   </section>
-
-
 
   <dialog id="backupConflictDialog" aria-labelledby="backupConflictHeading">
     <h2 id="backupConflictHeading">Choose which record to keep</h2>
@@ -1161,6 +1226,7 @@
     <span data-app-version></span><span class="sep" aria-hidden="true">·</span>
     <a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span>
+    <a href="docs/help.html">Help</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/privacy.html">Privacy</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/accessibility.html">Accessibility and design</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/about.html">About</a>
@@ -1364,6 +1430,8 @@ const sensationsChartBody = document.getElementById('sensationsChartBody');
 const menuToggle = document.getElementById('menuToggle');
 const appNavigation = document.getElementById('appNavigation');
 const entryTab = document.getElementById('entryTab');
+const sharedDataTab = document.getElementById('sharedDataTab');
+const sharedDataPanel = document.getElementById('sharedDataPanel');
 const maintenanceTab = document.getElementById('maintenanceTab');
 const entryPanel = document.getElementById('entryPanel');
 const reviewPanel = document.getElementById('reviewPanel');
@@ -1461,6 +1529,7 @@ function selectAppView(selectedButton, focusContent = false) {
     { name: 'entry', button: entryTab, panel: entryPanel },
     { name: 'logs', button: logsTab, panel: logsPanel },
     { name: 'charts', button: chartsTab, panel: chartsPanel },
+    { name: 'shared', button: sharedDataTab, panel: sharedDataPanel },
     { name: 'maintenance', button: maintenanceTab, panel: maintenancePanel }
   ];
   const selectedView = views.find(view => view.button === selectedButton) || views[0];
@@ -1475,6 +1544,8 @@ function selectAppView(selectedButton, focusContent = false) {
   reviewPanel.hidden = !['logs', 'charts'].includes(currentAppView);
   logsPanel.hidden = currentAppView !== 'logs';
   chartsPanel.hidden = currentAppView !== 'charts';
+  document.querySelector('.intro').hidden=currentAppView!=='entry';
+  sharedDataPanel.hidden = currentAppView !== 'shared';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
   if (currentAppView !== 'entry') {
     selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters):not(#googleDriveBackupSettings):not(#googleDriveShareOptions)').forEach(details => {
@@ -1509,11 +1580,11 @@ function serializeDataset(entries, scale = ratingScale) {
   return JSON.stringify({ schemaVersion: dataSchemaVersion, ratingScale: scale, entries });
 }
 
-function migrateLocalDataset() {
+function migrateLocalDataset(prepared) {
   const raw = localStorage.getItem(storageKey);
   const dataset = parseLocalDataset(raw);
   const entries = dataset.entries;
-  const migrated = entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
+  const migrated = prepared?.entries || entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
   // Preserve the exact original before any write; a failed snapshot blocks migration.
   if (!localStorage.getItem(`${storageKey}BeforeSchemaMigration`)) localStorage.setItem(`${storageKey}BeforeSchemaMigration`, JSON.stringify({ schemaVersion: Number(localStorage.getItem(schemaVersionKey)) || 1, rawEntries: raw, rawSettings: localStorage.getItem(settingsKey) }));
   localStorage.setItem(storageKey, serializeDataset(migrated, dataset.ratingScale));
@@ -1573,9 +1644,11 @@ function checkLocalDataSchema() {
     proceed.disabled = false;
     status.textContent = 'Backup download requested. Check the file has saved before selecting “Backup saved — update”.';
   });
-  proceed.addEventListener('click', () => {
+  proceed.addEventListener('click', async () => {
+    proceed.disabled=true;
     try {
-      migrateLocalDataset();
+      const prepared=await window.EmotionWheelDriveUI?.prepareLocalUpgrade();
+      migrateLocalDataset(prepared);
       if (!dataSchemaMatches()) throw new Error('Data schema version did not match after migration');
       upgradeEditingObserver.disconnect();
       upgradeDisabledControls.forEach((disabled, control) => { control.disabled = disabled; });
@@ -1583,8 +1656,9 @@ function checkLocalDataSchema() {
       renderAll();
       dialog.hidden = true;
       liveStatus.textContent = 'Data upgrade complete. Editing is now available.';
+      window.EmotionWheelDriveUI?.afterLocalUpgrade();
     }
-    catch (error) { status.textContent = 'The update could not complete. Your original data is retained in the local recovery snapshot if a write occurred. Keep your downloaded backup and free some browser storage before trying again.'; }
+    catch (error) { proceed.disabled=false;status.textContent = `${error.message} ` + 'The update could not complete. Your original data is retained in the local recovery snapshot if a write occurred. Keep your downloaded backup and free some browser storage before trying again.'; }
   });
   dialog.hidden = false;
 }
@@ -2772,7 +2846,7 @@ function renderCharts() {
   renderChartPeriodControls();
   innerSeriesControls.hidden = timeMeasure.value !== 'inner';
   chartsSummary.textContent = getReviewDataset()?.state === 'loading' ? 'Loading the selected file…'
-    : getReviewDataset()?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Maintenance.'
+    : getReviewDataset()?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Data Shared with Me.'
     : hasEntries
     ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
@@ -2951,7 +3025,7 @@ function renderLog() {
     ? 'Showing a shared Drive dataset. These records are separate from your local data and cannot be edited here.'
     : 'Records are stored in this browser. Optional Drive sync shares changes only when you enable it.';
   logSummary.textContent = shared?.state === 'loading' ? 'Loading the selected shared dataset…'
-    : shared?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Maintenance.'
+    : shared?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Data Shared with Me.'
     : shared ? `${entries.length} shared emotion record${entries.length === 1 ? '' : 's'}.`
     : hasEntries ? `${entries.length} emotion record${entries.length === 1 ? '' : 's'} stored locally.` : 'No emotions recorded yet.';
   logFilterStatus.textContent = hasEntries
@@ -3566,6 +3640,14 @@ async function shareChartImage(type) {
   }
 }
 
+function getOriginalBackupSnapshot() {
+  const rawEntries=localStorage.getItem(storageKey), rawSettings=localStorage.getItem(settingsKey);
+  const original=parseLocalDataset(rawEntries);
+  return JSON.parse(JSON.stringify({version:3,schemaVersion:original.schemaVersion || Number(localStorage.getItem(schemaVersionKey)) || 1,
+    ratingScale:original.ratingScale,entries:original.entries,settings:captureSettings,tags:getAvailableTags(),
+    exportedAt:new Date().toISOString(),recovery:{rawEntries,rawSettings}}));
+}
+
 function getBackupSnapshot() {
   return JSON.parse(JSON.stringify({
     version: 3,
@@ -3586,11 +3668,12 @@ function applyDriveSyncSnapshot(snapshot, expectedLocal) {
   }
   const parsed = getBackupEntriesFromText(JSON.stringify(snapshot));
   if (parsed.skipped || parsed.validEntries.length !== snapshot.entries.length) throw new Error('Sync received invalid records. Both copies are kept.');
+  const validatedEntries=parsed.validEntries.map((entry,index)=>({...snapshot.entries[index],...entry}));
   const originalEntries = localStorage.getItem(storageKey), originalSettings = localStorage.getItem(settingsKey);
   localStorage.setItem(`${storageKey}BeforeDriveSync`, JSON.stringify(expectedLocal));
   try {
     localStorage.setItem(settingsKey, JSON.stringify(snapshot.settings));
-    localStorage.setItem(storageKey, serializeDataset(parsed.validEntries, parsed.ratingScale));
+    localStorage.setItem(storageKey, serializeDataset(validatedEntries, parsed.ratingScale));
   } catch (error) {
     // Best-effort rollback; the full recovery snapshot was saved before writing.
     try {
@@ -3599,14 +3682,14 @@ function applyDriveSyncSnapshot(snapshot, expectedLocal) {
     } catch { /* Recovery snapshot remains available. */ }
     throw error;
   }
-  logEntries = parsed.validEntries;
+  logEntries = validatedEntries;
   captureSettings = normalizeSettings(snapshot.settings);
   adoptRatingScale(parsed.ratingScale);
   renderAll();
 }
 
 function saveBackupFile() {
-  const backup = getBackupSnapshot();
+  const backup = dataSchemaMatches()?getBackupSnapshot():getOriginalBackupSnapshot();
   downloadText('emotion-wheel-backup.json', `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
   liveStatus.textContent = 'Backup file saved.';
   loadBackupStatus.textContent = 'Backup file saved to this device.';
@@ -3877,7 +3960,7 @@ function copyHtmlWithSelection(html, text) {
   return copied || copyTextWithSelection(text);
 }
 
-[entryTab, logsTab, chartsTab, maintenanceTab].forEach(button => {
+[entryTab, logsTab, chartsTab, sharedDataTab, maintenanceTab].forEach(button => {
   button.addEventListener('click', () => selectAppView(button, true));
 });
 [logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo].forEach(control => {

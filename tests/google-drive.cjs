@@ -91,6 +91,12 @@ async function main() {
   replies=[json({files:[{id:rootId}]}),json({files:[{id:backupsId}]})];
   const beforeReuse=calls.length;
   await client.getFolderTree(); assert(calls.slice(beforeReuse).every(call=>!call.options.method),'Existing folders are reused');
+  const beforeDiscovery=calls.length;
+  replies=[json({files:[]})];assert.equal(await client.findExistingCurrent(),null);
+  replies=[json({files:[{id:rootId}]}),json({files:[{id:fileId}]})];
+  assert.equal((await client.findExistingCurrent()).id,fileId);
+  assert(calls.slice(beforeDiscovery).every(call=>!call.options.method),'Upgrade discovery must only read and never create folders or files');
+
   replies=[json({files:[{id:fileId},{id:'duplicate_current_123'}]})];
   await assert.rejects(client.findCurrent(rootId),/More than one current/);
   replies=[json({files:[],incompleteSearch:true})];

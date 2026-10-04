@@ -223,6 +223,12 @@
       return { folderId:folder.id, backupsId:backups.id };
     }
 
+    async findExistingCurrent() {
+      const folders=await this.listManagedFiles("mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='role' and value='root-folder' } and 'root' in parents");
+      if(folders.length>1)throw new Error('More than one Emotion Wheel folder was found. Review them in Drive before updating.');
+      return folders.length?this.findCurrent(folders[0].id):null;
+    }
+
     async findCurrent(folderId) {
       validFileId(folderId);
       const files = await this.listManagedFiles(`'${folderId}' in parents and appProperties has { key='role' and value='current' }`);

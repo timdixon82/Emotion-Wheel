@@ -11,7 +11,8 @@ async function main() {
   const nodes = new Map();
   const node = id => {
     if (!nodes.has(id)) nodes.set(id, { hidden: true, disabled: false, textContent: '', innerHTML: '',
-      value: '', checked: false, children: [], append(...items) {this.children.push(...items);}, setAttribute() {}, remove() {}, add(option) { this.children.push(option); }, click() { this.handlers.click?.(); }, reportValidity() { return /^[^@]+@[^@]+\.[^@]+$/.test(this.value); },
+      value: '', checked: false, children: [], append(...items) {this.children.push(...items);}, attributes:{},setAttribute(name,value){this.attributes[name]=value;},getAttribute(name){return this.attributes[name]??null;}, remove() {}, add(option) { this.children.push(option); }, click() { this.handlers.click?.(); }, reportValidity() { return /^[^@]+@[^@]+\.[^@]+$/.test(this.value); },
+      open:false,showModal(){this.open=true;},close(){this.open=false;},
       handlers: {}, addEventListener(type, handler) { this.handlers[type] = handler; },
       replaceChildren(...children) { this.innerHTML = ''; this.children = children; }, focus() { this.focused = true; } });
     return nodes.get(id);
@@ -44,7 +45,7 @@ async function main() {
     async findCurrent() { return currentFile; }
     async listBackups() { return Array.from({length:6},(_,index)=>({id:`synthetic_backup_${index}`,name:`Backup ${index}`,createdTime:`2026-10-0${index+1}T00:00:00Z`})).reverse(); }
     async trashBackup(id) { trashed.push(id); }
-    async createBackup(snapshot, options) { uploads.push(snapshot); currentFile = { id: 'synthetic_drive_file_123' }; return currentFile; }
+    async createBackup(snapshot, options) { uploads.push(snapshot); if(options.role==='current') {currentFile={id:'synthetic_drive_file_123'};return currentFile;}return {id:`synthetic_backup_${uploads.length}`}; }
   }
   const scope = vm.createContext({
     Option: class { constructor(text, value) { this.textContent = text; this.value = value; } },
@@ -53,13 +54,14 @@ async function main() {
       head: { append(script) { scripts.push(script.src); queueMicrotask(() => script.onload()); } } },
     EmotionWheelDrive: { DriveClient: SyntheticClient, sharingUrl, validFileId },
     location: { hostname: 'localhost', origin: 'http://localhost:8765', pathname: '/', search: '', hash: '', href: 'http://localhost:8765/#drive=synthetic_drive_file_123' },
+    window:{addEventListener(type,fn){documentHandlers[type]=fn;}},
     history: { replaceState(_state, _title, address) { assert.equal(address, '/'); } },
     fetch: async url => { requests.push(url); return { ok: true, json: async () => allowConfig ?
       { clientId: 'synthetic-client', apiKey: 'synthetic-key', appId: '123', origins: [configOrigin] } : {} }; },
     google: { accounts: { oauth2: { hasGrantedAllScopes: () => true, initTokenClient(options) { tokenOptions = options; return { ...options,
       requestAccessToken() { tokenOptions.callback({ access_token: 'synthetic', expires_in: 60 }); } }; } } } },
     URL, URLSearchParams, setTimeout, clearTimeout,
-    currentAppView: 'entry', selectAppView(button) { scope.currentAppView = button; }, maintenanceTab: 'maintenance', logsTab: 'logs', chartsTab: 'charts',
+    currentAppView: 'entry', selectAppView(button) { scope.currentAppView = button; }, maintenanceTab: 'maintenance', sharedDataTab:'shared', logsTab: 'logs', chartsTab: 'charts',
     getReviewDataset: () => activeDataset, setReviewDataset: dataset => { activeDataset = dataset; }, dataSchemaMatches: () => true,
     getBackupSnapshot: () => JSON.parse(JSON.stringify(personal)),
     getBackupEntriesFromText: text => ({ validEntries: JSON.parse(text).entries, ratingScale: JSON.parse(text).ratingScale, skipped: 0 }),
@@ -91,17 +93,23 @@ async function main() {
   scope.location.hash = '#drive=synthetic_drive_file_123';
   vm.runInContext(source, scope); await flush();
   assert.equal(clientInstance.connected,false,'Preparing sign-in must not connect');
-  await clicks('connectGoogleDriveButton');
+  assert.equal(node('googleDriveLinkPrompt').hidden,false,'A sharing link opens its own separate page');
+  assert.equal(scope.currentAppView,'shared','The link opens Data Shared with Me rather than settings');
+  assert.match(node('googleDriveLinkMessage').textContent,/Connect your Google account/);
+  assert.equal(node('googleDriveLinkSignInButton').textContent,'Connect Google');
+  await clicks('googleDriveLinkSignInButton');
   assert.equal(scripts.length, 1);
   assert.equal(scripts[0], 'https://accounts.google.com/gsi/client');
   await flush();
   assert.equal(tokenOptions.scope, 'openid email https://www.googleapis.com/auth/drive.file');
   assert.deepEqual(remoteReads, ['synthetic_drive_file_123']);
   assert.equal(node('googleDriveSharedPreview').hidden, false);
+  assert.equal(node('googleDriveLinkPrompt').hidden,true,'Successful access closes the sign-in page');
   assert.equal(activeDataset.ratingScale, 5);
   assert.equal(activeDataset.entries[0].comment, '<script>synthetic</script>');
-  assert.equal(node('googleAccountStatus').textContent, 'Google Drive connected as owner@example.test.');
-  assert.equal(node('googleMaintenanceAccountStatus').textContent, node('googleAccountStatus').textContent);
+  assert.equal(node('googleAccountStatus').textContent,'Google Connected');
+  assert.match(node('googleAccountStatus').getAttribute('aria-label'),/owner@example.test/);
+  assert.match(node('googleMaintenanceAccountStatus').textContent,/owner@example.test/);
   assert.equal(scope.currentAppView, 'logs');
   assert.equal(JSON.stringify(personal), personalBefore);
   assert.equal(uploads.length, 0);
@@ -197,7 +205,8 @@ async function main() {
   assert.equal(node('googleDriveSharingResult').hidden,true);
   await clicks('disconnectGoogleDriveButton');
   assert.equal(clientInstance.connected, false);
-  assert.match(node('googleAccountStatus').textContent, /disconnected/);
+  assert.equal(node('googleAccountStatus').textContent,'Google Disconnected');
+
   assert.equal(revoked, true);
   assert.equal(node('googleDriveSavedPanel').hidden, true);
   assert(!activeDataset || activeDataset.entries.length === 0);
@@ -238,8 +247,14 @@ async function main() {
   assert(node('sharedDriveFilesBody').children.every(row=>row.children[2].children.map(button=>button.textContent).join(',')==='View data,Edit name,Refresh,Remove'));
   const lastRow = () => node('sharedDriveFilesBody').children.at(-1);
   const editName = lastRow().children[2].children[1];
-  editName.click(); lastRow().children[0].children[0].value = 'Friend 20'; editName.click(); await flush();
+  editName.click(); lastRow().children[0].children[0].children[0].value = 'Friend 20'; lastRow().children[0].children[0].children[1].click(); await flush();
   assert.equal(activeDataset.label, 'Friend 20');
+  lastRow().children[2].children[1].click();
+  let draftField=lastRow().children[0].children[0].children[0];draftField.value='Unfinished name';draftField.handlers.input();
+  documentHandlers.reviewdatasetchange();
+  assert.equal(lastRow().children[0].children[0].hidden,false);assert.equal(lastRow().children[0].children[0].children[0].value,'Unfinished name');
+  assert.equal(lastRow().children[0].colSpan,3);
+  lastRow().children[0].children[0].children[2].click();assert.equal(activeDataset.label,'Friend 20');
   const remembered = JSON.parse(storage.get('emotionWheelSharedDatasetsV1'));
   assert(remembered.length >= 20);
   assert(remembered.every(item => Object.keys(item).sort().join() === 'id,label'), 'Only names and file IDs may be persisted');
@@ -271,8 +286,8 @@ async function main() {
   await clicks('disconnectGoogleDriveButton');
   email = 'second@example.test';
   await clicks('connectGoogleDriveButton'); await flush();
-  assert.match(node('googleAccountStatus').textContent, /second@example.test/);
-  assert(!node('googleAccountStatus').textContent.includes('owner@example.test'));
+  assert.match(node('googleAccountStatus').getAttribute('aria-label'), /second@example.test/);
+  assert(!node('googleAccountStatus').getAttribute('aria-label').includes('owner@example.test'));
   await clicks('disconnectGoogleDriveButton');
   console.log('PASS: 20+ shared files, owner labels, local aliases, permission rechecks, late-switch protection, close/remove and account labels preserve personal data; bookmarks contain only IDs and names.');
 
@@ -301,30 +316,72 @@ async function main() {
   await clicks('startGoogleDriveSyncButton');
   await flush();
   assert.match(node('googleDriveSyncStatus').textContent,/Synced 1/);
-  assert.equal(node('startGoogleDriveSyncButton').hidden,true);
-  assert.equal(node('syncGoogleDriveNowButton').hidden,false);
-  assert.equal(node('pauseGoogleDriveSyncButton').hidden,false);
+  assert.equal(node('startGoogleDriveSyncButton').textContent,'Pause Sync');
+  assert.equal(node('saveGoogleDriveButton').textContent,'Sync Now');
+  assert.match(node('googleDriveLastSyncStatus').textContent,/Last successful sync/);
   assert(storage.has('emotionWheelDriveSyncV1'));
   own.entries.push(syncRecord('local','local add'));
   cloud.entries.push(syncRecord('remote','remote add'));
-  await clicks('syncGoogleDriveNowButton'); await flush();
+  await clicks('saveGoogleDriveButton'); await flush();
   assert.equal(own.entries.length,3); assert.equal(cloud.entries.length,3);
   own.entries=own.entries.filter(entry=>entry.id !== 'local');
-  await clicks('syncGoogleDriveNowButton'); await flush();
+  await clicks('saveGoogleDriveButton'); await flush();
   assert.equal(cloud.entries.length,2); assert(cloud.driveSync.deletedIds.includes('local'));
   own.entries[0].comment='local conflicting edit'; cloud.entries[0].comment='remote conflicting edit';
+  own.entries.push(syncRecord('new-local','device only'));cloud.entries.push(syncRecord('new-remote','Drive only'));
   const beforeConflict = writes;
-  await clicks('syncGoogleDriveNowButton'); await flush();
+  await clicks('saveGoogleDriveButton'); await flush();
   assert.equal(writes,beforeConflict); assert.match(node('googleDriveSyncStatus').textContent,/paused/);
-  await clicks('pauseGoogleDriveSyncButton');
+  assert.equal(node('googleDriveConflict').hidden,false);
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off');
+  assert.equal(node('googleDriveSyncIssueBanner').hidden,false);
+  await clicks('reviewGoogleDriveSyncIssueButton');
+  assert.equal(scope.currentAppView,'maintenance');
+  assert.equal(node('googleDriveConflictHeading').focused,true);
+  assert.match(node('googleDriveSyncSummaryButton').getAttribute('aria-label'),/Last synced:/);
+  await clicks('googleDriveSyncSummaryButton');assert.equal(scope.currentAppView,'maintenance');assert.equal(node('googleDriveConflictHeading').focused,true);
+  await clicks('confirmGoogleDriveConflictButton');assert.equal(writes,beforeConflict);
+  assert.match(node('googleDriveSyncStatus').textContent,/every conflict/);
+  let firstConflict=node('googleDriveConflictRecords').children[0];
+  firstConflict.children[4].children[0].handlers.change();
+  const uploadsBeforeStale=uploads.length;etag='"newer-review"';
+  await clicks('confirmGoogleDriveConflictButton');await flush();
+  assert.equal(writes,beforeConflict);assert.equal(uploads.length,uploadsBeforeStale,'Stale review must stop before recovery uploads or writes');
+  assert.match(node('googleDriveSyncStatus').textContent,/changed since the review/);
+  await clicks('saveGoogleDriveButton');await flush();
+  firstConflict=node('googleDriveConflictRecords').children[0];firstConflict.children[4].children[0].handlers.change();
+  const createRecovery=clientInstance.createBackup.bind(clientInstance);let recoveryAttempts=0;
+  clientInstance.createBackup=async(snapshot,options)=>{if(++recoveryAttempts===2)throw new Error('Synthetic backup failure');return createRecovery(snapshot,options);};
+  await clicks('confirmGoogleDriveConflictButton');await flush();
+  assert.equal(writes,beforeConflict,'Both recovery files must succeed before resolving a conflict');
+  assert.equal(own.entries[0].comment,'local conflicting edit');assert.equal(cloud.entries[0].comment,'remote conflicting edit');
+  clientInstance.createBackup=createRecovery;
+  await clicks('confirmGoogleDriveConflictButton');await flush();
+  assert.equal(writes,beforeConflict+1);
+  assert.equal(own.entries.find(entry=>entry.id==='first').comment,'remote conflicting edit');
+  assert(own.entries.some(entry=>entry.id==='new-local'));assert(own.entries.some(entry=>entry.id==='new-remote'));
+  assert.equal(node('googleDriveConflict').hidden,true);assert(!node('googleAccountStatus').textContent.includes('Sync failed'));
+  assert.equal(uploads.at(-2).entries[0].comment,'local conflicting edit');
+  assert.equal(uploads.at(-1).entries[0].comment,'remote conflicting edit');
+  assert(storage.has('emotionWheelDriveSyncV1ConflictRecovery'));
+  const writesAfterResolution=writes;
+  await clicks('startGoogleDriveSyncButton');
   const folderProvider=clientInstance.getFolderTree;
   clientInstance.getFolderTree=async()=>{throw new Error('Synthetic folder failure');};
   await clicks('startGoogleDriveSyncButton'); await flush();
   assert.match(node('googleDriveStatus').textContent,/folder failure/);
-  assert.equal(node('syncGoogleDriveNowButton').disabled,true,'Failed current-file preparation must not start stale sync');
-  assert.equal(writes,beforeConflict);
+  assert.equal(node('saveGoogleDriveButton').textContent,'Save to Drive','Failed current-file preparation must not start stale sync');
+  assert.equal(writes,writesAfterResolution);
   clientInstance.getFolderTree=folderProvider;
-  await clicks('disconnectGoogleDriveButton'); assert.equal(node('syncGoogleDriveNowButton').disabled,true);
+  own.entries[0].comment='manual device edit';cloud.entries[0].comment='manual Drive edit';
+  await clicks('saveGoogleDriveButton');await flush();
+  assert.equal(node('startGoogleDriveSyncButton').textContent,'Start Sync','Manual conflicts must not enable automatic sync');
+  assert.equal(node('saveGoogleDriveButton').textContent,'Save to Drive');
+  node('googleDriveConflictRecords').children[0].children[2].children[0].handlers.change();
+  await clicks('confirmGoogleDriveConflictButton');await flush();
+  assert.equal(own.entries[0].comment,'manual device edit');
+  assert.match(node('googleDriveLastSyncStatus').textContent,/automatic sync is off/);
+  await clicks('disconnectGoogleDriveButton'); assert.equal(node('saveGoogleDriveButton').disabled,true);
   console.log('PASS: one-click two-way sync persists a baseline, merges both devices, propagates deletions, pauses conflicts and disconnects without overwriting either copy.');
   // Closing the Google popup must release the busy controls.
   scope.google.accounts.oauth2.initTokenClient = options => {
@@ -360,7 +417,12 @@ async function main() {
   assert.equal(requests.length, requestsBeforeReload);
   assert.equal(scripts.length, scriptsBeforeReload);
   assert.equal(remoteReads.length, readsBeforeReload);
-  assert.match(node('googleAccountStatus').textContent, /disconnected/);
+  assert.equal(node('googleAccountStatus').textContent,'Google Disconnected');
+  const rememberedFailure=JSON.parse(storage.get('emotionWheelDriveSyncV1'));
+  storage.set('emotionWheelDriveSyncV1',JSON.stringify({...rememberedFailure,syncError:'Synthetic stored failure',syncFailedAt:'2026-10-04T10:00:00Z'}));
+  vm.runInContext(source,scope);
+  assert.equal(node('googleDriveSyncIssueBanner').hidden,false,'An unresolved sync issue survives reload without Google login');
+  assert.match(node('googleDriveSyncIssueMessage').textContent,/needs attention/);
   console.log('PASS: reopening restores the dataset list with local data selected and no Google requests, records or remembered account token.');
   scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
   await clicks('connectGoogleDriveButton'); await flush();
@@ -374,6 +436,86 @@ async function main() {
   await clicks('cancelGoogleDriveSharingButton');
   await clicks('disconnectGoogleDriveButton');
   console.log('PASS: streamlined sharing reopens the owned current file without uploading; options start collapsed, cancellation grants nothing and Done returns to one Share button.');
+  scope.currentAppView='shared';documentHandlers.appviewchange();await flush();
+  const recordsBeforeLinks=JSON.stringify(own),writesBeforeLinks=writes;
+  scope.location.hash='#drive=synthetic_drive_file_123';documentHandlers.hashchange();await flush();
+  assert.equal(node('googleDriveLinkPrompt').hidden,false);
+  assert.equal(scope.location.hash,'#drive=synthetic_drive_file_123','Keep the file link available through a reload until access succeeds');
+  await clicks('googleDriveLinkCancelButton');
+  assert.equal(node('googleDriveLinkPrompt').hidden,true);
+  assert.equal(scope.currentAppView,'logs');
+  scope.location.hash='#drive=invalid/link';documentHandlers.hashchange();
+  assert.equal(node('googleDriveLinkPrompt').hidden,false);
+  assert.equal(node('googleDriveLinkSignInButton').hidden,true);
+  assert.match(node('googleDriveLinkMessage').textContent,/cannot be opened/);
+  await clicks('googleDriveLinkCancelButton');
+  scope.location.hash='#drive=synthetic_drive_file_123';documentHandlers.hashchange();await flush();
+  clientInstance.readBackup=async()=>{const error=new Error('Synthetic access denied');error.code='drive-access';throw error;};
+  await clicks('googleDriveLinkSignInButton');await flush();
+  assert.equal(node('googleDriveLinkPrompt').hidden,false,'Access denial stays in the sharing page');
+  assert.match(node('googleDriveLinkMessage').textContent,/cannot open the file/);
+  assert.match(node('googleDriveLinkStatus').textContent,/access denied/);
+  assert.equal(node('googleDriveLinkSignInButton').textContent,'Switch Google account');
+  assert.equal(node('googleDriveLinkAccessPage').hidden,false);
+  assert.equal(scope.currentAppView,'shared','Access denial stays on Data Shared with Me');
+  await clicks('googleDriveLinkCancelButton');
+  assert.equal(JSON.stringify(own),recordsBeforeLinks);
+  assert.equal(writes,writesBeforeLinks);
+  console.log('PASS: Shared data navigation and focused link login, cancellation, invalid links and access denial preserve local records and avoid settings.');
+  scope.dataSchemaVersion=3;scope.storageKey='synthetic-records';
+  clientInstance.getUpdateState=async id=>({id,etag,editable:true,owners:[{emailAddress:email}]});
+  clientInstance.updateBackup=async(id,snapshot,expected)=>{assert.equal(expected,etag);cloud=structuredClone(snapshot);etag='"schema-next"';writes++;return {id,etag};};
+  own.schemaVersion=3;cloud=structuredClone(own);cloud.schemaVersion=2;
+  for(const copy of [own,cloud])for(const entry of copy.entries){entry.createdAt=entry.timestamp;entry.modifiedAt=entry.timestamp;}
+  storage.set(scope.storageKey,JSON.stringify(own));
+  scope.getOriginalBackupSnapshot=()=>({...structuredClone(own),recovery:{rawEntries:storage.get(scope.storageKey)}});
+  clientInstance.readBackup=async()=>({metadata:{owners:[{emailAddress:email}],name:'Current'},backup:structuredClone(cloud),text:JSON.stringify(cloud)});
+  const backupsBeforeSchema=uploads.length, writesBeforeSchema=writes;
+  await clicks('saveGoogleDriveButton');await flush();
+  assert.equal(cloud.schemaVersion,3,node('googleDriveSyncStatus').textContent);
+  assert.equal(writes,writesBeforeSchema+1);
+  assert.equal(uploads.length,backupsBeforeSchema+2,'Older Drive files are backed up with the device before schema conversion');
+  assert.equal(uploads.at(-1).schemaVersion,2,'The recovery file keeps the original Drive schema');
+  cloud.schemaVersion=4;
+  const writesBeforeFuture=writes,backupsBeforeFuture=uploads.length;
+  await clicks('saveGoogleDriveButton');await flush();
+  assert.match(node('googleDriveSyncStatus').textContent,/newer or unsupported/);
+  assert.equal(writes,writesBeforeFuture);assert.equal(uploads.length,backupsBeforeFuture);
+  cloud.schemaVersion=3;
+  scope.pendingRatingScaleChange={target:10,raw:storage.get(scope.storageKey)};
+  const beforeScaleBackup=uploads.length;
+  await clicks('driveBeforeScaleChange');await flush();
+  assert.equal(uploads.length,beforeScaleBackup+1);
+  assert.equal(uploads.at(-1).ratingScale,5);
+  assert.equal(node('scaleBackupSaved').checked,true);
+  assert.equal(writes,writesBeforeFuture,'An original-rating backup must not merge or overwrite the current file');
+  scope.pendingRatingScaleChange=null;
+  await clicks('driveBeforeUpgrade');await flush();
+  assert.equal(node('continueDataUpgrade').disabled,false);
+  const prepared=await scope.window.EmotionWheelDriveUI.prepareLocalUpgrade();
+  assert.equal(prepared.schemaVersion,3);
+  etag='"changed-after-backup"';
+  await assert.rejects(()=>scope.window.EmotionWheelDriveUI.prepareLocalUpgrade(),/Drive changed since the backup/);
+  const createOriginal=clientInstance.createBackup;
+  clientInstance.createBackup=async()=>{throw new Error('Synthetic original backup failure');};
+  node('scaleBackupSaved').checked=false;node('scaleBackupSaved').disabled=true;
+  scope.pendingRatingScaleChange={target:10,raw:storage.get(scope.storageKey)};
+  await clicks('driveBeforeScaleChange');await flush();
+  assert.equal(node('scaleBackupSaved').checked,false);
+  assert.match(node('ratingScaleConversionStatus').textContent,/original backup failure/);
+  clientInstance.createBackup=createOriginal;
+  scope.pendingRatingScaleChange=null;
+  scope.dataSchemaMatches=()=>false;
+  clientInstance.findExistingCurrent=async()=>currentFile;
+  const beforePreflightWrites=writes,beforePreflightUploads=uploads.length;
+  await clicks('connectGoogleDriveButton');await flush();
+  clientInstance.findExistingCurrent=async()=>currentFile;
+  await flush();
+  assert.match(node('dataUpgradeStatus').textContent,/Drive checked before the data update/);
+  assert.equal(writes,beforePreflightWrites);assert.equal(uploads.length,beforePreflightUploads,'Connect preflight cannot upload originals without the backup action');
+  console.log('PASS: original Drive backups gate rating changes; schema upgrades protect both copies, reject stale reviews and future formats, and stop on backup failure.');
+
+
 
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
