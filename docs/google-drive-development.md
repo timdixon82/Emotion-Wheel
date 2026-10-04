@@ -253,3 +253,69 @@ All four Node suites, JavaScript syntax, HTML validation and diff checks passed.
 Device VoiceOver and narrow-screen manual checks remain release gates.
 
 Google identity reference: https://developers.google.com/identity/openid-connect/reference
+
+## Two-way sync development
+
+Two-way reconciliation now compares the last successful common baseline with
+local and Drive copies. IDs distinguish entries; deletions are represented by
+tombstones in `driveSync.deletedIds`, and propagate after a common baseline is
+established. A deletion versus a concurrent edit pauses sync. Tombstones are
+not automatically pruned: an older device must not reintroduce removed records.
+Settings, schema and rating-scale conflicts pause rather than silently convert.
+
+Explicit confirmation enables one owned editable file. Sync polls every 15
+seconds while connected, pauses on failure, and requires confirmation after
+reload or reconnection. A recovery snapshot precedes applying remote data.
+The baseline is stored locally, with full own records, unlike shared bookmarks.
+Drive updates use the v2 JSON ETag and an exact If-Match header, create a new
+pinned revision, and pause when Google rejects a stale update or cannot supply
+a baseline. Revision limits must pause safely; there is no automatic revision
+deletion. An ambiguous upload is not automatically retried.
+
+Shared datasets are fetched afresh on link opening, selection and Refresh, with
+`cache:no-store`; they are not automatically polled while viewed. Ordinary reload
+selects local data, retains shared bookmarks, and requires reconnection/selection.
+The shared status now includes its latest successful download time.
+
+`node tests/google-drive-sync.cjs` covers reconciliation. The UI suite additionally
+covers confirmed merge, local/remote additions, deletion propagation, persistent
+baselines, conflicts and disconnect. Live ETag validation remains in progress:
+two initial sync attempts failed during the baseline request, before upload.
+Do not release until real stale-ETag rejection, owner updates, second-device
+pulls/deletions and interrupted-write recovery have all been demonstrated.
+
+References:
+- https://developers.google.com/workspace/drive/api/reference/rest/v2/files
+- https://developers.google.com/workspace/drive/api/reference/rest/v2/files/update
+
+The developer-only stale-update probe is limited to the approved synthetic file
+on localhost. Starting sync was held disabled until that probe returned Google’s 412
+conflict response; that live check has now passed. It currently encountered intermittent read failures and a
+generic update error; expanded HTTP status reporting and a format-preserving
+stale ETag test are ready for the next signed-in check. No successful live sync
+is claimed. All five Node suites and HTML/JavaScript checks pass.
+
+The live safety probe subsequently passed: Google returned the stale-update
+conflict, and the UI reported that the synthetic backup was not overwritten.
+The same signed-in session is now testing normal conditional updates. Intermittent
+metadata network failures remain a separate reliability concern.
+
+Read-only network failures now retry at most three attempts with short delays.
+Writes are attempted once and pause on ambiguous failures. Regression coverage
+verifies this distinction.
+
+Normal conditional sync then succeeded on the same file with one synthetic
+record. The common baseline was established and no extra Drive file was created.
+A temporary edit-and-restore test of the synthetic note is in progress.
+
+The live temporary note edit reached the existing Drive file and was verified
+by refreshing its read-only dataset. The original synthetic note was then restored
+locally, synced successfully, and verified by another Drive-backed refresh.
+The single original entry ID and original record timestamp were retained; editing
+advanced its modification timestamp as intended. Sync was paused after testing.
+No additional file was created. Real second-device/offline/conflict-resolution
+trials remain release gates; fixtures do not substitute for those trials.
+
+The local-apply regression also exercises the production function directly:
+active edits and stale local data reject application; quota failure rolls back
+the writes and retains the full recovery snapshot.

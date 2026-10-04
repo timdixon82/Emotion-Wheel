@@ -7,6 +7,7 @@
   <script src="assets/theme.js"></script>
   <script src="assets/version.js" defer></script>
   <script src="assets/google-drive.js" defer></script>
+  <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/google-drive-ui.js" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
@@ -689,7 +690,7 @@
   <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
-    <p id="logSourceHelp" class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
+    <p id="logSourceHelp" class="help">Records are stored in this browser. Optional Drive sync shares changes only when you enable it.</p>
     <p id="logSummary" aria-live="polite" tabindex="-1">No emotions recorded yet.</p>
     <button type="button" id="emptyLogEntryButton" class="empty-action">Record your first emotion</button>
     <div id="logActionNotice" class="confirmation" tabindex="-1" hidden>
@@ -1051,7 +1052,7 @@
     <div class="details-content">
       <p id="googleMaintenanceAccountStatus" class="help">Google Drive is disconnected.</p>
       <p class="help">You can use Emotion Wheel without a Google account. Connecting lets you save a copy to your Drive and open a shared backup. Your local records and file backups remain available.</p>
-      <p class="help">This preview saves a new Drive backup each time. Automatic sync is still being developed. Backups include notes and all recorded fields; review them before sharing.</p>
+      <p class="help">This preview saves a new Drive backup each time. Optional two-way sync is available below for local testing. Backups include notes and all recorded fields; review them before sharing.</p>
       <div class="actions">
         <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
         <button type="button" id="saveGoogleDriveButton" disabled>Save a copy to Google Drive</button>
@@ -1067,6 +1068,20 @@
           <button type="button" id="shareGoogleDriveCopyButton">Share this saved copy read-only</button>
         </div>
       </div>
+      <section aria-labelledby="googleDriveSyncHeading">
+        <h2 id="googleDriveSyncHeading">Two-way Drive sync</h2>
+        <p>Choose a saved copy or open a Drive file you own. Sync merges changes from this browser and that file, including deletions after the first sync. Different edits to the same record or settings pause sync for review. Shared files from other owners cannot be synced. Sync runs while this page is open and connected.</p>
+        <button type="button" id="startGoogleDriveSyncButton" disabled>Review two-way sync</button>
+        <button type="button" id="syncGoogleDriveNowButton" disabled>Sync now</button>
+        <button type="button" id="pauseGoogleDriveSyncButton" disabled>Pause sync</button>
+        <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
+        <p id="googleDriveSyncStatus" role="status">Two-way sync is off.</p>
+        <div id="googleDriveSyncConfirmation" hidden>
+          <p id="googleDriveSyncReview"></p>
+          <button type="button" id="confirmGoogleDriveSyncButton">Confirm two-way sync</button>
+          <button type="button" id="cancelGoogleDriveSyncButton">Cancel sync setup</button>
+        </div>
+      </section>
       <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
         <h2 id="googleDriveSharingHeading" tabindex="-1">Share Drive snapshot</h2>
         <p class="help">This gives a named person Viewer access to the saved snapshot, including notes, tags and every recorded field. They can download and keep a copy. Removing Drive access cannot recall downloaded copies.</p>
@@ -2905,7 +2920,7 @@ function renderLog() {
   document.getElementById('log-heading').textContent = shared ? `${shared.label} — read-only log` : 'Local emotion log';
   document.getElementById('logSourceHelp').textContent = shared
     ? 'Showing a shared Drive dataset. These records are separate from your local data and cannot be edited here.'
-    : 'Records are stored only in this browser on this device using local storage. They are not sent anywhere.';
+    : 'Records are stored in this browser. Optional Drive sync shares changes only when you enable it.';
   logSummary.textContent = shared?.state === 'loading' ? 'Loading the selected shared dataset…'
     : shared?.state === 'unavailable' ? 'The selected shared dataset is unavailable. Reconnect or try refreshing.'
     : shared ? `${entries.length} shared emotion record${entries.length === 1 ? '' : 's'}.`
@@ -3532,6 +3547,33 @@ function getBackupSnapshot() {
     tags: getAvailableTags(),
     entries: logEntries
   }));
+}
+
+function applyDriveSyncSnapshot(snapshot, expectedLocal) {
+  if (editingEntry || pendingRatingScaleChange) throw new Error('Finish the current edit or scale review before applying Drive changes.');
+  if (!dataSchemaMatches() || JSON.stringify(getBackupSnapshot().entries) !== JSON.stringify(expectedLocal.entries) ||
+      JSON.stringify(captureSettings) !== JSON.stringify(expectedLocal.settings) || ratingScale !== expectedLocal.ratingScale) {
+    throw new Error('Local data changed during sync. Sync paused; refresh and try again.');
+  }
+  const parsed = getBackupEntriesFromText(JSON.stringify(snapshot));
+  if (parsed.skipped || parsed.validEntries.length !== snapshot.entries.length) throw new Error('Sync received invalid records. Both copies are kept.');
+  const originalEntries = localStorage.getItem(storageKey), originalSettings = localStorage.getItem(settingsKey);
+  localStorage.setItem(`${storageKey}BeforeDriveSync`, JSON.stringify(expectedLocal));
+  try {
+    localStorage.setItem(settingsKey, JSON.stringify(snapshot.settings));
+    localStorage.setItem(storageKey, serializeDataset(parsed.validEntries, parsed.ratingScale));
+  } catch (error) {
+    // Best-effort rollback; the full recovery snapshot was saved before writing.
+    try {
+      if (originalSettings === null) localStorage.removeItem(settingsKey); else localStorage.setItem(settingsKey, originalSettings);
+      if (originalEntries === null) localStorage.removeItem(storageKey); else localStorage.setItem(storageKey, originalEntries);
+    } catch { /* Recovery snapshot remains available. */ }
+    throw error;
+  }
+  logEntries = parsed.validEntries;
+  captureSettings = normalizeSettings(snapshot.settings);
+  adoptRatingScale(parsed.ratingScale);
+  renderAll();
 }
 
 function saveBackupFile() {

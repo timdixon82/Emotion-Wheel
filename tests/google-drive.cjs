@@ -12,6 +12,38 @@ async function main() {
       inner: 'Happy', comment: 'Synthetic note: café 🙂', tags: ['Work'], bucketLevel: 5,
       extension: { retained: true }
     }] };
+  let retriedReads = 0;
+  const transient = new DriveClient({ fetch: async () => {
+    retriedReads++;
+    if (retriedReads === 1) throw new TypeError('Synthetic transient connection failure');
+    return new Response(JSON.stringify({email_verified:true,email:'test@example.test'}));
+  } });
+  transient.setAccessToken({access_token:'synthetic',expires_in:60});
+  assert.equal(await transient.getConnectedEmail(),'test@example.test'); assert.equal(retriedReads,2);
+  let writesAttempted = 0;
+  const ambiguous = new DriveClient({fetch:async()=>{ writesAttempted++; throw new TypeError('Synthetic response lost'); }});
+  ambiguous.setAccessToken({access_token:'synthetic',expires_in:60});
+  await assert.rejects(ambiguous.updateBackup(fileId,backup,'"baseline"'),/connection failed/);
+  assert.equal(writesAttempted,1,'Ambiguous uploads must never retry automatically');
+  console.log('PASS: transient reads retry within a bound; ambiguous writes are attempted only once.');
+  const guardedCalls = [];
+  let guardedReplies = [];
+  const guarded = new DriveClient({ fetch: async (url, options) => { guardedCalls.push({url,options}); return guardedReplies.shift(); } });
+  guarded.setAccessToken({access_token:'synthetic',expires_in:60});
+  guardedReplies = [new Response(JSON.stringify({id:fileId,etag:'"baseline"',editable:true}))];
+  assert.equal((await guarded.getUpdateState(fileId)).etag, '"baseline"');
+  await assert.rejects(guarded.updateBackup(fileId,backup,'*'), /baseline/);
+  guardedReplies = [new Response('',{status:412})];
+  await assert.rejects(guarded.updateBackup(fileId,backup,'"baseline"'), error => error.code === 'drive-conflict');
+  const guardedPut = guardedCalls.at(-1);
+  assert.equal(guardedPut.options.method,'PUT'); assert.equal(guardedPut.options.headers.get('If-Match'),'"baseline"');
+  assert(guardedPut.url.includes('newRevision=true&pinned=true'));
+  assert.deepEqual(JSON.parse(guardedPut.options.body),backup);
+  guardedReplies = [new Response(JSON.stringify({id:fileId,etag:'"next"'}))];
+  assert.equal((await guarded.updateBackup(fileId,backup,'"baseline"')).etag,'"next"');
+  guardedReplies = [new Response(JSON.stringify({id:fileId}))];
+  await assert.rejects(guarded.getUpdateState(fileId), /baseline/);
+  console.log('PASS: guarded updates require an exact ETag, preserve revisions and pause on stale or missing baselines.');
   const original = JSON.stringify(backup);
   const calls = [];
   let time = 0;

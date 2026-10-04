@@ -104,6 +104,8 @@ jobs:
 
       - name: Verify shared dataset review
         run: node tests/review-datasets.cjs
+      - name: Two-way sync reconciliation
+        run: node tests/google-drive-sync.cjs
 
       # --- PHP with MariaDB, and WordPress ---
       # Both stacks use the same Composer scripts, defined in each

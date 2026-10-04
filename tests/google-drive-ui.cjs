@@ -238,6 +238,44 @@ async function main() {
   await clicks('disconnectGoogleDriveButton');
   console.log('PASS: 20+ shared files, owner labels, local aliases, permission rechecks, late-switch protection, close/remove and account labels preserve personal data; bookmarks contain only IDs and names.');
 
+  // Exercise the production sync lifecycle with a durable common baseline.
+  scope.google.accounts.oauth2.hasGrantedAllScopes = () => true;
+  await clicks('connectGoogleDriveButton'); await flush();
+  scope.EmotionWheelSync = require('../assets/google-drive-sync.js');
+  const syncRecord = (id, comment) => ({ id, inner:'Happy',timestamp:'2026-10-04T10:00:00Z',comment });
+  let own = {version:3,schemaVersion:2,ratingScale:5,settings:{mode:'phase1'},tags:[],entries:[syncRecord('first','baseline')]};
+  let cloud = structuredClone(own), etag = '"one"', writes = 0;
+  scope.getBackupSnapshot = () => structuredClone(own);
+  scope.applyDriveSyncSnapshot = (snapshot, expected) => { assert.deepEqual(own,expected); own=structuredClone(snapshot); };
+  clientInstance.getUpdateState = async id => ({id,etag,editable:true,owners:[{emailAddress:email}]});
+  clientInstance.readBackup = async id => ({metadata:{owners:[{emailAddress:email}],name:'Own backup'},backup:structuredClone(cloud),text:JSON.stringify(cloud)});
+  clientInstance.updateBackup = async (id,snapshot,expected) => {
+    if (id === '1mJnWuoX58_YY9lzg5jm5t9Kdm1azZpD9' && expected !== etag) { const error=new Error('stale'); error.code='drive-conflict'; throw error; }
+    assert.equal(expected,etag); cloud=structuredClone(snapshot); etag='"next"'; writes++; return {id,etag};
+  };
+  activeDataset = {fileId:'1mJnWuoX58_YY9lzg5jm5t9Kdm1azZpD9',owner:email,entries:[],label:'Synthetic backup'};
+  await clicks('testGoogleDriveSyncGuardButton'); await flush();
+  assert.match(node('googleDriveSyncStatus').textContent,/protection passed/);
+  assert.equal(writes,0,'Stale probe must not update the file');
+  activeDataset = {fileId:'synthetic_sync_file_123',owner:email,entries:[],label:'Own backup'};
+  await clicks('startGoogleDriveSyncButton');
+  assert.equal(writes,0,'Review does not write');
+  await clicks('confirmGoogleDriveSyncButton'); await flush();
+  assert.match(node('googleDriveSyncStatus').textContent,/Synced 1/);
+  assert(storage.has('emotionWheelDriveSyncV1'));
+  own.entries.push(syncRecord('local','local add'));
+  cloud.entries.push(syncRecord('remote','remote add'));
+  await clicks('syncGoogleDriveNowButton'); await flush();
+  assert.equal(own.entries.length,3); assert.equal(cloud.entries.length,3);
+  own.entries=own.entries.filter(entry=>entry.id !== 'local');
+  await clicks('syncGoogleDriveNowButton'); await flush();
+  assert.equal(cloud.entries.length,2); assert(cloud.driveSync.deletedIds.includes('local'));
+  own.entries[0].comment='local conflicting edit'; cloud.entries[0].comment='remote conflicting edit';
+  const beforeConflict = writes;
+  await clicks('syncGoogleDriveNowButton'); await flush();
+  assert.equal(writes,beforeConflict); assert.match(node('googleDriveSyncStatus').textContent,/paused/);
+  await clicks('disconnectGoogleDriveButton'); assert.equal(node('syncGoogleDriveNowButton').disabled,true);
+  console.log('PASS: confirmed two-way sync persists a baseline, merges both devices, propagates deletions, pauses conflicts and disconnects without overwriting either copy.');
   // Closing the Google popup must release the busy controls.
   scope.google.accounts.oauth2.initTokenClient = options => {
     tokenOptions = options;

@@ -66,17 +66,26 @@
       const headers = new Headers(options.headers);
       headers.set('Authorization', `Bearer ${this.#token}`);
       let response;
-      try {
-        response = await this.#fetch(url, {
-          ...options, headers, credentials: 'omit', cache: 'no-store', redirect: options.redirect || 'error'
-        });
-      } catch {
-        if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
-        const action = operation || (options.method === 'POST' ? 'saving the backup' :
-          url.includes('?alt=media') ? 'downloading the backup' : 'checking file access');
-        const error = new Error(`Google Drive connection failed while ${action}. Try again. Your local data is unchanged.`);
-        error.code = 'drive-network';
-        throw error;
+      const attempts = !options.method || options.method === 'GET' ? 3 : 1;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        try {
+          response = await this.#fetch(url, {
+            ...options, headers, credentials: 'omit', cache: 'no-store', redirect: options.redirect || 'error'
+          });
+          break;
+        } catch {
+          if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+          if (attempt + 1 < attempts) {
+            await new Promise(resolve => setTimeout(resolve, (attempt + 1) * 250));
+            if (generation !== this.#generation || !this.connected) throw new Error('Google Drive connection changed.');
+            continue;
+          }
+          const action = operation || (options.method === 'POST' ? 'saving the backup' :
+            url.includes('?alt=media') ? 'downloading the backup' : 'checking file access');
+          const error = new Error(`Google Drive connection failed while ${action}. Try again. Your local data is unchanged.`);
+          error.code = 'drive-network';
+          throw error;
+        }
       }
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       if (!response.ok) {
@@ -89,8 +98,9 @@
           error.code = 'drive-access';
           throw error;
         }
+        if (response.status === 412) { const error = new Error('The Drive file changed elsewhere. Sync paused; your local data is kept.'); error.code = 'drive-conflict'; throw error; }
         if (response.status === 429) throw new Error('Google Drive is busy. Try again later.');
-        throw new Error('Google Drive could not complete the request. Your local data is unchanged.');
+        throw new Error(`Google Drive could not complete the request (HTTP ${response.status}). Your local data is unchanged.`);
       }
       return response;
     }
@@ -171,6 +181,39 @@
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       if (permission.role !== 'reader' || permission.type !== 'user') throw new Error('Google did not confirm Viewer access. Check sharing in Drive before sharing the link.');
       return permission;
+    }
+
+    // v2 exposes the file ETag in JSON, avoiding reliance on CORS-exposed headers.
+    // Live stale-ETag rejection must pass before automatic updates are released.
+    async getUpdateState(fileId) {
+      validFileId(fileId);
+      const generation = this.#generation;
+      const fields = 'id,etag,editable,owners(emailAddress),headRevisionId';
+      const response = await this.#request(`https://www.googleapis.com/drive/v2/files/${fileId}?fields=${encodeURIComponent(fields)}`, { redirect: 'follow' }, 'checking the sync baseline');
+      const state = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (state.id !== fileId || typeof state.etag !== 'string' || !/^"[^"\r\n]+"$/.test(state.etag)) {
+        throw new Error('Drive did not provide a safe update baseline. Sync is unavailable.');
+      }
+      return state;
+    }
+
+    async updateBackup(fileId, backup, expectedEtag) {
+      validFileId(fileId);
+      if (typeof expectedEtag !== 'string' || !/^"[^"\r\n]+"$/.test(expectedEtag)) throw new Error('A safe Drive update baseline is required.');
+      if (!backup || !Array.isArray(backup.entries)) throw new Error('No valid backup to sync.');
+      const content = JSON.stringify(backup);
+      if (new TextEncoder().encode(content).byteLength > MAX_BACKUP_BYTES) throw new Error('The backup is too large to sync.');
+      const generation = this.#generation;
+      const response = await this.#request(`https://www.googleapis.com/upload/drive/v2/files/${fileId}?uploadType=media&newRevision=true&pinned=true&fields=id,etag,headRevisionId`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json; charset=UTF-8', 'If-Match': expectedEtag }, body: content
+      }, 'syncing the backup');
+      const result = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (result.id !== fileId || typeof result.etag !== 'string' || !/^"[^"\r\n]+"$/.test(result.etag)) {
+        throw new Error('Drive update result is uncertain. Sync paused; check the file before retrying.');
+      }
+      return result;
     }
 
     async createBackup(backup) {

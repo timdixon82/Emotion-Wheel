@@ -46,6 +46,8 @@
     changingReview = true;
     try { setReviewDataset(dataset); } finally { changingReview = false; }
   }
+  let syncTarget, syncTimer, syncPending, syncSafetyVerified = true; // Live stale-ETag rejection verified on the synthetic file.
+  const syncStorageKey = 'emotionWheelDriveSyncV1';
   function update() {
     connect.disabled = busy;
     save.disabled = open.disabled = refresh.disabled = busy || !client.connected;
@@ -60,6 +62,12 @@
     bookmarks.forEach((label, id) => datasetSelect.add(new Option(`${label} — ${id.slice(-6)}`, id)));
     if (selected && !bookmarks.has(selected.fileId)) datasetSelect.add(new Option(selected.label, selected.fileId));
     datasetSelect.value = selected?.fileId || 'local';
+    byId('startGoogleDriveSyncButton').disabled = !syncSafetyVerified || busy || !client.connected || !connectedEmail || !(savedFileId || selected?.owner === connectedEmail);
+    byId('syncGoogleDriveNowButton').disabled = busy || !syncTarget || !client.connected;
+    byId('pauseGoogleDriveSyncButton').disabled = !syncTarget;
+    byId('testGoogleDriveSyncGuardButton').hidden = location.hostname !== 'localhost' || selected?.fileId !== '1mJnWuoX58_YY9lzg5jm5t9Kdm1azZpD9' || selected?.owner !== connectedEmail;
+    byId('testGoogleDriveSyncGuardButton').disabled = busy || !client.connected;
+
     byId('addReviewDatasetButton').disabled = busy;
     byId('refreshReviewDatasetButton').disabled = busy || !selected || !client.connected;
     byId('copyReviewDatasetLinkButton').disabled = !selected;
@@ -155,7 +163,7 @@
     previewFileId = fileId; preview.hidden = false;
     linkedFileId = '';
     if (!['logs', 'charts'].includes(currentAppView)) selectAppView(logsTab, true);
-    status.textContent = 'Shared dataset loaded into Logs and Charts. Your local records and settings are kept.';
+    status.textContent = `Shared dataset refreshed from Drive at ${new Date().toLocaleTimeString()}. Your local records and settings are kept.`;
   }
   function chooseLocal() {
     epoch++; busy = false; resetSharing(); closePicker(); clearPreview(); linkedFileId = '';
@@ -224,7 +232,7 @@
     }
     if (busy) return;
     epoch++; const requestEpoch = epoch;
-    client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); savedFileId = ''; savedPanel.hidden = true; clearPreview();
+    pauseSync(); client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); savedFileId = ''; savedPanel.hidden = true; clearPreview();
     busy = true; update(); status.textContent = 'Waiting for Google account selection and authorisation…';
     tokenClient.callback = async response => {
       if (epoch !== requestEpoch) return;
@@ -244,7 +252,7 @@
           busy = false;
           if (!client.connected) throw new Error('Reconnect Google Drive to continue.');
           connect.textContent = 'Reconnect or switch Google account';
-          status.textContent = 'Google Drive connected. Nothing is uploaded until you choose Save a copy.';
+          status.textContent = 'Google Drive connected. Choose Save a copy or explicitly enable two-way sync.';
           if (linkedFileId) operation(operationEpoch => openPreview(linkedFileId, operationEpoch), 'Opening the shared backup…');
         } catch (error) { busy = false; status.textContent = error.message; }
       }
@@ -309,7 +317,7 @@
   refresh.addEventListener('click', () => operation(operationEpoch => openPreview(previewFileId, operationEpoch), 'Refreshing the shared backup…'));
   byId('closeGoogleDrivePreviewButton').addEventListener('click', chooseLocal);
   disconnect.addEventListener('click', () => {
-    epoch++; client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); busy = false; savedFileId = ''; clearPreview(); savedPanel.hidden = true;
+    epoch++; pauseSync(); client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); busy = false; savedFileId = ''; clearPreview(); savedPanel.hidden = true;
     closePicker();
     connect.textContent = tokenClient ? 'Sign in to Google' : 'Connect Google Drive';
     status.textContent = 'Google Drive disconnected. Local records and Drive files are kept.'; update(); connect.focus();
@@ -361,6 +369,105 @@
     }, 'Granting the confirmed recipient Viewer access…');
   });
   byId('copyGoogleDriveLinkButton').addEventListener('click', () => copyLink(savedFileId));
+
+  function pauseSync(message = 'Sync paused. Local records and the Drive file are kept.') {
+    clearTimeout(syncTimer); syncTarget = undefined; syncPending = undefined;
+    byId('googleDriveSyncConfirmation').hidden = true;
+    byId('googleDriveSyncStatus').textContent = message;
+  }
+  function scheduleSync() {
+    clearTimeout(syncTimer);
+    if (!syncTarget) return;
+    syncTimer = setTimeout(() => {
+      if (busy) scheduleSync(); else runSync();
+    }, 15000);
+    syncTimer?.unref?.();
+  }
+  async function runSync() {
+    if (!syncTarget || busy) return;
+    const target = syncTarget;
+    let success = false;
+    await operation(async operationEpoch => {
+      if (!client.connected || connectedEmail !== target.owner) throw new Error('Reconnect the sync owner account.');
+      if (!dataSchemaMatches()) throw new Error('Complete the local data upgrade before syncing.');
+      if ((typeof editingEntry !== 'undefined' && editingEntry) || (typeof pendingRatingScaleChange !== 'undefined' && pendingRatingScaleChange)) throw new Error('Finish the current edit or scale review before syncing.');
+      const local = getBackupSnapshot();
+      const before = await client.getUpdateState(target.id);
+      if (epoch !== operationEpoch || syncTarget !== target) return;
+      if (!before.editable || !before.owners?.some(owner => owner.emailAddress === target.owner)) throw new Error('Only your own editable Drive file can sync.');
+      const remote = await client.readBackup(target.id);
+      const after = await client.getUpdateState(target.id);
+      if (epoch !== operationEpoch || syncTarget !== target) return;
+      if (before.etag !== after.etag) throw new Error('Drive changed while reading. Sync paused; try again.');
+      const parsed = getBackupEntriesFromText(remote.text);
+      if (parsed.skipped || remote.backup.schemaVersion !== local.schemaVersion) throw new Error('The Drive schema or records require review before sync.');
+      const merged = EmotionWheelSync.reconcile(target.base, local, remote.backup);
+      const localNow = getBackupSnapshot();
+      if (EmotionWheelSync.canonical(EmotionWheelSync.content(localNow)) !== EmotionWheelSync.canonical(EmotionWheelSync.content(local))) throw new Error('Local data changed during sync. Try again.');
+      if (EmotionWheelSync.canonical(EmotionWheelSync.content(merged)) !== EmotionWheelSync.canonical(EmotionWheelSync.content(remote.backup)) ||
+          EmotionWheelSync.canonical(merged.driveSync) !== EmotionWheelSync.canonical(remote.backup.driveSync)) {
+        await client.updateBackup(target.id, { ...merged, exportedAt: new Date().toISOString() }, after.etag);
+      }
+      if (epoch !== operationEpoch || syncTarget !== target) return;
+      if (EmotionWheelSync.canonical(EmotionWheelSync.content(merged)) !== EmotionWheelSync.canonical(EmotionWheelSync.content(getBackupSnapshot()))) {
+        applyDriveSyncSnapshot(merged, local);
+      }
+      target.base = merged;
+      localStorage.setItem(syncStorageKey, JSON.stringify({ id: target.id, owner: target.owner, base: merged }));
+      byId('googleDriveSyncStatus').textContent = `Synced ${merged.entries.length} records at ${new Date().toLocaleTimeString()}. Changes are checked every 15 seconds while connected.`;
+      status.textContent = 'Two-way sync complete. Local and Drive changes have been reconciled.';
+      success = true;
+    }, 'Checking both copies for changes…');
+    if (syncTarget !== target) return;
+    if (!success) {
+      clearTimeout(syncTimer);
+      byId('googleDriveSyncStatus').textContent = `Sync paused. ${status.textContent} Use Sync now after reviewing both copies. No automatic retry will overwrite a conflict.`;
+    } else scheduleSync();
+  }
+  byId('testGoogleDriveSyncGuardButton').addEventListener('click', () => operation(async operationEpoch => {
+    const selected = getReviewDataset();
+    if (location.hostname !== 'localhost' || selected?.fileId !== '1mJnWuoX58_YY9lzg5jm5t9Kdm1azZpD9' || selected.owner !== connectedEmail) throw new Error('This check is limited to the approved synthetic backup.');
+    pauseSync();
+    const remote = await client.readBackup(selected.fileId);
+    if (epoch !== operationEpoch) return;
+    const baseline = await client.getUpdateState(selected.fileId);
+    if (epoch !== operationEpoch) return;
+    const stale = baseline.etag.replace(/[A-Za-z0-9](?=[^A-Za-z0-9]*"$)/, character => /[0-9]/.test(character) ? (character === '0' ? '1' : '0') : (character === 'a' ? 'b' : 'a'));
+    if (stale === baseline.etag) throw new Error('Unable to construct a safe stale-update test.');
+    try {
+      await client.updateBackup(selected.fileId, remote.backup, stale);
+    } catch (error) {
+      if (error.code === 'drive-conflict') {
+        syncSafetyVerified = true;
+        byId('googleDriveSyncStatus').textContent = 'Live conflict protection passed: Google rejected the stale update. The backup was not overwritten.';
+        return;
+      }
+      throw error;
+    }
+    throw new Error('Google accepted a stale update. Do not enable sync until conditional updates are fixed.');
+  }, 'Testing stale-update rejection on the approved synthetic backup…'));
+  byId('startGoogleDriveSyncButton').addEventListener('click', () => {
+    const selected = getReviewDataset();
+    const id = (selected?.owner === connectedEmail ? selected.fileId : '') || savedFileId;
+    if (!syncSafetyVerified || !id || !connectedEmail || !client.connected || busy) return;
+    syncPending = { id, owner: connectedEmail };
+    byId('googleDriveSyncReview').textContent = `Enable two-way sync with Drive file ${id.slice(-6)} in ${connectedEmail}? Local and Drive records will be merged. A recovery snapshot is kept before changing local data. Deletions are tracked after the first sync. Conflicts pause syncing. Existing viewers will see the updated file. Sync pauses on reload or disconnect; reconnect and confirm to resume.`;
+    byId('googleDriveSyncConfirmation').hidden = false;
+  });
+  byId('confirmGoogleDriveSyncButton').addEventListener('click', () => {
+    if (!syncSafetyVerified || !syncPending || busy || !client.connected || syncPending.owner !== connectedEmail) return;
+    const candidate = { ...syncPending, base: null };
+    try {
+      const remembered = JSON.parse(localStorage.getItem(syncStorageKey) || 'null');
+      if (remembered?.id === candidate.id && remembered.owner === candidate.owner) candidate.base = remembered.base;
+    } catch { /* First sync still preserves records and rejects conflicts. */ }
+    syncTarget = candidate; syncPending = undefined;
+    byId('googleDriveSyncConfirmation').hidden = true;
+    runSync(); update();
+  });
+  byId('cancelGoogleDriveSyncButton').addEventListener('click', () => { syncPending = undefined; byId('googleDriveSyncConfirmation').hidden = true; });
+  byId('pauseGoogleDriveSyncButton').addEventListener('click', () => { pauseSync(); update(); });
+  byId('syncGoogleDriveNowButton').addEventListener('click', runSync);
 
   update();
 })();
