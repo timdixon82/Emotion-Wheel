@@ -126,3 +126,46 @@ level of the configured scale.
 The local browser is available for manual testing. Real Google sign-in, uploads,
 Picker selection and cross-account sharing remain untested. Automatic sync is
 not implemented; this preview creates an explicit new backup on each save.
+
+Additional preparation: regression checks now cover Picker selection, cancellation,
+duplicate callbacks, wrong-file selection from a sharing link, denied refresh,
+account changes during streamed responses, and disconnect during downloads.
+Picker explicitly uses the app origin, failed refreshes discard the shared
+preview, and Google initialisation failures release controls for retry. A linked
+file access failure explains how an authorised recipient can select the file in
+Picker to grant per-file app access. Both Drive suites are included in CI, using
+Node 22 for this dependency-free app.
+
+A browser-downloaded synthetic JSON backup was inspected successfully: schema,
+scale, note, ID and timestamps were retained. Loading a shared fragment opened
+Maintenance, removed the fragment from the address bar, loaded no Google scripts
+and preserved the synthetic local log. Keyboard activation of Connect worked.
+The native file chooser could not be controlled by the in-app browser automation,
+so browser-level backup restoration remains a manual check; automated merge and
+restore lifecycle coverage passes. Local checks run under Node 26.8.2; the new
+CI steps have not run on GitHub because the branch remains local.
+
+## Manual trial once Google credentials are configured
+
+Use synthetic data throughout. Localhost data is separate from the live app.
+
+1. Record an emotion with a note. Reload; check Logs and Charts. Save a JSON
+   backup, then Load and merge that same backup; there should still be one copy
+   of the entry.
+2. Connect Google Drive, choose the owner test account, and authorise the
+   per-file scope. Confirm that connecting alone creates no Drive file.
+3. Choose Save a copy. Open the resulting Drive file and check that its sharing
+   is restricted. Grant the recipient test account Viewer access through Drive.
+4. Copy the Emotion Wheel sharing link. In a separate browser profile signed
+   into the recipient account, open it, connect, and select the same shared file
+   in Picker if requested. The recipient's personal log must stay separate.
+5. Check the shared log and counts. Close and disconnect; personal records must
+   remain. Test a cancelled sign-in and a cancelled Picker selection.
+6. Test an uninvited account, then revoke the recipient's Drive access and refresh.
+   Access must fail without changing personal data. Previously downloaded copies
+   cannot be recalled.
+
+Local sharing links use `http://localhost:8765/` and are for testing in another
+profile on the same computer. Cross-device testing needs a reachable test origin
+and corresponding OAuth/key restrictions before release. Each save creates a new
+snapshot and sharing link; the current preview does not update an earlier copy.

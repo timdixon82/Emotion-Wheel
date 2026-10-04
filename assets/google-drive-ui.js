@@ -12,7 +12,7 @@
   const refresh = byId('refreshGoogleDrivePreviewButton');
   const client = new EmotionWheelDrive.DriveClient();
   const scripts = new Map();
-  let config, tokenClient, activePicker;
+  let config, tokenClient, activePicker, finishPicker;
   let busy = false, epoch = 0, savedFileId = '', previewFileId = '', linkedFileId = '';
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('drive')) {
@@ -35,6 +35,10 @@
     byId('googleDriveSharedSummary').textContent = '';
     byId('googleDriveSharedChartSummary').textContent = '';
   }
+  function closePicker() {
+    activePicker?.setVisible(false); activePicker = undefined;
+    finishPicker?.(); finishPicker = undefined;
+  }
   async function operation(action, message) {
     if (busy) return;
     const operationEpoch = epoch;
@@ -44,6 +48,9 @@
       if (epoch === operationEpoch) status.textContent = error instanceof SyntaxError ?
         'The Drive file or connection configuration is invalid. Your local records are kept.' :
         error.message || 'Google Drive is unavailable. Your local records are kept.';
+      if (epoch === operationEpoch && error.code === 'drive-access' && linkedFileId && client.connected) {
+        status.textContent += ' If you have access in Drive, choose Open a Drive backup and select this file to grant the app access.';
+      }
     } finally {
       if (epoch === operationEpoch) { busy = false; update(); }
     }
@@ -80,6 +87,7 @@
     scripts.set(url, promise); return promise;
   }
   async function openPreview(fileId, operationEpoch) {
+    clearPreview();
     const result = await client.readBackup(fileId);
     if (epoch !== operationEpoch) return;
     const parsed = getBackupEntriesFromText(result.text);
@@ -132,9 +140,11 @@
       if (epoch !== requestEpoch) return;
       busy = false; status.textContent = 'Google sign-in was closed or could not open. Try again; your local records are kept.'; update();
     };
-    tokenClient = google.accounts.oauth2.initTokenClient({ client_id: config.clientId,
-      scope: 'https://www.googleapis.com/auth/drive.file', callback: tokenClient.callback, error_callback: failed });
-    try { tokenClient.requestAccessToken({ prompt: 'select_account' }); } catch { failed(); }
+    try {
+      tokenClient = google.accounts.oauth2.initTokenClient({ client_id: config.clientId,
+        scope: 'https://www.googleapis.com/auth/drive.file', callback: tokenClient.callback, error_callback: failed });
+      tokenClient.requestAccessToken({ prompt: 'select_account' });
+    } catch { failed(); }
   });
   save.addEventListener('click', () => operation(async operationEpoch => {
     if (!dataSchemaMatches()) throw new Error('Complete the local data upgrade before saving a Drive copy.');
@@ -155,17 +165,27 @@
     if (epoch !== operationEpoch) return;
     await new Promise((resolve, reject) => {
       const view = new google.picker.DocsView().setMimeTypes('application/json,text/plain');
+      let selected = false;
+      finishPicker = resolve;
       const picker = new google.picker.PickerBuilder().setDeveloperKey(config.apiKey)
         .setAppId(config.appId).setOAuthToken(client.getPickerToken()).addView(view)
+        .setOrigin(location.origin)
         .setCallback(async data => {
           if (epoch !== operationEpoch) { resolve(); return; }
-          if (data.action === google.picker.Action.CANCEL) { status.textContent = 'No Drive backup opened. Your personal log is kept.'; resolve(); return; }
+          if (selected) return;
+          if (data.action === google.picker.Action.CANCEL) {
+            selected = true; closePicker(); status.textContent = 'No Drive backup opened. Your personal log is kept.'; return;
+          }
           if (data.action !== google.picker.Action.PICKED) return;
+          selected = true;
+          // Hide the picker without resolving until the selected file is validated.
+          activePicker?.setVisible(false); activePicker = undefined;
           try {
             const fileId = EmotionWheelDrive.validFileId(data.docs[0].id);
             if (linkedFileId && fileId !== linkedFileId) throw new Error('Choose the backup referenced by this sharing link.');
             await openPreview(fileId, operationEpoch); resolve();
           } catch (error) { reject(error); }
+          finally { if (epoch === operationEpoch) finishPicker = undefined; }
         }).build();
       activePicker = picker;
       picker.setVisible(true);
@@ -177,8 +197,8 @@
     status.textContent = 'Shared preview closed. Your personal log is kept.'; update(); open.focus();
   });
   disconnect.addEventListener('click', () => {
-    activePicker?.setVisible(false); activePicker = undefined;
     epoch++; client.disconnect(); busy = false; savedFileId = ''; clearPreview(); savedPanel.hidden = true;
+    closePicker();
     connect.textContent = tokenClient ? 'Sign in to Google' : 'Connect Google Drive';
     status.textContent = 'Google Drive disconnected. Local records and Drive files are kept.'; update(); connect.focus();
   });

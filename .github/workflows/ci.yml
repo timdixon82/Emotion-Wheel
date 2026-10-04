@@ -57,6 +57,12 @@ jobs:
         if: hashFiles('package.json') != ''
         run: npm ci
 
+      - name: Set up Node.js for dependency-free app tests
+        if: hashFiles('package.json') == ''
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+        with:
+          node-version: '22'
+
       - name: Install Playwright browsers
         # Gated on a Playwright config file, not a remembered flag: any
         # project that adds one gets the browser install for free, whether
@@ -89,6 +95,12 @@ jobs:
 
       - name: Verify emotion data and backup compatibility
         run: node tests/context-analysis.cjs
+
+      - name: Verify optional Google Drive transport
+        run: node tests/google-drive.cjs
+
+      - name: Verify optional Google Drive controls
+        run: node tests/google-drive-ui.cjs
 
       # --- PHP with MariaDB, and WordPress ---
       # Both stacks use the same Composer scripts, defined in each

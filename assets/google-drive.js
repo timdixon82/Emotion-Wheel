@@ -75,7 +75,9 @@
           throw new Error('Reconnect Google Drive to continue.');
         }
         if (response.status === 403 || response.status === 404) {
-          throw new Error('This Google account cannot access the file, or the file is unavailable.');
+          const error = new Error('This Google account cannot access the file, or the file is unavailable.');
+          error.code = 'drive-access';
+          throw error;
         }
         if (response.status === 429) throw new Error('Google Drive is busy. Try again later.');
         throw new Error('Google Drive could not complete the request. Your local data is unchanged.');
@@ -116,6 +118,7 @@
       const fields = 'id,name,mimeType,size,modifiedTime,version,capabilities(canDownload,canEdit)';
       const metadataResponse = await this.#request(`${API}files/${fileId}?fields=${encodeURIComponent(fields)}`);
       const metadata = JSON.parse(await this.#readText(metadataResponse));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       if (metadata.mimeType !== 'application/json' && metadata.mimeType !== 'text/plain') {
         throw new Error('Choose an Emotion Wheel JSON backup file.');
       }
@@ -131,6 +134,7 @@
     }
 
     async createBackup(backup) {
+      const generation = this.#generation;
       if (!backup || !Array.isArray(backup.entries)) throw new Error('No valid backup to save.');
       const content = JSON.stringify(backup);
       if (new TextEncoder().encode(content).byteLength > MAX_BACKUP_BYTES) {
@@ -146,6 +150,7 @@
         method: 'POST', headers: { 'Content-Type': `multipart/related; boundary=${boundary}` }, body
       });
       const result = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       validFileId(result.id);
       return result;
     }

@@ -99,7 +99,27 @@ async function main() {
   delayed.disconnect();
   finish(json({ mimeType: 'application/json' }));
   await assert.rejects(pending, /connection changed/);
+  // Switching accounts while a response body is streaming must not send the
+  // second request with the new account, or report an old upload as current.
+  let bodyController;
+  const stream = () => new Response(new ReadableStream({ start(controller) { bodyController = controller; } }));
+  let streamingCalls = 0;
+  const streaming = new DriveClient({ fetch: async () => { streamingCalls++; return stream(); } });
+  streaming.setAccessToken({ access_token: 'first-account', expires_in: 60 });
+  const metadataPending = streaming.readBackup(fileId);
+  await new Promise(resolve => setImmediate(resolve));
+  streaming.setAccessToken({ access_token: 'second-account', expires_in: 60 });
+  bodyController.enqueue(new TextEncoder().encode(JSON.stringify({ mimeType: 'application/json' })));
+  bodyController.close();
+  await assert.rejects(metadataPending, /connection changed/);
+  assert.equal(streamingCalls, 1, 'Account change must stop before the content request');
+  const uploadPending = streaming.createBackup(backup);
+  await new Promise(resolve => setImmediate(resolve));
+  streaming.disconnect();
+  bodyController.enqueue(new TextEncoder().encode(JSON.stringify({ id: fileId })));
+  bodyController.close();
+  await assert.rejects(uploadPending, /connection changed/);
   assert.equal(JSON.stringify(backup), original);
-  console.log('PASS: file IDs validated; share link contains only file ID; disconnect clears access and discards in-flight results.');
+  console.log('PASS: file IDs validated; share link contains only file ID; disconnect and account changes discard in-flight requests and streamed responses.');
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
