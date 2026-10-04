@@ -319,3 +319,19 @@ trials remain release gates; fixtures do not substitute for those trials.
 The local-apply regression also exercises the production function directly:
 active edits and stale local data reject application; quota failure rolls back
 the writes and retains the full recovery snapshot.
+
+## Simplified file management
+
+Logs and Charts now show one labelled data selector. File actions, owner details,
+renaming and the management selector are in Maintenance. Both selectors stay in
+step; choosing or refreshing a file in Maintenance keeps that screen open.
+The connected account remains a small header label when signed in.
+Maintenance separates local backups, Google connection, your Drive backup/sync,
+and files you can view. Duplicate file-opening and preview controls are removed
+from the visible interface, and inactive management actions stay hidden. The
+synthetic protection probe appears only with `?drive-debug=1`.
+
+Browser checks confirmed the single review selector, hidden management actions
+on review screens, the Maintenance selector staying on that page, and both
+selectors returning to local data. Existing controller and review regressions
+and HTML validation pass.

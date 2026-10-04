@@ -211,6 +211,11 @@ async function main() {
   assert(remembered.length >= 20);
   assert(remembered.every(item => Object.keys(item).sort().join() === 'id,label'), 'Only names and file IDs may be persisted');
   assert(!storage.get('emotionWheelSharedDatasetsV1').includes('<script>'));
+  scope.currentAppView = 'maintenance';
+  node('manageDatasetSelect').value = 'synthetic_shared_file_003';
+  node('manageDatasetSelect').handlers.change(); await flush();
+  assert.equal(scope.currentAppView,'maintenance','Managing a file must keep the user in Maintenance');
+  assert.equal(node('reviewDatasetSelect').value,node('manageDatasetSelect').value,'Both file selectors stay in step');
   const readsBeforeSwitch = remoteReads.length;
   node('reviewDatasetSelect').value = 'synthetic_shared_file_000';
   node('reviewDatasetSelect').handlers.change(); await flush();

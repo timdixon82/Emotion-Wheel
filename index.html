@@ -112,6 +112,13 @@
     }
     .settings-panel, .status, .log-panel { background: var(--panel); }
     .workspace-panel { margin-top: 1rem; }
+    .dataset-picker { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .dataset-picker label { font-weight: 700; }
+    .dataset-picker select { flex: 1; min-width: 0; max-width: 100%; }
+    .connected-account { font-size: .875rem; margin: .5rem 0 0; overflow-wrap: anywhere; }
+    .drive-task { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .drive-task h2 { margin-top: 0; }
+
     details {
       border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
       margin: 1rem 0; box-shadow: var(--shadow);
@@ -417,29 +424,9 @@
       </select>
     </div>
   </nav>
+  <p id="googleAccountStatus" class="connected-account" hidden>Google Drive is disconnected.</p>
 </header>
 <main id="main-content" tabindex="-1">
-  <section class="export-panel" aria-label="Dataset for Logs and Charts">
-    <label for="reviewDatasetSelect">Dataset for Logs and Charts</label>
-    <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp">
-      <option value="local">My local data</option>
-    </select>
-    <p id="reviewDatasetHelp" class="help">Choose your local data or a shared Drive backup. Shared datasets are read-only; switch to My local data to record or edit. Maintenance always manages your local data.</p>
-    <div class="actions">
-      <button type="button" id="addReviewDatasetButton">Add a shared Drive backup</button>
-      <button type="button" id="refreshReviewDatasetButton" disabled>Refresh selected dataset</button>
-      <button type="button" id="copyReviewDatasetLinkButton" disabled>Copy selected dataset link</button>
-      <button type="button" id="shareReviewDatasetButton" disabled>Share selected Drive file read-only</button>
-      <button type="button" id="removeReviewDatasetButton" disabled>Remove selected dataset from list</button>
-    </div>
-    <div id="reviewDatasetNameControls" hidden>
-      <label for="reviewDatasetName">Name for this shared dataset</label>
-      <input id="reviewDatasetName" type="text" maxlength="120">
-      <button type="button" id="renameReviewDatasetButton">Save dataset name</button>
-    </div>
-    <p id="reviewDatasetStatus" role="status" aria-live="polite">Viewing my local data.</p>
-    <p id="googleAccountStatus" class="help">Google Drive is disconnected.</p>
-  </section>
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
     <h2 id="dataUpgradeHeading">New features are here!</h2>
     <p id="dataUpgradeDescription">Back up your records before updating.</p>
@@ -687,6 +674,12 @@
   </section>
 
   <section id="reviewPanel" class="workspace-panel" hidden>
+  <div class="dataset-picker">
+    <label for="reviewDatasetSelect">Data to view</label>
+    <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
+    <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Maintenance.</p>
+  </div>
+
   <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
@@ -1031,15 +1024,15 @@
 
   <section id="maintenancePanel" class="workspace-panel" aria-label="Maintenance" tabindex="-1" hidden>
   <details id="export-data" class="export-panel" open>
-    <summary>Save, load, and manage data</summary>
+    <summary>Back up or load your own data</summary>
     <div class="details-content">
-    <p class="help">CSV files are for reading and sharing. Backup files are JSON so they can be loaded back into this page. Clearing the local log only affects this browser.</p>
+    <p class="help">Save a backup to keep a copy of your own records. Load a backup to add its records or replace your current log. CSV exports can be read in a spreadsheet.</p>
     <div class="actions">
-      <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
-      <button type="button" id="exportLogButton" disabled>Export full log as CSV</button>
+      <button type="button" id="exportTallyButton" disabled>Export emotion counts (CSV)</button>
+      <button type="button" id="exportLogButton" disabled>Export records (CSV)</button>
       <button type="button" id="saveBackupButton" disabled>Save backup file</button>
-      <button type="button" id="loadMergeButton">Load and merge</button>
-      <button type="button" id="loadReplaceButton">Load and replace</button>
+      <button type="button" id="loadMergeButton">Add records from a backup</button>
+      <button type="button" id="loadReplaceButton">Replace log from a backup</button>
       <button type="button" id="clearLogButton" class="danger" disabled>Clear local log</button>
     </div>
     <label for="loadBackupInput" class="visually-hidden">Choose a backup file to load (JSON format)</label>
@@ -1051,17 +1044,18 @@
     <summary>Google Drive (optional)</summary>
     <div class="details-content">
       <p id="googleMaintenanceAccountStatus" class="help">Google Drive is disconnected.</p>
-      <p class="help">You can use Emotion Wheel without a Google account. Connecting lets you save a copy to your Drive and open a shared backup. Your local records and file backups remain available.</p>
-      <p class="help">This preview saves a new Drive backup each time. Optional two-way sync is available below for local testing. Backups include notes and all recorded fields; review them before sharing.</p>
+      <p class="help">Connect your Google account to save your data online or open files people have shared with you. Google Drive is optional.</p>
       <div class="actions">
         <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
-        <button type="button" id="saveGoogleDriveButton" disabled>Save a copy to Google Drive</button>
-        <button type="button" id="openGoogleDriveButton" disabled>Open a Drive backup</button>
         <button type="button" id="disconnectGoogleDriveButton" disabled>Disconnect Google Drive</button>
       </div>
       <p id="googleDriveStatus" class="help" role="status">Google Drive is disconnected. Records are saved only in this browser.</p>
+      <section class="drive-task" aria-labelledby="myDriveDataHeading">
+        <h2 id="myDriveDataHeading">Your data in Google Drive</h2>
+        <p>Save a new backup, or turn on sync to keep one file up to date across your devices. Saving a backup once does not turn on sync.</p>
+        <button type="button" id="saveGoogleDriveButton" disabled>Save a new Drive backup</button>
       <div id="googleDriveSavedPanel" hidden>
-        <p>To share this copy, open it in Drive and give named people Viewer access, then copy the Emotion Wheel link.</p>
+        <p>To share this backup, choose who can view it, then copy its link.</p>
         <div class="actions">
           <a id="googleDriveFileLink" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer">Open saved copy in Drive</a>
           <button type="button" id="copyGoogleDriveLinkButton">Copy Emotion Wheel sharing link</button>
@@ -1069,22 +1063,22 @@
         </div>
       </div>
       <section aria-labelledby="googleDriveSyncHeading">
-        <h2 id="googleDriveSyncHeading">Two-way Drive sync</h2>
-        <p>Choose a saved copy or open a Drive file you own. Sync merges changes from this browser and that file, including deletions after the first sync. Different edits to the same record or settings pause sync for review. Shared files from other owners cannot be synced. Sync runs while this page is open and connected.</p>
-        <button type="button" id="startGoogleDriveSyncButton" disabled>Review two-way sync</button>
+        <h3 id="googleDriveSyncHeading">Keep your data in sync</h3>
+        <p>Use a saved backup or select a file you own below. Sync combines changes from your devices, including deletions after setup. If changes clash, sync pauses so you can review them. Keep this page open and connected for sync to run.</p>
+        <button type="button" id="startGoogleDriveSyncButton" disabled>Set up sync</button>
         <button type="button" id="syncGoogleDriveNowButton" disabled>Sync now</button>
         <button type="button" id="pauseGoogleDriveSyncButton" disabled>Pause sync</button>
         <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
         <p id="googleDriveSyncStatus" role="status">Two-way sync is off.</p>
         <div id="googleDriveSyncConfirmation" hidden>
           <p id="googleDriveSyncReview"></p>
-          <button type="button" id="confirmGoogleDriveSyncButton">Confirm two-way sync</button>
+          <button type="button" id="confirmGoogleDriveSyncButton">Turn on sync</button>
           <button type="button" id="cancelGoogleDriveSyncButton">Cancel sync setup</button>
         </div>
       </section>
       <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
-        <h2 id="googleDriveSharingHeading" tabindex="-1">Share Drive snapshot</h2>
-        <p class="help">This gives a named person Viewer access to the saved snapshot, including notes, tags and every recorded field. They can download and keep a copy. Removing Drive access cannot recall downloaded copies.</p>
+        <h2 id="googleDriveSharingHeading" tabindex="-1">Choose who can view this file</h2>
+        <p class="help">The person you choose can read every record, including notes, and download a copy. Removing their access later cannot remove copies they have already saved.</p>
         <label for="googleDriveRecipientEmail">Recipient’s Google account email</label>
         <input id="googleDriveRecipientEmail" type="email" maxlength="254" required>
         <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification</label>
@@ -1098,16 +1092,36 @@
           <button type="button" id="confirmGoogleDriveSharingButton">Confirm Viewer access</button>
         </section>
       </section>
-      <section id="googleDriveSharedPreview" aria-labelledby="googleDriveSharedHeading" tabindex="-1" hidden>
-        <h2 id="googleDriveSharedHeading">Shared dataset — read only</h2>
-        <p id="googleDriveSharedSummary" class="help"></p>
-        <p class="help">Use Logs and Charts to explore this dataset. Your local records and settings are kept. File names and IDs are remembered in the dataset list; shared records are kept only for this session.</p>
+      </section>
+      <section class="drive-task" aria-labelledby="manageDriveFilesHeading">
+        <h2 id="manageDriveFilesHeading">Files you can view</h2>
+        <p>Add a shared file, then choose it here to rename it, copy its link or remove it from your list. Removing it here keeps the file in Google Drive.</p>
+        <label for="manageDatasetSelect">Choose a file</label>
+        <select id="manageDatasetSelect"><option value="local">My local data</option></select>
+        <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
+    <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
+    <div id="selectedDriveFileActions" class="actions" hidden>
+      <button type="button" id="refreshReviewDatasetButton" disabled>Refresh file</button>
+      <button type="button" id="copyReviewDatasetLinkButton" disabled>Copy file link</button>
+      <button type="button" id="shareReviewDatasetButton" disabled>Share a file you own</button>
+      <button type="button" id="removeReviewDatasetButton" disabled>Remove from this list</button>
+    </div>
+    <div id="reviewDatasetNameControls" hidden>
+      <label for="reviewDatasetName">Name in your file list</label>
+      <input id="reviewDatasetName" type="text" maxlength="120">
+      <button type="button" id="renameReviewDatasetButton">Save name</button>
+    </div>
+    <p id="reviewDatasetStatus" role="status" aria-live="polite">Viewing my local data.</p>
+      <section id="googleDriveSharedPreview" aria-labelledby="googleDriveSharedHeading" hidden>
+        <h3 id="googleDriveSharedHeading" class="visually-hidden">View selected file</h3>
+        <p id="googleDriveSharedSummary" hidden></p>
+        <button type="button" id="refreshGoogleDrivePreviewButton" hidden>Refresh shared backup</button>
         <div class="actions">
-          <button type="button" id="refreshGoogleDrivePreviewButton">Refresh shared backup</button>
-          <button type="button" id="viewSharedLogsButton">View shared Logs</button>
-          <button type="button" id="viewSharedChartsButton">View shared Charts</button>
-          <button type="button" id="closeGoogleDrivePreviewButton">Return to my local data</button>
+          <button type="button" id="viewSharedLogsButton">View Logs</button>
+          <button type="button" id="viewSharedChartsButton">View Charts</button>
+          <button type="button" id="closeGoogleDrivePreviewButton" hidden>Return to my local data</button>
         </div>
+      </section>
       </section>
     </div>
   </details>
@@ -2744,7 +2758,9 @@ function renderCharts() {
 
   renderChartPeriodControls();
   innerSeriesControls.hidden = timeMeasure.value !== 'inner';
-  chartsSummary.textContent = hasEntries
+  chartsSummary.textContent = getReviewDataset()?.state === 'loading' ? 'Loading the selected file…'
+    : getReviewDataset()?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Maintenance.'
+    : hasEntries
     ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
   shareEmotionChartButton.disabled = !topEmotions.length;
@@ -2922,7 +2938,7 @@ function renderLog() {
     ? 'Showing a shared Drive dataset. These records are separate from your local data and cannot be edited here.'
     : 'Records are stored in this browser. Optional Drive sync shares changes only when you enable it.';
   logSummary.textContent = shared?.state === 'loading' ? 'Loading the selected shared dataset…'
-    : shared?.state === 'unavailable' ? 'The selected shared dataset is unavailable. Reconnect or try refreshing.'
+    : shared?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Maintenance.'
     : shared ? `${entries.length} shared emotion record${entries.length === 1 ? '' : 's'}.`
     : hasEntries ? `${entries.length} emotion record${entries.length === 1 ? '' : 's'} stored locally.` : 'No emotions recorded yet.';
   logFilterStatus.textContent = hasEntries
