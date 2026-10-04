@@ -102,6 +102,9 @@ jobs:
       - name: Verify optional Google Drive controls
         run: node tests/google-drive-ui.cjs
 
+      - name: Verify shared dataset review
+        run: node tests/review-datasets.cjs
+
       # --- PHP with MariaDB, and WordPress ---
       # Both stacks use the same Composer scripts, defined in each
       # project's composer.json per docs/stacks/php-mariadb.md and

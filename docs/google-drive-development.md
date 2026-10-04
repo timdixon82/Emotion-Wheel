@@ -13,7 +13,7 @@ with `tjdixon@gmail.com` and `tim@dixon-net.com` added as test users. The approv
 is created with only `http://localhost:8765` authorised. The approved Picker key
 is created with website restrictions `http://localhost:8765/*` and
 `https://docs.google.com/*`, and API restrictions for Drive and Picker only.
-The consent configuration declares only `drive.file`.
+The consent configuration declares `drive.file`, `openid` and `userinfo.email`. Drive access remains per-file; the basic identity scopes display the verified connected email.
 
 The browser credentials are configured in ignored
 `assets/google-drive-config.local.json`; no OAuth client secret is stored. Local
@@ -44,7 +44,7 @@ local test.
    and developer contact email. Use External audience so personal Google
    accounts can participate; remain in Testing and add owner and recipient test
    accounts.
-4. Request only `https://www.googleapis.com/auth/drive.file`. This scope permits
+4. Request `openid email https://www.googleapis.com/auth/drive.file`. The identity scopes display the connected account; the Drive scope permits
    access to app-created or explicitly selected files. It is write-capable;
    Google's Viewer permission on a shared file separately prevents a recipient
    from writing to that file. Do not request access to all Drive files.
@@ -84,7 +84,7 @@ Google pages:
    records, capture settings or rating scale.
 4. Create app links containing a file ID in a fragment, never an access token.
    First version: explicit saving and read-only shared preview with Refresh.
-   Owners grant named recipients Viewer access using Drive's sharing screen.
+   Owners review and confirm named recipients’ Viewer access in the app, with notification off by default.
 5. Add automatic saving only after validating concurrency protection against
    real Drive responses. Preserve recoverable snapshots, mark pending changes,
    handle failed/ambiguous uploads, and prevent silent overwrites. Multi-device
@@ -126,7 +126,7 @@ release unchanged throughout.
 
 ## Local test results — 4 October 2026
 
-The three Node suites above, JavaScript syntax checks, HTML validation for
+The initial three Node suites above, JavaScript syntax checks, HTML validation for
 `index.html` and `docs/privacy.html`, and `git diff --check` passed.
 
 At `http://localhost:8765`, a synthetic Happy entry with a note was recorded,
@@ -224,3 +224,32 @@ Local sharing links use `http://localhost:8765/` and are for testing in another
 profile on the same computer. Cross-device testing needs a reachable test origin
 and corresponding OAuth/key restrictions before release. Each save creates a new
 snapshot and sharing link; the current preview does not update an earlier copy.
+
+## Multiple datasets and guided sharing
+
+The dataset selector now uses the existing Logs and Charts for shared backups.
+It displays share owner, file name and short ID, with editable local labels.
+Shared Entry and log actions are disabled; Maintenance continues to manage local data.
+Only file IDs and labels persist; shared records, tokens and connected email stay
+in memory. Selecting or refreshing a shared file rechecks Drive access. Removing
+a dataset removes its bookmark without changing Drive.
+
+Guided sharing reviews the complete snapshot and recipient before confirming
+Viewer access. Email notifications are unchecked by default. Saving still creates
+an explicit snapshot; automatic sync and protected updates are not implemented.
+
+Run `node tests/review-datasets.cjs` alongside the other three suites. Regression
+coverage includes all chart families, scales, filtering, local exports, 20 shared
+files, aliases, cancellation races, owner/account labels, and confirmed Viewer
+permission requests. The live browser also verified Google email identity for both controlled accounts,
+shared Logs and Charts, and switching back to the unchanged local log. In-app
+sharing confirmed the existing synthetic file’s Viewer access for
+`tim@dixon-net.com`, with notification off. The recipient then loaded that same
+file: connected account `tim@dixon-net.com`, share owner `tjdixon@gmail.com`,
+Entry disabled, and the owner-only sharing control disabled. No additional
+Drive file was uploaded. Twenty-file switching and cross-scale charts were
+verified with synthetic regression fixtures, rather than twenty real Drive files.
+All four Node suites, JavaScript syntax, HTML validation and diff checks passed.
+Device VoiceOver and narrow-screen manual checks remain release gates.
+
+Google identity reference: https://developers.google.com/identity/openid-connect/reference

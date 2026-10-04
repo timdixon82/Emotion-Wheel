@@ -5,8 +5,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const names = ['ensureEntryIdentity', 'mergeBackupEntries', 'sortCountRows', 'countValues', 'getAppropriateCounts', 'getAlignmentCounts', 'getVisibleAppropriateRows', 'getVisibleAlignmentRows', 'getLevelCounts', 'normalizeTags', 'getContextCounts', 'getEntryPathLabel', 'getRecordedLevel', 'displayValue', 'formatDateTime', 'getLogRows', 'csvEscape', 'getEntryKey', 'getIntensityComparison', 'getRecordingAlignment', 'convertRatingEntries', 'getScaleConversionWarning', 'normalizeLoadedEntry', 'getBackupEntriesFromText'];
-const context = vm.createContext({ Intl, crypto: require('node:crypto').webcrypto, ratingScale: 10, dataSchemaVersion: 3 });
+const names = ['getReviewDataset', 'getReviewEntries', 'getReviewScale', 'ensureEntryIdentity', 'mergeBackupEntries', 'sortCountRows', 'countValues', 'getAppropriateCounts', 'getAlignmentCounts', 'getVisibleAppropriateRows', 'getVisibleAlignmentRows', 'getLevelCounts', 'normalizeTags', 'getContextCounts', 'getEntryPathLabel', 'getRecordedLevel', 'displayValue', 'formatDateTime', 'getLogRows', 'csvEscape', 'getEntryKey', 'getIntensityComparison', 'getRecordingAlignment', 'convertRatingEntries', 'getScaleConversionWarning', 'normalizeLoadedEntry', 'getBackupEntriesFromText'];
+const context = vm.createContext({ Intl, crypto: require('node:crypto').webcrypto, reviewDataset: null, ratingScale: 10, dataSchemaVersion: 3 });
 for (const name of names) {
   const source = html.match(new RegExp(`(?:async )?function ${name}\\([\\s\\S]*?\\n}`));
   assert(source, `Missing helper: ${name}`);

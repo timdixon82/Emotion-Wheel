@@ -60,7 +60,7 @@
       return this.#token;
     }
 
-    async #request(url, options = {}) {
+    async #request(url, options = {}, operation = '') {
       if (!this.connected) throw new Error('Reconnect Google Drive to continue.');
       const generation = this.#generation;
       const headers = new Headers(options.headers);
@@ -72,8 +72,8 @@
         });
       } catch {
         if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
-        const action = options.method === 'POST' ? 'saving the backup' :
-          url.includes('?alt=media') ? 'downloading the backup' : 'checking file access';
+        const action = operation || (options.method === 'POST' ? 'saving the backup' :
+          url.includes('?alt=media') ? 'downloading the backup' : 'checking file access');
         const error = new Error(`Google Drive connection failed while ${action}. Try again. Your local data is unchanged.`);
         error.code = 'drive-network';
         throw error;
@@ -125,7 +125,7 @@
     async readBackup(fileId) {
       validFileId(fileId);
       const generation = this.#generation;
-      const fields = 'id,name,mimeType,size,modifiedTime,version,capabilities(canDownload,canEdit)';
+      const fields = 'id,name,mimeType,size,modifiedTime,version,owners(displayName,emailAddress),capabilities(canDownload,canEdit,canShare)';
       const metadataResponse = await this.#request(`${API}files/${fileId}?fields=${encodeURIComponent(fields)}`);
       const metadata = JSON.parse(await this.#readText(metadataResponse));
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
@@ -144,6 +144,33 @@
       if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
       // Full record/schema validation belongs to the existing app import layer.
       return { metadata, backup, text };
+    }
+
+    async getConnectedEmail() {
+      const generation = this.#generation;
+      const response = await this.#request('https://openidconnect.googleapis.com/v1/userinfo', {}, 'checking the connected account');
+      const account = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (account.email_verified !== true || typeof account.email !== 'string' || !account.email.includes('@')) {
+        throw new Error('Google did not provide a verified account email.');
+      }
+      return account.email;
+    }
+
+    async shareWithViewer(fileId, email, notify = false) {
+      validFileId(fileId);
+      if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        throw new Error('Enter a valid recipient email address.');
+      }
+      const generation = this.#generation;
+      const response = await this.#request(`${API}files/${fileId}/permissions?sendNotificationEmail=${notify === true}&fields=id,type,role,emailAddress`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'user', role: 'reader', emailAddress: email })
+      }, 'granting Viewer access');
+      const permission = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (permission.role !== 'reader' || permission.type !== 'user') throw new Error('Google did not confirm Viewer access. Check sharing in Drive before sharing the link.');
+      return permission;
     }
 
     async createBackup(backup) {

@@ -50,6 +50,31 @@ async function main() {
   assert.equal(JSON.stringify(backup), original);
   console.log('PASS: creation uploads complete backup including IDs, dates, settings, notes, tags and scale without changing local input.');
 
+  replies = [json({ email: 'owner@example.test', email_verified: true })];
+  assert.equal(await client.getConnectedEmail(), 'owner@example.test');
+  assert.equal(calls.at(-1).url, 'https://openidconnect.googleapis.com/v1/userinfo');
+  assert.equal(calls.at(-1).options.headers.get('Authorization'), 'Bearer synthetic-test-token');
+  replies = [json({ email: 'unverified@example.test', email_verified: false })];
+  await assert.rejects(client.getConnectedEmail(), /verified/);
+  const beforeInvalidRecipient = calls.length;
+  await assert.rejects(client.shareWithViewer(fileId, 'bad\nrecipient@example.test'), /valid recipient/);
+  assert.equal(calls.length, beforeInvalidRecipient);
+  replies = [json({ type: 'user', role: 'reader', emailAddress: 'viewer@example.test' })];
+  await client.shareWithViewer(fileId, 'viewer@example.test');
+  const grant = calls.at(-1);
+  assert.equal(grant.options.method, 'POST');
+  assert(grant.url.includes('/permissions?sendNotificationEmail=false'));
+  assert.deepEqual(JSON.parse(grant.options.body), { type: 'user', role: 'reader', emailAddress: 'viewer@example.test' });
+  assert.equal(grant.options.redirect, 'error');
+  assert.equal(grant.options.credentials, 'omit');
+  replies = [json({ type: 'user', role: 'reader' })];
+  await client.shareWithViewer(fileId, 'viewer@example.test', true);
+  assert(calls.at(-1).url.includes('sendNotificationEmail=true'));
+  replies = [json({ type: 'user', role: 'writer' })];
+  await assert.rejects(client.shareWithViewer(fileId, 'viewer@example.test'), /confirm Viewer/);
+  assert.equal(JSON.stringify(backup), original);
+  console.log('PASS: account label comes from Google verified email; sharing grants only a named user Viewer access, defaults to no notification and requires a confirmed reader response.');
+
   time = 56000;
   const beforeExpiry = calls.length;
   await assert.rejects(client.createBackup(backup), /Reconnect/);
