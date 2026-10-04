@@ -418,12 +418,12 @@
 <main id="main-content" tabindex="-1">
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
     <h2 id="dataUpgradeHeading">New features are here!</h2>
-    <p id="dataUpgradeDescription">We’re updating the app to bring you new features and more ways to explore your emotions. To make this possible, your data schema needs updating. Let’s back up your data before we start.</p>
-    <p>Download your backup below, then confirm it has saved to complete the update. All editing and data imports are disabled until the update is complete. You can still review and export your existing records.</p>
+    <p id="dataUpgradeDescription">Back up your records before updating.</p>
+    <p>Download a backup, check that it has saved, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
     <section aria-labelledby="dataUpgradeWhatsNewHeading">
       <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
       <ul>
-        <li>More ways to capture context: select multiple tags, create your own tags and record how full your emotion bucket feels from 1 to 10.</li>
+        <li>More ways to capture context: select multiple tags, create your own tags and record how full your emotion bucket feels. Choose ratings out of 5 or 10 in Advanced settings.</li>
         <li>Improved charts to explore your most recorded tags and how emotions relate to tags and bucket levels.</li>
         <li>Improved Logs and filters: combine dates, search, multiple emotions, tags, bucket levels, expected and actual intensity, and alignment.</li>
         <li>Choose Custom on Charts to use the same filters for your analysis.</li>
@@ -434,14 +434,20 @@
     <button type="button" id="continueDataUpgrade" disabled>Backup saved — update</button>
     <p id="dataUpgradeStatus" role="status"></p>
   </section>
-  <p class="intro">Record an emotion now or review patterns over time. Start with Phase 1 for simple logging, then use Phase 2 for guided reflection or Phase 3 for tags and your emotion bucket level.</p>
+  <p class="intro">Record your emotions and explore patterns over time.</p>
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
     <details id="capture-settings" class="settings-panel">
       <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
       <div class="details-content">
-        <p class="help">Use a preset, or choose exactly which fields appear when recording an emotion.</p>
-        <div class="actions" role="group" aria-label="Capture presets">
+        <p class="help">Choose how much detail to record.</p>
+        <ul class="help">
+          <li><strong>Phase 1:</strong> Record just the emotion.</li>
+          <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
+          <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
+          <li><strong>Custom:</strong> Choose which questions to include.</li>
+        </ul>
+        <div class="actions" role="group" aria-label="Choose how much detail to record">
           <button type="button" id="phaseOneButton">Phase 1</button>
           <button type="button" id="phaseTwoButton">Phase 2</button>
           <button type="button" id="phaseThreeButton">Phase 3</button>
@@ -449,16 +455,44 @@
         </div>
         <div id="customSettingsPanel" class="optional-panel" hidden>
           <fieldset>
-            <legend>Fields to collect</legend>
+            <legend>Questions to include</legend>
             <div class="checkbox-grid">
-              <label><input type="checkbox" id="collectAppropriate"> Emotion appropriate</label>
-              <label><input type="checkbox" id="collectIntensity"> Expected and actual intensity</label>
-              <label><input type="checkbox" id="collectSensations"> Physical sensations</label>
-              <label><input type="checkbox" id="collectTags"> Tags</label>
-              <label><input type="checkbox" id="collectBucketLevel"> Emotion bucket level</label>
+              <label><input type="checkbox" id="collectAppropriate"> Whether the emotion fits the situation</label>
+              <label><input type="checkbox" id="collectIntensity"> Expected and actual emotion strength</label>
+              <label><input type="checkbox" id="collectSensations"> How your body feels</label>
+              <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
+              <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
             </div>
           </fieldset>
         </div>
+
+        <details id="advanced-settings" class="settings-panel">
+          <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
+          <div class="details-content">
+            <label for="ratingScale">Rating scale</label>
+            <select id="ratingScale" aria-describedby="ratingScaleHelp">
+              <option value="5">1–5</option>
+              <option value="10">1–10</option>
+            </select>
+            <p id="ratingScaleHelp" class="help">Choose ratings out of 5 or 10 for emotion strength and your emotional bucket. This applies whichever phase you use.</p>
+            <p class="help">If you have saved records, you’ll be asked to save a backup and confirm before their ratings are changed.</p>
+            <p id="ratingScaleStatus" role="status" aria-live="polite"></p>
+            <section hidden id="ratingScaleConfirmation" class="optional-panel" aria-labelledby="ratingScaleHeading" aria-describedby="ratingScaleWarning">
+              <h3 id="ratingScaleHeading" tabindex="-1">Change rating scale</h3>
+              <p id="ratingScaleWarning"></p>
+              <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
+              <p id="ratingScaleExample"></p>
+              <p>Save a backup first so you can keep your original ratings. Check the file has saved before confirming below.</p>
+              <button type="button" id="downloadBeforeScaleChange">Download backup</button>
+              <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
+              <p id="ratingScaleConversionStatus" role="status" aria-live="polite"></p>
+              <div class="actions">
+                <button type="button" id="confirmScaleChange" disabled>Confirm and change scale</button>
+                <button type="button" id="cancelScaleChange">Cancel</button>
+              </div>
+            </section>
+          </div>
+        </details>
       </div>
     </details>
 
@@ -531,24 +565,24 @@
     <div id="intensityPanel" class="optional-panel" hidden>
       <fieldset>
         <legend>Intensity</legend>
-        <p id="intensityScaleHelp">Use the decrease and increase buttons to choose an intensity from 1 to 10.</p>
+        <p id="intensityScaleHelp">Use the decrease and increase buttons to choose an intensity from 1 to 5. Expected and actual intensity are aligned only when the ratings are equal.</p>
         <div class="field-row">
           <div class="stacked-label" role="group" aria-labelledby="expectedIntensityLabel" aria-describedby="intensityScaleHelp">
             <span id="expectedIntensityLabel">Expected intensity</span>
             <div class="intensity-control">
               <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="-1" aria-label="Decrease expected intensity">−</button>
-              <output id="expectedIntensityValue" class="intensity-value" for="expectedIntensity">5 out of 10</output>
+              <output id="expectedIntensityValue" class="intensity-value" for="expectedIntensity">3 out of 5</output>
               <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="1" aria-label="Increase expected intensity">+</button>
-              <input type="hidden" id="expectedIntensity" value="5">
+              <input type="hidden" id="expectedIntensity" value="3">
             </div>
           </div>
           <div class="stacked-label" role="group" aria-labelledby="actualIntensityLabel" aria-describedby="intensityScaleHelp">
             <span id="actualIntensityLabel">Actual intensity</span>
             <div class="intensity-control">
               <button type="button" data-intensity-target="actualIntensity" data-intensity-change="-1" aria-label="Decrease actual intensity">−</button>
-              <output id="actualIntensityValue" class="intensity-value" for="actualIntensity">5 out of 10</output>
+              <output id="actualIntensityValue" class="intensity-value" for="actualIntensity">3 out of 5</output>
               <button type="button" data-intensity-target="actualIntensity" data-intensity-change="1" aria-label="Increase actual intensity">+</button>
-              <input type="hidden" id="actualIntensity" value="5">
+              <input type="hidden" id="actualIntensity" value="3">
             </div>
           </div>
         </div>
@@ -581,10 +615,10 @@
       <input type="hidden" id="bucketLevel" value="">
       <fieldset aria-describedby="bucketHelp">
         <legend>Emotion bucket level</legend>
-        <p id="bucketHelp" class="help">How full does your emotional bucket feel? Choose 1–10, where 1 is the lowest level and 10 is full. This is separate from emotion intensity. It starts at 5 when enabled for capture.</p>
+        <p id="bucketHelp" class="help">How full does your emotional bucket feel? Choose 1–5, where 1 is the lowest level and 5 is full. This is separate from emotion intensity. It starts at 3 when enabled for capture.</p>
         <div class="intensity-control" role="group" aria-label="Choose emotion bucket level">
           <button type="button" id="decreaseBucketLevel" aria-label="Decrease emotion bucket level">−</button>
-          <output id="bucketLevelValue" class="intensity-value" for="bucketLevel">5 out of 10</output>
+          <output id="bucketLevelValue" class="intensity-value" for="bucketLevel">3 out of 5</output>
           <button type="button" id="increaseBucketLevel" aria-label="Increase emotion bucket level">+</button>
         </div>
         <p id="bucketValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -949,7 +983,7 @@
         <table><caption>Tags</caption><thead><tr><th scope="col">Tag</th><th scope="col">Records</th></tr></thead><tbody id="tagsChartBody"></tbody></table>
       </section>
       <h4>Emotion bucket levels</h4>
-      <p class="help">Levels use a scale from 1 to 10, where 10 is full. Missing levels are excluded from the average.</p>
+      <p id="bucketChartScaleHelp" class="help">Levels use a scale from 1 to 5, where 5 is full. Missing levels are excluded from the average.</p>
       <p id="bucketChartSummary" class="help" aria-live="polite"></p>
       <ul id="bucketChart" class="bar-list" aria-label="Emotion bucket levels" aria-describedby="bucketChartSummary"></ul>
       <section class="scroll-table" tabindex="0" aria-label="Emotion bucket levels">
@@ -991,6 +1025,8 @@
   </details>
   </section>
 
+
+
   <dialog id="backupConflictDialog" aria-labelledby="backupConflictHeading">
     <h2 id="backupConflictHeading">Choose which record to keep</h2>
     <p>This backup contains different data for the same record. Review both versions before continuing.</p>
@@ -1022,7 +1058,7 @@
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
-const dataSchemaVersion = 2;
+const dataSchemaVersion = 3;
 const schemaVersionKey = `${storageKey}SchemaVersion`;
 const settingsKey = 'emotionWheelCaptureSettingsV1';
 const emotionColours = {
@@ -1226,6 +1262,7 @@ const chartsPanel = document.getElementById('chartsPanel');
 let selectedInner = null;
 let selectedMiddle = null;
 let selectedOuter = null;
+let ratingScale = loadRatingScale();
 let captureSettings = loadSettings();
 let logEntries = loadLog();
 const upgradeDisabledControls = new Map();
@@ -1235,6 +1272,7 @@ let lastRecordedEntry = null;
 let deletedEntryForUndo = null;
 let editingEntry = null;
 let currentAppView = 'entry';
+let pendingRatingScaleChange = null;
 
 function unique(values) {
   return [...new Set(values)];
@@ -1300,31 +1338,50 @@ function selectAppView(selectedButton, focusContent = false) {
   if (focusContent) requestAnimationFrame(() => selectedView.panel.focus());
 }
 
+function parseLocalDataset(raw) {
+  if (!raw) return { entries: [], ratingScale: 5 };
+  const parsed = JSON.parse(raw);
+  // All records made before scale metadata was introduced used 1–10.
+  if (Array.isArray(parsed)) return { entries: parsed, ratingScale: parsed.length ? 10 : 5 };
+  if (parsed && Array.isArray(parsed.entries) && [5, 10].includes(parsed.ratingScale)) return parsed;
+  throw new Error('Unrecognised local data format or rating scale');
+}
+
+function loadRatingScale() {
+  try { return parseLocalDataset(localStorage.getItem(storageKey)).ratingScale; }
+  catch (error) { return 10; }
+}
+
 function loadLog() {
-  try {
-    const raw = localStorage.getItem(storageKey);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return [];
-    return parsed;
-  } catch (error) {
-    return [];
-  }
+  try { return parseLocalDataset(localStorage.getItem(storageKey)).entries; }
+  catch (error) { return []; }
+}
+
+function serializeDataset(entries, scale = ratingScale) {
+  return JSON.stringify({ schemaVersion: dataSchemaVersion, ratingScale: scale, entries });
 }
 
 function migrateLocalDataset() {
   const raw = localStorage.getItem(storageKey);
-  const entries = raw ? JSON.parse(raw) : [];
-  if (!Array.isArray(entries)) throw new Error('Unrecognised local data format');
+  const dataset = parseLocalDataset(raw);
+  const entries = dataset.entries;
   const migrated = entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
   // Preserve the exact original before any write; a failed snapshot blocks migration.
   if (!localStorage.getItem(`${storageKey}BeforeSchemaMigration`)) localStorage.setItem(`${storageKey}BeforeSchemaMigration`, JSON.stringify({ schemaVersion: Number(localStorage.getItem(schemaVersionKey)) || 1, rawEntries: raw, rawSettings: localStorage.getItem(settingsKey) }));
-  localStorage.setItem(storageKey, JSON.stringify(migrated));
+  localStorage.setItem(storageKey, serializeDataset(migrated, dataset.ratingScale));
   localStorage.setItem(schemaVersionKey, String(dataSchemaVersion));
   logEntries = migrated;
+  ratingScale = dataset.ratingScale;
 }
 
 function dataSchemaMatches() {
-  try { return localStorage.getItem(schemaVersionKey) === String(dataSchemaVersion); }
+  try {
+    if (localStorage.getItem(schemaVersionKey) !== String(dataSchemaVersion)) return false;
+    const raw = localStorage.getItem(storageKey);
+    if (!raw) return true;
+    const dataset = parseLocalDataset(raw);
+    return dataset.schemaVersion === dataSchemaVersion;
+  }
   catch (error) { return false; }
 }
 
@@ -1362,8 +1419,9 @@ function checkLocalDataSchema() {
   upgradeEditingObserver = new MutationObserver(lockDataEditing);
   upgradeEditingObserver.observe(document.getElementById('main-content'), { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
   download.addEventListener('click', () => {
-    const originalEntries = JSON.parse(raw);
-    downloadText('emotion-wheel-before-update.json', JSON.stringify({ version: 2, schemaVersion: version, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
+    const originalDataset = parseLocalDataset(raw);
+    const originalEntries = originalDataset.entries;
+    downloadText('emotion-wheel-before-update.json', JSON.stringify({ version: 3, schemaVersion: version, ratingScale: originalDataset.ratingScale, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
     proceed.disabled = false;
     status.textContent = 'Backup download requested. Check the file has saved before selecting “Backup saved — update”.';
   });
@@ -1385,7 +1443,8 @@ function checkLocalDataSchema() {
 
 function saveLog() {
   if (!dataSchemaMatches()) throw new Error('Complete the data upgrade before changing records.');
-  localStorage.setItem(storageKey, JSON.stringify(logEntries));
+  if (loadRatingScale() !== ratingScale) throw new Error('The rating scale changed in another tab. Reload before saving.');
+  localStorage.setItem(storageKey, serializeDataset(logEntries));
 }
 
 function loadSettings() {
@@ -1510,19 +1569,19 @@ newTag.addEventListener('keydown', event => {
 });
 
 function renderBucketLevel() {
-  if (captureSettings.collectBucketLevel && !bucketLevel.value) bucketLevel.value = '5';
+  if (captureSettings.collectBucketLevel && !bucketLevel.value) bucketLevel.value = String(Math.ceil(ratingScale / 2));
   const value = Number(bucketLevel.value);
-  document.getElementById('bucketLevelValue').textContent = `${value || 5} out of 10${value === 10 ? ' — Full' : ''}`;
+  document.getElementById('bucketLevelValue').textContent = `${value || Math.ceil(ratingScale / 2)} out of ${ratingScale}${value === ratingScale ? ' — Full' : ''}`;
   document.getElementById('decreaseBucketLevel').setAttribute('aria-disabled', !bucketLevel.value || value <= 1 ? 'true' : 'false');
-  document.getElementById('increaseBucketLevel').setAttribute('aria-disabled', value >= 10 ? 'true' : 'false');
+  document.getElementById('increaseBucketLevel').setAttribute('aria-disabled', value >= ratingScale ? 'true' : 'false');
 }
 
 function changeBucketLevel(change) {
   const value = Number(bucketLevel.value);
-  if (change < 0 && (!bucketLevel.value || value <= 1) || change > 0 && value >= 10) return;
-  bucketLevel.value = String(Math.min(10, Math.max(1, value + change)));
+  if (change < 0 && (!bucketLevel.value || value <= 1) || change > 0 && value >= ratingScale) return;
+  bucketLevel.value = String(Math.min(ratingScale, Math.max(1, value + change)));
   renderBucketLevel();
-  document.getElementById('bucketValueStatus').textContent = `Emotion bucket level, ${bucketLevel.value} out of 10${bucketLevel.value === '10' ? ', full' : ''}.`;
+  document.getElementById('bucketValueStatus').textContent = `Emotion bucket level, ${bucketLevel.value} out of ${ratingScale}${Number(bucketLevel.value) === ratingScale ? ', full' : ''}.`;
 }
 
 document.getElementById('decreaseBucketLevel').addEventListener('click', () => changeBucketLevel(-1));
@@ -1532,11 +1591,12 @@ document.getElementById('increaseBucketLevel').addEventListener('click', () => c
 function renderSettings() {
   const modeLabels = {
     phase1: 'Phase 1: Emotion only',
-    phase2: 'Phase 2: Guided reflection',
-    phase3: 'Phase 3: Context and bucket level',
-    custom: 'Custom fields'
+    phase2: 'Phase 2: More detail',
+    phase3: 'Phase 3: Most detail',
+    custom: 'Custom questions'
   };
   captureModeSummary.textContent = `Capture settings — ${modeLabels[captureSettings.captureMode] || modeLabels.phase1}`;
+  renderRatingScale();
   collectAppropriate.checked = captureSettings.collectAppropriate;
   collectIntensity.checked = captureSettings.collectIntensity;
   collectSensations.checked = captureSettings.collectSensations;
@@ -1676,8 +1736,8 @@ function clearEntryForm() {
   document.querySelectorAll('input[name="appropriate"]').forEach(input => {
     input.checked = false;
   });
-  expectedIntensity.value = expectedIntensity.defaultValue;
-  actualIntensity.value = actualIntensity.defaultValue;
+  expectedIntensity.value = String(Math.ceil(ratingScale / 2));
+  actualIntensity.value = String(Math.ceil(ratingScale / 2));
   entryComment.value = '';
   bucketLevel.value = '';
   renderBucketLevel();
@@ -1772,21 +1832,179 @@ function getSelectedSensations() {
 }
 
 function renderIntensityAlignment() {
-  expectedIntensityValue.textContent = `${expectedIntensity.value} out of 10`;
-  actualIntensityValue.textContent = `${actualIntensity.value} out of 10`;
+  expectedIntensityValue.textContent = `${expectedIntensity.value} out of ${ratingScale}`;
+  actualIntensityValue.textContent = `${actualIntensity.value} out of ${ratingScale}`;
   document.querySelectorAll('[data-intensity-target]').forEach(button => {
     const input = document.getElementById(button.dataset.intensityTarget);
     const nextValue = Number(input.value) + Number(button.dataset.intensityChange);
-    button.setAttribute('aria-disabled', nextValue < 1 || nextValue > 10 ? 'true' : 'false');
+    button.setAttribute('aria-disabled', nextValue < 1 || nextValue > ratingScale ? 'true' : 'false');
   });
-  const comparison = getIntensityComparison(Number(expectedIntensity.value), Number(actualIntensity.value));
+  const comparison = getRecordingAlignment(Number(expectedIntensity.value), Number(actualIntensity.value));
   intensityAlignment.textContent = comparison;
   intensityAlignment.className = `alignment ${comparison === 'Aligned' ? 'good' : 'warn'}`;
 }
 
 function getIntensityComparison(expected, actual) {
-  return Math.abs(expected - actual) <= 1 ? 'Aligned' : 'Not aligned';
+  return expected === actual ? 'Aligned' : 'Not aligned';
 }
+
+function getRecordingAlignment(expected, actual, previous = editingEntry) {
+  if (previous && typeof previous.intensityAlignment === 'string'
+    && previous.expectedIntensity != null && previous.expectedIntensity !== ''
+    && previous.actualIntensity != null && previous.actualIntensity !== ''
+    && Number(previous.expectedIntensity) === expected && Number(previous.actualIntensity) === actual) {
+    return previous.intensityAlignment;
+  }
+  return getIntensityComparison(expected, actual);
+}
+
+function convertRatingEntries(entries, from, to) {
+  if (![5, 10].includes(from) || ![5, 10].includes(to)) throw new Error('Unsupported rating scale');
+  return entries.map(entry => {
+    const converted = { ...entry };
+    for (const field of ['expectedIntensity', 'actualIntensity', 'bucketLevel']) {
+      const original = entry[field];
+      if (original == null || original === '') continue;
+      const value = Number(original);
+      if (!Number.isInteger(value) || value < 1 || value > from) throw new Error('Invalid saved rating; restore or correct this record before converting');
+      converted[field] = from === to ? value : from === 10 ? Math.ceil(value / 2) : value * 2;
+    }
+    const expected = converted.expectedIntensity;
+    const actual = converted.actualIntensity;
+    if (expected != null && expected !== '' && actual != null && actual !== '') {
+      converted.intensityAlignment = getIntensityComparison(Number(expected), Number(actual));
+    } else {
+      delete converted.intensityAlignment;
+    }
+    return converted;
+  });
+}
+
+function getScaleConversionWarning(from, to) {
+  const calculation = from === 10
+    ? 'Ratings will be divided by two and rounded up. This reduces detail; switching back cannot restore the original ratings.'
+    : 'Ratings will be multiplied by two. This cannot restore detail lost during an earlier conversion to 1–5.';
+  return `Change from 1–${from} to 1–${to}? ${calculation} Alignment will be checked again: expected and actual ratings must be equal to count as “Aligned”. Some saved results and chart totals may change.`;
+}
+
+function renderRatingScale() {
+  document.getElementById('ratingScale').value = String(ratingScale);
+  document.getElementById('advancedSettingsSummary').textContent = `Advanced settings — ratings out of ${ratingScale}`;
+  document.getElementById('intensityScaleHelp').textContent = `Use the decrease and increase buttons to choose an intensity from 1 to ${ratingScale}. New ratings are aligned only when expected and actual are equal.`;
+  document.getElementById('bucketHelp').textContent = `How full does your emotional bucket feel? Choose 1–${ratingScale}, where 1 is the lowest level and ${ratingScale} is full. This is separate from emotion intensity. It starts at ${Math.ceil(ratingScale / 2)} when enabled for capture.`;
+  document.getElementById('bucketChartScaleHelp').textContent = `Levels use a scale from 1 to ${ratingScale}, where ${ratingScale} is full. Missing levels are excluded from the average.`;
+  for (const prefix of ['', 'chart']) {
+    for (const field of ['logExpectedFilter', 'logActualFilter', 'logBucketFilter']) {
+      const container = document.getElementById(`${prefix}${field}`);
+      if (!container) continue;
+      container.querySelectorAll('input').forEach(input => {
+        if (input.value === '__missing') return;
+        const label = input.closest('label');
+        label.hidden = Number(input.value) > ratingScale;
+        if (label.hidden) input.checked = false;
+        label.lastChild.textContent = ` ${input.value}${field === 'logBucketFilter' && Number(input.value) === ratingScale ? ' — Full' : ''}`;
+      });
+    }
+  }
+}
+
+function adoptRatingScale(target) {
+  const previous = ratingScale;
+  if (previous === target) return;
+  const convertValue = value => value === '' ? '' : String(previous === 10 ? Math.ceil(Number(value) / 2) : Number(value) * 2);
+  for (const input of [expectedIntensity, actualIntensity, bucketLevel]) input.value = convertValue(input.value);
+  for (const prefix of ['', 'chart']) {
+    for (const field of ['logExpectedFilter', 'logActualFilter', 'logBucketFilter']) {
+      const container = document.getElementById(`${prefix}${field}`);
+      if (!container) continue;
+      const selected = getCheckedFilterValues(container).map(value => value === '__missing' ? value : convertValue(value));
+      setCheckedFilterValues(container, selected);
+    }
+  }
+  if (lastRecordedEntry) lastRecordedEntry = convertRatingEntries([lastRecordedEntry], previous, target)[0];
+  if (deletedEntryForUndo) deletedEntryForUndo = { ...deletedEntryForUndo, entry: convertRatingEntries([deletedEntryForUndo.entry], previous, target)[0] };
+  if (editingEntry) editingEntry = logEntries.find(entry => entry.id === editingEntry.id) || null;
+  ratingScale = target;
+}
+
+function commitRatingScaleChange(target, expectedRaw) {
+  if (!dataSchemaMatches()) throw new Error('Complete the data upgrade first');
+  const raw = localStorage.getItem(storageKey);
+  if (raw !== expectedRaw) throw new Error('The log changed while you were choosing the scale. Cancel and try again with a new backup.');
+  const dataset = parseLocalDataset(raw);
+  if (dataset.ratingScale !== ratingScale) throw new Error('The rating scale changed in another tab. Reload before converting.');
+  const converted = convertRatingEntries(dataset.entries, ratingScale, target);
+  localStorage.setItem(`${storageKey}BeforeRatingScaleChange`, JSON.stringify({ ratingScale, rawEntries: raw, rawSettings: localStorage.getItem(settingsKey) }));
+  // The ratings and their scale are committed in one atomic storage write.
+  localStorage.setItem(storageKey, serializeDataset(converted, target));
+  return converted;
+}
+
+document.getElementById('ratingScale').addEventListener('change', event => {
+  const target = Number(event.target.value);
+  event.target.value = String(ratingScale);
+  if (target === ratingScale || !dataSchemaMatches()) { cancelRatingScaleChange(false); return; }
+  const raw = localStorage.getItem(storageKey);
+  if (!logEntries.length) {
+    try {
+      logEntries = commitRatingScaleChange(target, raw);
+      adoptRatingScale(target);
+      renderAll();
+      document.getElementById('ratingScaleStatus').textContent = `Rating scale changed to 1–${ratingScale}.`;
+    } catch (error) { document.getElementById('ratingScaleStatus').textContent = error.message; }
+    return;
+  }
+  pendingRatingScaleChange = { target, raw };
+  document.getElementById('ratingScaleHeading').textContent = `Change saved ratings to 1–${target}?`;
+  document.getElementById('ratingScaleWarning').textContent = getScaleConversionWarning(ratingScale, target);
+  document.getElementById('ratingScaleExample').textContent = ratingScale === 10
+    ? 'For example, expected 7 and actual 8 both become 4. A saved “Not aligned” result for those ratings becomes “Aligned”.'
+    : 'For example, expected 3 and actual 4 become 6 and 8 and are “Not aligned”. Any older saved “Aligned” result for unequal ratings becomes “Not aligned”.';
+  const checkbox = document.getElementById('scaleBackupSaved');
+  checkbox.checked = false;
+  checkbox.disabled = true;
+  document.getElementById('confirmScaleChange').disabled = true;
+  document.getElementById('ratingScaleConversionStatus').textContent = '';
+  document.getElementById('ratingScaleConfirmation').hidden = false;
+  document.getElementById('ratingScaleHeading').focus();
+});
+
+document.getElementById('downloadBeforeScaleChange').addEventListener('click', () => {
+  try {
+    if (localStorage.getItem(storageKey) !== pendingRatingScaleChange.raw) throw new Error('The log changed. Cancel and try again.');
+    const original = parseLocalDataset(pendingRatingScaleChange.raw);
+    downloadText('emotion-wheel-before-scale-change.json', JSON.stringify({
+      version: 3, schemaVersion: dataSchemaVersion, ratingScale: original.ratingScale,
+      exportedAt: new Date().toISOString(), settings: captureSettings, tags: getAvailableTags(), entries: original.entries
+    }, null, 2), 'application/json;charset=utf-8');
+    document.getElementById('scaleBackupSaved').disabled = false;
+    document.getElementById('ratingScaleConversionStatus').textContent = 'Backup download requested. Check that the file has saved, then tick the confirmation.';
+  } catch (error) { document.getElementById('ratingScaleConversionStatus').textContent = error.message; }
+});
+
+document.getElementById('scaleBackupSaved').addEventListener('change', event => {
+  document.getElementById('confirmScaleChange').disabled = !event.target.checked;
+});
+
+document.getElementById('confirmScaleChange').addEventListener('click', () => {
+  if (!pendingRatingScaleChange || !document.getElementById('scaleBackupSaved').checked) return;
+  try {
+    logEntries = commitRatingScaleChange(pendingRatingScaleChange.target, pendingRatingScaleChange.raw);
+    adoptRatingScale(pendingRatingScaleChange.target);
+    renderAll();
+    document.getElementById('ratingScaleStatus').textContent = `Saved ratings converted to 1–${ratingScale}. Alignment checked again.`;
+    cancelRatingScaleChange();
+  } catch (error) { document.getElementById('ratingScaleConversionStatus').textContent = `${error.message} The scale change could not complete. Keep your backup.`; }
+});
+
+function cancelRatingScaleChange(focusControl = true) {
+  pendingRatingScaleChange = null;
+  document.getElementById('ratingScaleConfirmation').hidden = true;
+  document.getElementById('ratingScale').value = String(ratingScale);
+  if (focusControl) document.getElementById('ratingScale').focus();
+}
+
+document.getElementById('cancelScaleChange').addEventListener('click', () => cancelRatingScaleChange());
 
 function getTally(entries = logEntries) {
   const tallyMap = new Map();
@@ -2330,8 +2548,8 @@ function renderMetricCards(metrics) {
 
   const rows = [
     ['Records with intensity', String(metrics.count)],
-    ['Average expected intensity', metrics.expectedAverage.toFixed(1)],
-    ['Average actual intensity', metrics.actualAverage.toFixed(1)],
+    [`Average expected intensity (1–${ratingScale})`, metrics.expectedAverage.toFixed(1)],
+    [`Average actual intensity (1–${ratingScale})`, metrics.actualAverage.toFixed(1)],
     ['Average actual minus expected', metrics.differenceAverage.toFixed(1)]
   ];
 
@@ -2476,7 +2694,7 @@ function renderCharts() {
     else {
       const count = rows.reduce((total, row) => total + row.count, 0);
       const average = count ? rows.reduce((total, row) => total + Number(row.label) * row.count, 0) / count : 0;
-      summary.textContent = count ? `Average bucket level: ${average.toFixed(1)} out of 10, from ${count} records. 10 is full.` : 'No bucket levels recorded in this period.';
+      summary.textContent = count ? `Average bucket level: ${average.toFixed(1)} out of ${ratingScale}, from ${count} records. ${ratingScale} is full.` : 'No bucket levels recorded in this period.';
     }
     renderBarChart(document.getElementById(`${key}Chart`), summary, rows, 'Not recorded in this period.');
     addTableRows(document.getElementById(`${key}ChartBody`), rows, 'Not recorded in this period.', row => [row.label, String(row.count)], 2);
@@ -2490,7 +2708,7 @@ function renderCharts() {
 function getContextCounts(entries, field) {
   const counts = new Map();
   entries.forEach(entry => {
-    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= 10 ? [entry.bucketLevel] : []);
+    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= ratingScale ? [entry.bucketLevel] : []);
     values.forEach(value => {
       const key = String(value).toLocaleLowerCase();
       const row = counts.get(key) || { label: String(value), count: 0 };
@@ -2503,7 +2721,7 @@ function getContextCounts(entries, field) {
 
 function getLogRows(entries = logEntries) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', 'Expected intensity', 'Actual intensity', 'Alignment', 'Physical sensations', 'Tags', 'Emotion bucket level', 'Note']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${ratingScale})`, `Actual intensity (1–${ratingScale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${ratingScale})`, 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -2795,11 +3013,11 @@ function renderContextAnalysis() {
   const bucketTag = document.getElementById('bucketAnalysisTag').value;
   const bucketEntries = entriesForTag(entries, bucketTag);
   document.getElementById('bucketEmotionSummary').textContent = `${bucketEntries.length} matching entries; ${bucketEntries.filter(entry => entry.bucketLevel == null).length} without a recorded bucket level.`;
-  const levels = [...Array.from({length:10}, (_,i) => String(i+1)), '__missing'];
+  const levels = [...Array.from({length:ratingScale}, (_,i) => String(i+1)), '__missing'];
   const head = document.getElementById('bucketEmotionHead');
   head.replaceChildren();
   const header = document.createElement('tr');
-  ['Emotion', ...levels.map(level => level === '__missing' ? 'Not recorded' : level === '10' ? '10 — Full' : level), 'Total'].forEach(label => {
+  ['Emotion', ...levels.map(level => level === '__missing' ? 'Not recorded' : level === String(ratingScale) ? `${ratingScale} — Full` : level), 'Total'].forEach(label => {
     const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
   }); head.append(header);
   const body = document.getElementById('bucketEmotionBody'); body.replaceChildren();
@@ -2975,8 +3193,8 @@ function getChartShareData(type) {
   const intensityAverages = getIntensityAverages(chartEntries);
   const metricRows = intensityAverages ? [
     { label: 'Records with intensity', value: String(intensityAverages.count) },
-    { label: 'Average expected intensity', value: intensityAverages.expectedAverage.toFixed(1) },
-    { label: 'Average actual intensity', value: intensityAverages.actualAverage.toFixed(1) },
+    { label: `Average expected intensity (1–${ratingScale})`, value: intensityAverages.expectedAverage.toFixed(1) },
+    { label: `Average actual intensity (1–${ratingScale})`, value: intensityAverages.actualAverage.toFixed(1) },
     { label: 'Average actual minus expected', value: intensityAverages.differenceAverage.toFixed(1) }
   ] : [];
 
@@ -3178,8 +3396,10 @@ async function shareChartImage(type) {
 
 function saveBackupFile() {
   const backup = {
-    version: 2,
+    version: 3,
     schemaVersion: dataSchemaVersion,
+    ratingScale,
+    settings: captureSettings,
     exportedAt: new Date().toISOString(),
     tags: getAvailableTags(),
     entries: logEntries
@@ -3196,9 +3416,9 @@ function describeBackupRecord(entry) {
     `Modified: ${displayValue(entry.modifiedAt)}`,
     `Emotion: ${getEntryPathLabel(entry)}`,
     `Tags: ${normalizeTags(entry.tags).join(', ') || 'Not recorded'}`,
-    `Bucket level: ${displayValue(entry.bucketLevel)}`,
-    `Expected intensity: ${displayValue(entry.expectedIntensity)}`,
-    `Actual intensity: ${displayValue(entry.actualIntensity)}`,
+    `Bucket level (1–${ratingScale}): ${displayValue(entry.bucketLevel)}`,
+    `Expected intensity (1–${ratingScale}): ${displayValue(entry.expectedIntensity)}`,
+    `Actual intensity (1–${ratingScale}): ${displayValue(entry.actualIntensity)}`,
     `Alignment: ${displayValue(entry.intensityAlignment)}`,
     `Appropriate: ${displayValue(entry.appropriate)}`,
     `Physical sensations: ${(entry.physicalSensations || []).join(', ') || 'Not recorded'}`,
@@ -3264,11 +3484,15 @@ function getEntryKey(entry) {
   });
 }
 
-function normalizeLoadedEntry(entry) {
+function normalizeLoadedEntry(entry, scale = 10) {
   if (!entry || typeof entry !== 'object') return null;
   if (typeof entry.timestamp !== 'string' || Number.isNaN(new Date(entry.timestamp).getTime())) return null;
   if (typeof entry.inner !== 'string' || !entry.inner.trim()) return null;
 
+  for (const field of ['expectedIntensity', 'actualIntensity', 'bucketLevel']) {
+    const value = entry[field];
+    if (value != null && value !== '' && (!Number.isInteger(Number(value)) || Number(value) < 1 || Number(value) > scale)) return null;
+  }
   const normalized = {
     ...entry,
     timestamp: entry.timestamp,
@@ -3284,10 +3508,10 @@ function normalizeLoadedEntry(entry) {
 
   const expected = entry.expectedIntensity == null || entry.expectedIntensity === '' ? NaN : Number(entry.expectedIntensity);
   const actual = entry.actualIntensity == null || entry.actualIntensity === '' ? NaN : Number(entry.actualIntensity);
-  if (Number.isFinite(expected)) {
+  if (Number.isInteger(expected) && expected >= 1 && expected <= scale) {
     normalized.expectedIntensity = expected;
   }
-  if (Number.isFinite(actual)) {
+  if (Number.isInteger(actual) && actual >= 1 && actual <= scale) {
     normalized.actualIntensity = actual;
   }
   if (typeof entry.intensityAlignment === 'string') {
@@ -3304,7 +3528,7 @@ function normalizeLoadedEntry(entry) {
   }
   if (Array.isArray(entry.tags)) normalized.tags = normalizeTags(entry.tags);
   const bucket = Number(entry.bucketLevel);
-  if (Number.isInteger(bucket) && bucket >= 1 && bucket <= 10) normalized.bucketLevel = bucket;
+  if (Number.isInteger(bucket) && bucket >= 1 && bucket <= scale) normalized.bucketLevel = bucket;
   if (typeof entry.comment === 'string') {
     normalized.comment = entry.comment;
   }
@@ -3319,23 +3543,37 @@ function getBackupEntriesFromText(text) {
   if (!parsed || !Array.isArray(parsed.entries)) {
     throw new Error('Backup file must contain an entries array.');
   }
+  const scale = parsed.ratingScale === undefined ? 10 : parsed.ratingScale;
+  if (![5, 10].includes(scale)) throw new Error('Unsupported backup rating scale');
+  if (parsed.schemaVersion > dataSchemaVersion) throw new Error('This backup requires a newer version of the app');
   const validEntries = [];
   let skipped = 0;
   parsed.entries.forEach(entry => {
-    const normalized = normalizeLoadedEntry(entry);
+    const normalized = normalizeLoadedEntry(entry, scale);
     if (normalized) {
       validEntries.push(normalized);
     } else {
       skipped += 1;
     }
   });
-  return { validEntries, skipped, tags: normalizeTags(parsed.tags) };
+  return { validEntries, skipped, tags: normalizeTags(parsed.tags), ratingScale: scale };
 }
 
 async function loadBackupFile(file, mode) {
   if (!dataSchemaMatches()) { loadBackupStatus.textContent = 'Complete the data upgrade before loading a backup.'; return; }
   try {
-    const { validEntries, skipped, tags } = getBackupEntriesFromText(await file.text());
+    const parsedBackup = getBackupEntriesFromText(await file.text());
+    let { validEntries } = parsedBackup;
+    const { skipped, tags } = parsedBackup;
+    const sourceScale = parsedBackup.ratingScale;
+    const targetScale = mode === 'replace' || !logEntries.length ? sourceScale : ratingScale;
+    if (sourceScale !== targetScale) {
+      if (!window.confirm(`This backup uses 1–${sourceScale}; your log uses 1–${targetScale}. ${getScaleConversionWarning(sourceScale, targetScale)} Only incoming records will be converted; your existing records will be kept. Continue?`)) {
+        loadBackupStatus.textContent = 'Import cancelled. Existing records were kept.';
+        return;
+      }
+      validEntries = convertRatingEntries(validEntries, sourceScale, targetScale);
+    }
     if (!validEntries.length && (skipped || mode !== 'replace')) {
       loadBackupStatus.textContent = `No valid records found in ${file.name}. ${skipped} record${skipped === 1 ? '' : 's'} skipped.`;
       liveStatus.textContent = 'No valid backup records were loaded.';
@@ -3343,16 +3581,17 @@ async function loadBackupFile(file, mode) {
     }
 
     if (mode === 'replace') {
-      const confirmed = window.confirm(`Replace the current local log with ${validEntries.length} record${validEntries.length === 1 ? '' : 's'} from this file?`);
+      const confirmed = window.confirm(`Replace the current local log with ${validEntries.length} record${validEntries.length === 1 ? '' : 's'} from this file, using its 1–${targetScale} rating scale?`);
       if (!confirmed) {
         loadBackupStatus.textContent = 'Load and replace cancelled. Existing records were kept.';
         return;
       }
-      localStorage.setItem(`${storageKey}BeforeReplacement`, JSON.stringify({ version: 2, entries: logEntries, tags: getAvailableTags() }));
+      localStorage.setItem(`${storageKey}BeforeReplacement`, JSON.stringify({ version: 3, ratingScale, entries: logEntries, tags: getAvailableTags() }));
       captureSettings.tags = normalizeTags([...getAvailableTags(), ...tags]);
       saveSettings();
-      localStorage.setItem(storageKey, JSON.stringify(validEntries));
+      localStorage.setItem(storageKey, serializeDataset(validEntries, targetScale));
       logEntries = validEntries;
+      adoptRatingScale(targetScale);
       renderAll();
       loadBackupStatus.textContent = `Loaded ${validEntries.length} record${validEntries.length === 1 ? '' : 's'} and replaced the current log. ${skipped} invalid record${skipped === 1 ? '' : 's'} skipped.`;
       liveStatus.textContent = 'Backup file loaded and current log replaced.';
@@ -3367,8 +3606,9 @@ async function loadBackupFile(file, mode) {
     }
     captureSettings.tags = normalizeTags([...getAvailableTags(), ...tags]);
     saveSettings();
-    localStorage.setItem(storageKey, JSON.stringify(result.entries));
+    localStorage.setItem(storageKey, serializeDataset(result.entries, targetScale));
     logEntries = result.entries;
+    adoptRatingScale(targetScale);
     renderAll();
     loadBackupStatus.textContent = `Merged ${result.added} new records from ${file.name}. ${result.duplicates} duplicates ignored. ${result.conflicts} conflicts resolved using your choices. ${skipped} invalid records skipped.`;
     liveStatus.textContent = 'Backup file merged into the local log.';
@@ -3540,7 +3780,7 @@ phaseOneButton.addEventListener('click', () => {
     collectBucketLevel: false,
     includeAllSensations: false
   });
-  liveStatus.textContent = 'Phase 1 selected. Only the emotion selection will be recorded.';
+  liveStatus.textContent = 'Phase 1 selected. You will record just the emotion.';
 });
 
 phaseTwoButton.addEventListener('click', () => {
@@ -3553,17 +3793,17 @@ phaseTwoButton.addEventListener('click', () => {
     collectBucketLevel: false,
     includeAllSensations: false
   });
-  liveStatus.textContent = 'Phase 2 selected. Extra reflection fields are available.';
+  liveStatus.textContent = 'Phase 2 selected. You can also record emotion strength, whether it fits the situation and how your body feels.';
 });
 
 phaseThreeButton.addEventListener('click', () => {
   setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectSensations: true, collectTags: true, collectBucketLevel: true, includeAllSensations: false });
-  liveStatus.textContent = 'Phase 3 selected. Tags and emotion bucket level are available alongside guided reflection.';
+  liveStatus.textContent = 'Phase 3 selected. You can also add tags and rate how full your emotional bucket feels.';
 });
 
 customButton.addEventListener('click', () => {
   setSettings({ captureMode: 'custom' });
-  liveStatus.textContent = 'Custom capture selected. Choose which fields to collect.';
+  liveStatus.textContent = 'Custom selected. Choose which questions to include.';
 });
 
 [collectAppropriate, collectIntensity, collectSensations, collectTags, collectBucketLevel].forEach(input => {
@@ -3588,10 +3828,10 @@ document.querySelectorAll('[data-intensity-target]').forEach(button => {
     if (button.getAttribute('aria-disabled') === 'true') return;
     const input = document.getElementById(button.dataset.intensityTarget);
     const change = Number(button.dataset.intensityChange);
-    input.value = String(Math.min(10, Math.max(1, Number(input.value) + change)));
+    input.value = String(Math.min(ratingScale, Math.max(1, Number(input.value) + change)));
     renderIntensityAlignment();
     const label = input === expectedIntensity ? 'Expected intensity' : 'Actual intensity';
-    intensityValueStatus.textContent = `${label}, ${input.value} out of 10.`;
+    intensityValueStatus.textContent = `${label}, ${input.value} out of ${ratingScale}.`;
   });
 });
 
@@ -3625,7 +3865,7 @@ recordButton.addEventListener('click', () => {
   if (captureSettings.collectIntensity) {
     entry.expectedIntensity = expected;
     entry.actualIntensity = actual;
-    entry.intensityAlignment = getIntensityComparison(expected, actual);
+    entry.intensityAlignment = getRecordingAlignment(expected, actual, previousEntry);
   }
   if (captureSettings.collectSensations) {
     entry.physicalSensations = getSelectedSensations();
@@ -3798,10 +4038,11 @@ function initializeChartFilters() {
   }, true);
 });
 window.addEventListener('storage', event => {
-  if ((event.key === schemaVersionKey || event.key === null) && !dataSchemaMatches()) window.location.reload();
+  if (event.key === storageKey || event.key === schemaVersionKey || event.key === null) window.location.reload();
 });
 initializeChartFilters();
 applyTheme(getInitialTheme());
+expectedIntensity.value = actualIntensity.value = String(Math.ceil(ratingScale / 2));
 renderAll();
 checkLocalDataSchema();
 </script>

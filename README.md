@@ -35,7 +35,7 @@ Read the fuller [privacy notes](docs/privacy.html) before using this for sensiti
 5. After saving, undo the entry, prepare another like it, or start a clean entry.
 6. Open Logs or Charts from the Review group when you want to explore your records, or Maintenance when you want to export, back up, load, or clear data.
 
-Phase 1 is recommended for at least one week to build the recording habit. Phase 2 then adds optional questions about appropriateness, expected and actual intensity, intensity alignment, and physical sensations.
+Phase 1 is recommended for at least one week to build the recording habit. Phase 2 then adds optional questions about appropriateness, expected and actual intensity, intensity alignment, and physical sensations. New recordings use equal expected and actual intensity ratings for alignment. Logs, charts, filters and exports use each record’s saved alignment result; existing results are preserved until a rating-scale conversion is performed or the record’s intensity ratings are explicitly changed. Editing only a note or another field preserves the saved alignment result.
 
 ## Design and themes
 
@@ -84,7 +84,7 @@ This project is available under the [MIT Licence](LICENSE).
 
 ## Phase 3: tags and emotion bucket level
 
-Phase 3 includes Phase 2 reflection plus optional multiple tags and an emotion bucket level from 1 to 10 (10 means full). Custom can enable either field independently. Bucket level describes overall emotional capacity and is separate from emotion intensity; it starts as Not recorded rather than an assumed value.
+Phase 3 includes Phase 2 reflection plus optional multiple tags and an emotion bucket level using the chosen rating scale (the maximum means full). Custom can enable either field independently. Bucket level describes overall emotional capacity and is separate from emotion intensity; it starts at the midpoint when enabled for capture. Older entries without a bucket level remain Not recorded.
 
 Tags start with Work, Family, Relationship, Friends, Health, Sleep, Money, Home, Exercise, Social, Study, Travel and Caring responsibilities. Create more tags in Entry; names are trimmed and duplicates are matched without regard to case. New tags are selected immediately and saved for reuse. Logs and shared/exported tables include both fields, and log search matches them. Reflection charts show tag counts, bucket-level counts and the average recorded bucket level for the selected period. Multiple tags can make tag counts exceed entry counts; missing bucket levels are excluded from averages.
 
@@ -100,10 +100,18 @@ Log filters support multiple emotions, tags and bucket levels using native check
 
 Records now carry a permanent UUID in `id`, plus `createdAt` and `modifiedAt`. The existing `timestamp` remains the recorded date used by logs and charts. Legacy records receive an ID once; missing metadata dates use their recorded timestamp because historical edit dates are unknown. The original local JSON is retained before migration. No storage keys change.
 
-Version 2 JSON backups contain these fields. Version 1 backups remain importable; legacy content matching prevents repeat imports creating duplicates. Records with the same GUID but different contents prompt a review: keep current, use backup, keep both, or cancel the entire merge. Keeping both assigns a new GUID to the additional record. Replacement still requires confirmation and saves the previous log locally first. Failed imports keep existing records.
+Version 3 JSON backups contain these fields, the rating scale and capture settings. Version 1 and 2 backups remain importable; legacy content matching prevents repeat imports creating duplicates. Records with the same GUID but different contents prompt a review: keep current, use backup, keep both, or cancel the entire merge. Keeping both assigns a new GUID to the additional record. Replacement still requires confirmation and saves the previous log locally first. Failed imports keep existing records.
 
 Charts offer the same filters as Logs. Choose Custom in View chart period to show Advanced filters below the period controls and apply them to every chart. Choose All time, A day, A week or A month to return to normal period navigation. Advanced filters reset whenever the chart period selection changes. Chart drill-down carries the advanced criteria into Logs.
 
 Run `node tests/context-analysis.cjs` for data, filtering, record identity and backup lifecycle regression checks.
 
-Local data has a separate schema version marker (currently 2), while the existing browser storage key and array format remain compatible. On opening an older local dataset, a top banner requires an original-data backup download and confirmation that it has saved before migration. The app retains an exact local recovery snapshot of records and settings before writing. Adding, editing, deleting and importing data, including capture settings, are blocked throughout the app until the upgrade completes. Review, filtering and exports remain available. Closing the page before confirmation leaves the dataset unchanged. Backups include the schema version; older backup files remain supported.
+Local data has a separate schema version marker (currently 3). The existing browser storage key is retained; its dataset now contains the entries and their rating scale together so they can be saved atomically. Older local arrays remain readable and migrate without changing their ratings or saved alignment results. On opening an older local dataset, a top banner requires an original-data backup download and confirmation that it has saved before migration. The app retains an exact local recovery snapshot of records and settings before writing. Adding, editing, deleting and importing data, including capture settings, are blocked throughout the app until the upgrade completes. Review, filtering and exports remain available. Closing the page before confirmation leaves the dataset unchanged. Backups include the schema version; older backup files remain supported.
+
+### Rating scale
+
+Open Capture settings, expand its Advanced settings section, then use Rating scale to select 1–5 or 1–10. This choice applies to expected intensity, actual intensity and emotion bucket level in all phases. New users start with 1–5; existing datasets without scale metadata are treated as 1–10, even when all their recorded values are 5 or below. Once stored, the dataset’s scale is used on every opening. Phase presets preserve it.
+
+Changing the scale with saved records shows an inline warning and confirmation within Advanced settings; it does not open a popup. Download the original-data backup and confirm it has saved before converting. Moving from 1–10 to 1–5 divides ratings by two and rounds up; moving back multiplies by two and cannot recover lost detail. Both directions recalculate alignment using equal expected and actual ratings. For example, expected 7 and actual 8 become 4 and 4, which are aligned. Existing saved alignment results drive views and exports until conversion. Missing values stay missing, and IDs, dates, notes, tags and other fields are preserved. A local recovery snapshot retains the exact original dataset and settings. Cancellation and failed storage writes leave the saved dataset unchanged.
+
+Logs, filters, chart averages, bucket heatmaps and accessible recording controls follow the dataset’s scale. Backups record it explicitly. Replacing a log adopts the backup’s scale; merging into a non-empty log with a different scale requires confirmation to convert only the incoming records and recalculate their alignment. Backups without scale metadata use 1–10.
