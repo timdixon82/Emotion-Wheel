@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.4.0" defer></script>
+  <script src="assets/version.js?v=1.4.1" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
@@ -1232,18 +1232,18 @@
       <div id="sharedDataManagement">
         <p id="sharedDataAccountStatus" class="help">Connect Google to open shared files.</p>
         <button type="button" id="sharedDataConnectButton">Connect Google</button>
-        <p id="googleDriveSharedListSyncStatus" class="drive-feedback" role="status">Your shared-file list is saved in this browser. Connect Google to keep it available on your other devices.</p>
-        <button type="button" id="syncGoogleDriveSharedListButton" disabled>Refresh shared-file list</button>
         <p id="sharedDataConnectionStatus" class="drive-feedback" role="status" hidden></p>
         <p>View shared data in Logs and Charts. When connected, file references and names sync through your own Google Drive. Removing a file from this list keeps it in Google Drive.</p>
         <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
-        <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
-        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
         <p id="sharedDriveFilesEmpty">No shared files added yet.</p>
         <div class="table-scroll"><table id="sharedDriveFilesTable" hidden>
           <caption>Files you can view</caption><thead><tr><th scope="col">Name</th><th scope="col">Owner</th><th scope="col">Actions</th></tr></thead>
           <tbody id="sharedDriveFilesBody"></tbody>
         </table></div>
+        <div class="actions"><button type="button" id="addReviewDatasetButton">Add a Drive file</button><button type="button" id="syncGoogleDriveSharedListButton" disabled>Refresh shared-file list</button></div>
+        <p id="googleDriveSharedListSyncStatus" class="drive-feedback" role="status">Your shared-file list is saved in this browser. Connect Google to keep it available on your other devices.</p>
+        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
+
     <p id="reviewDatasetStatus" hidden>Viewing my local data.</p>
       <div id="googleDriveSharedPreview" hidden>
         <p id="googleDriveSharedSummary" hidden></p>
