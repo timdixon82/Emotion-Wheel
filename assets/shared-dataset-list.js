@@ -9,7 +9,7 @@
       if(!item || typeof item.id!=='string' || !/^[A-Za-z0-9_-]{10,200}$/.test(item.id) || ids.has(item.id) || !Number.isSafeInteger(item.revision) || item.revision<1 || typeof item.device!=='string' || !/^[A-Za-z0-9_-]{1,80}$/.test(item.device) || typeof item.deleted!=='boolean' || typeof item.label!=='string' || item.label.length>120 || (!item.deleted && !item.label.trim()))throw new Error('The shared-file list contains an invalid reference. Both copies are kept.');
       ids.add(item.id);return {id:item.id,label:item.deleted?'':item.label,revision:item.revision,device:item.device,deleted:item.deleted};
     });
-    return {kind,version:1,items:items.sort((a,b)=>a.id.localeCompare(b.id))};
+    return {kind,version:1,items:items.sort((a,b)=>a.id<b.id?-1:a.id>b.id?1:0)};
   }
   function empty(){return {kind,version:1,items:[]};}
   function merge(...copies){
