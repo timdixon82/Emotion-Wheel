@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Help - Emotion Wheel</title>
   <script src="../assets/theme.js"></script>
-  <script src="../assets/version.js?v=1.3.2" defer></script>
+  <script src="../assets/version.js?v=1.4.0" defer></script>
   <script src="../assets/help-sync-status.js" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <link rel="stylesheet" href="../assets/info-pages.css">
@@ -149,7 +149,7 @@
     <ol>
       <li>Connect Google and save your data to Drive.</li>
       <li>Choose Share My Data from the menu. If disconnected, choose Connect Google, then choose Add person. This normally uses your current file. Share options lets you choose another file you own.</li>
-      <li>Enter the recipient's Google email address and choose Give access and get link. This grants Viewer access. Sending a Google email notification is optional.</li>
+      <li>Enter the recipient's Google email address and choose Give Viewer access. This grants Viewer access. Sending a Google email notification is optional and off by default. Tick it under Share options if you want Google to notify them.</li>
       <li>Use Share link to send the link through your browser's share controls, or Copy link and paste it into a message yourself.</li>
     </ol>
     <p>The link opens the file you shared from your Google Drive. It contains a file reference, not your records or a sign-in token. Having the link alone does not grant permission: the recipient must use a Google account with access to that file.</p>
@@ -161,7 +161,8 @@
     <h2 id="received-heading">Data shared with you</h2>
     <p>Open the Emotion Wheel link you receive. Data Shared with Me asks you to connect Google. Choose the account the owner gave access to. The app checks access, then opens the shared logs.</p>
     <p>If access fails, try the correct Google account. If you already have access in Drive, the app may ask you to choose that file once so Google lets the app open it. If you do not have permission, use the request-access link or ask the owner.</p>
-    <p>The table shows the file's name, owner and simple actions: View data opens Logs, Edit name changes its label in this browser, Refresh downloads the latest copy and Remove closes it and removes it from your list. Removing a bookmark does not delete anyone's Drive file.</p>
+    <p>The table shows the file's name, owner and simple actions: View data opens Logs, Edit name changes its label in your shared-file list, Refresh downloads the latest copy and Remove closes it and removes it from your list. Removing a bookmark does not delete anyone's Drive file.</p>
+    <p>When you connect Google, the list of shared file references and names is saved in your own Emotion Wheel folder as Emotion Wheel shared files.json. Connect the same Google account on another device to bring back the list. Changes and removals are checked every 15 seconds while connected; Refresh shared-file list checks immediately. Each file still belongs to its owner, and viewing it checks your access again. Shared emotion records are not copied into your Drive. Different Google accounts have separate lists.</p>
     <p>You can keep several shared files in the list. Use Data to view in the header or mobile menu to switch between them and My local data. Every opening, selection or refresh fetches the file again and checks permission. Files already being viewed do not update continuously.</p>
     <a href="#help-top">Back to help topics</a>
   </section>
@@ -181,6 +182,6 @@
     <a href="#help-top">Back to help topics</a>
   </section>
 </main>
-<footer><nav aria-label="Information pages"><span data-app-version></span><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span><a href="licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html">Privacy</a><span class="sep" aria-hidden="true">·</span><a href="accessibility.html">Accessibility and design</a><span class="sep" aria-hidden="true">·</span><a href="help.html" aria-current="page">Help</a><span class="sep" aria-hidden="true">·</span><a href="about.html">About</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/contact/" target="_blank" rel="noopener">Contact / feedback</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/" target="_blank" rel="noopener">© Tim Dixon</a></nav></footer>
+<footer><nav aria-label="Information pages"><span data-app-version></span><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new / changelog</a><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span><a href="licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html">Privacy</a><span class="sep" aria-hidden="true">·</span><a href="accessibility.html">Accessibility and design</a><span class="sep" aria-hidden="true">·</span><a href="help.html" aria-current="page">Help</a><span class="sep" aria-hidden="true">·</span><a href="about.html">About</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/contact/" target="_blank" rel="noopener">Contact / feedback</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/" target="_blank" rel="noopener">© Tim Dixon</a></nav></footer>
 </body>
 </html>

@@ -44,6 +44,28 @@ async function main() {
   guardedReplies = [new Response(JSON.stringify({id:fileId}))];
   await assert.rejects(guarded.getUpdateState(fileId), /baseline/);
   console.log('PASS: guarded updates require an exact ETag, preserve revisions and pause on stale or missing baselines.');
+  const listSchema=require('../assets/shared-dataset-list.js');
+  const list=listSchema.change(listSchema.empty(),'shared_synthetic_123','Friend','device_one');
+  await assert.rejects(()=>guarded.updateSharedList(fileId,list,'*'),/baseline/);
+  guardedReplies=[new Response('',{status:412})];
+  await assert.rejects(()=>guarded.updateSharedList(fileId,list,'"baseline"'),error=>error.code==='drive-conflict');
+  guardedReplies=[new Response(JSON.stringify({id:fileId,etag:'"next"'}))];
+  await guarded.updateSharedList(fileId,{...list,entries:[{comment:'Never upload'}],access_token:'Never upload'},'"baseline"');
+  assert.deepEqual(JSON.parse(guardedCalls.at(-1).options.body),list);
+  assert.equal(guardedCalls.at(-1).options.headers.get('If-Match'),'"baseline"');
+  assert(!guardedCalls.at(-1).url.includes('pinned=true'));
+  guardedReplies=[new Response(JSON.stringify({id:fileId,name:'Emotion Wheel shared files.json'}))];
+  await guarded.createSharedList(list,'synthetic_folder_123');
+  assert.match(guardedCalls.at(-1).options.body, /"role":"shared-list"/);
+  assert.match(guardedCalls.at(-1).options.body, /"parents":\["synthetic_folder_123"\]/);
+  assert(!guardedCalls.at(-1).options.body.includes('Never upload'));
+  guardedReplies=[new Response(JSON.stringify(list))];
+  assert.deepEqual(await guarded.readSharedList(fileId),list);
+  await assert.rejects(()=>guarded.createSharedList(backup,'synthetic_folder_123'),/supported version/);
+  guardedReplies=[new Response(JSON.stringify({files:[{id:fileId}]}))];
+  assert.equal((await guarded.findSharedLists()).length,1);
+  assert(guardedCalls.at(-1).url.includes('shared-list'));
+  console.log('PASS: shared-list uploads contain references only, remain separate from backups, and use exact stale-update protection.');
   const permissionCalls=[];let permissionReplies=[];
   const sharingClient=new DriveClient({fetch:async(url,options)=>{permissionCalls.push({url,options});return permissionReplies.shift();}});
   sharingClient.setAccessToken({access_token:'synthetic',expires_in:60});
@@ -166,6 +188,7 @@ async function main() {
   assert(calls.at(-1).url.includes('sendNotificationEmail=true'));
   replies = [json({ type: 'user', role: 'writer' })];
   await assert.rejects(client.shareWithViewer(fileId, 'viewer@example.test'), /confirm Viewer/);
+
   assert.equal(JSON.stringify(backup), original);
   console.log('PASS: account label comes from Google verified email; sharing grants only a named user Viewer access, defaults to no notification and requires a confirmed reader response.');
 

@@ -46,9 +46,79 @@
     if(new URLSearchParams(location.hash.slice(1)).has('drive')) history.replaceState(null, '', `${location.pathname}${location.search}`);
   }
 
+  const sharedListKey='emotionWheelSharedListSyncV1';
+  let sharedListStore={device:crypto.randomUUID(),owner:'',accounts:Object.create(null),unowned:EmotionWheelSharedList.empty()};
+  try {
+    const stored=JSON.parse(localStorage.getItem(sharedListKey)||'null');
+    if(stored && /^[A-Za-z0-9_-]{1,80}$/.test(stored.device) && typeof stored.owner==='string' && stored.accounts && typeof stored.accounts==='object' && !Array.isArray(stored.accounts)) {
+      const accounts=Object.create(null);for(const [owner,value] of Object.entries(stored.accounts))accounts[owner]=EmotionWheelSharedList.validate(value);
+      sharedListStore={device:stored.device,owner:stored.owner,accounts,unowned:stored.unowned?EmotionWheelSharedList.validate(stored.unowned):EmotionWheelSharedList.empty()};
+    }
+  } catch { /* Keep legacy references when preference metadata cannot be read. */ }
+  let sharedListItems=sharedListStore.accounts[sharedListStore.owner] || sharedListStore.unowned;
+  let sharedListBusy=false,sharedListTimer;
+  function saveSharedListState(){
+    if(sharedListStore.owner)sharedListStore.accounts[sharedListStore.owner]=sharedListItems;else sharedListStore.unowned=sharedListItems;
+    localStorage.setItem(sharedListKey,JSON.stringify(sharedListStore));
+  }
+  function recordSharedListChanges(){
+    for(const [id,label] of bookmarks){const old=sharedListItems.items.find(item=>item.id===id);if(!old || old.deleted || old.label!==label)sharedListItems=EmotionWheelSharedList.change(sharedListItems,id,label,sharedListStore.device);}
+    for(const item of sharedListItems.items)if(!item.deleted && !bookmarks.has(item.id))sharedListItems=EmotionWheelSharedList.change(sharedListItems,item.id,null,sharedListStore.device);
+    saveSharedListState();scheduleSharedListSync(750);
+  }
+  function selectSharedListAccount(owner){
+    if(sharedListStore.owner!==owner){
+      const first=!sharedListStore.owner && Object.keys(sharedListStore.accounts).length===0;
+      if(first)recordSharedListChanges();
+      sharedListItems=sharedListStore.accounts[owner] || (first?sharedListItems:EmotionWheelSharedList.empty());
+      sharedListStore.owner=owner;bookmarks.clear();fileOwners.clear();
+      for(const item of sharedListItems.items)if(!item.deleted)bookmarks.set(item.id,item.label);
+      localStorage.setItem(datasetStorageKey,JSON.stringify([...bookmarks].map(([id,label])=>({id,label}))));saveSharedListState();update();scheduleSharedListSync(1000);
+    }
+  }
+  function scheduleSharedListSync(delay=15000){
+    clearTimeout(sharedListTimer);
+    if(!client.connected || !connectedEmail || typeof client.findSharedLists!=='function')return;
+    sharedListTimer=setTimeout(syncSharedList,delay);sharedListTimer?.unref?.();
+  }
+  async function syncSharedList(){
+    if(!client.connected || !connectedEmail || typeof client.findSharedLists!=='function')return;
+    if(sharedListBusy){scheduleSharedListSync(1000);return;}
+    if(busy){scheduleSharedListSync(1000);return;}
+    sharedListBusy=true;const operationEpoch=epoch,owner=connectedEmail;
+    const output=byId('googleDriveSharedListSyncStatus');output.textContent='Checking your shared-file list in Google Drive…';update();
+    const unchanged=()=>epoch===operationEpoch && client.connected && connectedEmail===owner && sharedListStore.owner===owner;
+    try {
+      const files=await client.findSharedLists();if(!unchanged())return;
+      const remote=[];let merged=sharedListItems;
+      for(const file of files){
+        const before=await client.getUpdateState(file.id);if(!unchanged())return;
+        if(!before.editable || !before.owners?.some(item=>item.emailAddress===owner))throw new Error('Only your own editable shared-file list can sync.');
+        const value=EmotionWheelSharedList.validate(await client.readSharedList(file.id));if(!unchanged())return;
+        const after=await client.getUpdateState(file.id);if(!unchanged())return;
+        if(before.etag!==after.etag)throw new Error('The shared-file list changed while reading. It will retry shortly.');
+        remote.push({id:file.id,value,etag:after.etag});merged=EmotionWheelSharedList.merge(merged,value);
+      }
+      merged=EmotionWheelSharedList.merge(merged,sharedListItems);
+      if(!files.length && merged.items.length){
+        const tree=await client.getFolderTree();if(!unchanged())return;
+        await client.createSharedList(merged,tree.folderId);if(!unchanged())return;
+      } else for(const file of remote){
+        if(JSON.stringify(file.value)!==JSON.stringify(merged)){await client.updateSharedList(file.id,merged,file.etag);if(!unchanged())return;}
+      }
+      sharedListItems=EmotionWheelSharedList.merge(merged,sharedListItems);saveSharedListState();
+      bookmarks.clear();for(const item of sharedListItems.items)if(!item.deleted)bookmarks.set(item.id,item.label);
+      localStorage.setItem(datasetStorageKey,JSON.stringify([...bookmarks].map(([id,label])=>({id,label}))));
+      const selected=getReviewDataset();if(selected && !bookmarks.has(selected.fileId))chooseLocal();else if(selected && bookmarks.get(selected.fileId)!==selected.label)setDataset({...selected,label:bookmarks.get(selected.fileId)});
+      output.textContent=`Shared-file list synced with ${owner}’s Google Drive. Last checked: ${new Date().toLocaleTimeString()}.`;
+    } catch(error){if(unchanged())output.textContent=`Shared-file list could not sync: ${error.message} Your local list is kept; retrying in 15 seconds.`;}
+    finally {sharedListBusy=false;if(epoch===operationEpoch){update();scheduleSharedListSync();}}
+  }
+  byId('syncGoogleDriveSharedListButton').addEventListener('click',syncSharedList);
   function persistBookmarks() {
     try {
       localStorage.setItem(datasetStorageKey, JSON.stringify([...bookmarks].map(([id, label]) => ({ id, label }))));
+      recordSharedListChanges();
     } catch { status.textContent += ' Dataset names could not be remembered in this browser.'; }
   }
   function setDataset(dataset) {
@@ -63,6 +133,7 @@
   const syncStorageKey = 'emotionWheelDriveSyncV1';
   try {const remembered=JSON.parse(localStorage.getItem(syncStorageKey)||'null');if(remembered?.syncError){syncError=remembered.syncError;syncFailedAt=remembered.syncFailedAt||'';lastSyncedAt=remembered.lastSyncedAt||'';}}catch{}
   function update() {
+    byId('syncGoogleDriveSharedListButton').disabled=sharedListBusy || !client.connected || !connectedEmail;
     if(syncOffer && (!client.connected || syncOffer.epoch!==epoch || syncOffer.owner!==connectedEmail || syncTarget || getReviewDataset()))syncOffer=undefined;
     byId('googleDriveSyncOffer').hidden=!syncOffer;
     byId('acceptGoogleDriveSyncOfferButton').disabled=busy || !syncOffer || !client.connected;
@@ -365,8 +436,8 @@
     if(currentAppView!=='maintenance' || !client.connected || !connectedEmail || busy || typeof client.findExistingBackupFolder!=='function')return;
     operation(async operationEpoch=>{await refreshBackupList(operationEpoch);if(epoch===operationEpoch)status.textContent='Backup list refreshed from Google Drive.';},'Refreshing backups from Google Drive…','backups');
   }
-  window.addEventListener('focus',refreshVisibleBackups);
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')refreshVisibleBackups();});
+  window.addEventListener('focus',()=>{refreshVisibleBackups();syncSharedList();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){refreshVisibleBackups();syncSharedList();}});
   byId('sharedDataConnectButton').addEventListener('click',()=>connect.click());
   connect.addEventListener('click', () => {
     if (!tokenClient) {
@@ -396,6 +467,7 @@
           if (epoch !== requestEpoch) return;
           busy = false;
           if (!client.connected) throw new Error('Reconnect Google Drive to continue.');
+          if(connectedEmail && typeof client.findSharedLists==='function')selectSharedListAccount(connectedEmail);
           if(syncError){byId('googleDriveSyncStatus').textContent='The previous sync failed. Choose Save to Drive to review the latest copies.';byId('googleDriveSyncStatus').hidden=false;}
           connect.textContent = 'Reconnect or switch Google account';
           status.textContent = 'Google Drive connected. Choose Save to Drive, Create dated backup or Start Sync.';
@@ -404,6 +476,7 @@
           else if(!dataSchemaMatches())checkDriveBeforeUpgrade();
           else if(currentAppView==='sharing')await refreshSharingAccess();
           else if(currentAppView==='maintenance' && typeof client.findExistingBackupFolder==='function')await operation(refreshBackupList,'Loading your dated backups…','backups');
+          if(epoch===requestEpoch && connectedEmail && typeof client.findSharedLists==='function'){selectSharedListAccount(connectedEmail);await syncSharedList();}
           if(epoch===requestEpoch && !busy && !connectedFromShared && !linkedFileId && currentAppView!=='shared' && !getReviewDataset() && dataSchemaMatches())await offerExistingSync();
         } catch (error) { busy = false; status.textContent = error.message; }
       }
@@ -779,7 +852,7 @@
   refresh.addEventListener('click', () => operation(operationEpoch => openPreview(previewFileId, operationEpoch, !['maintenance','shared'].includes(currentAppView)), 'Refreshing the shared backup…','files'));
   byId('closeGoogleDrivePreviewButton').addEventListener('click', chooseLocal);
   disconnect.addEventListener('click', () => {
-    pendingSafetyBackup=undefined;epoch++; driveTree = undefined; cleanupPlan = undefined; byId('googleDriveBackupCleanup').hidden = true; pauseSync(); client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); busy = false; savedFileId = ''; clearPreview(); savedPanel.hidden = true;
+    clearTimeout(sharedListTimer);byId('googleDriveSharedListSyncStatus').textContent='Google is disconnected. Your shared-file list is kept in this browser; connect to check changes on other devices.';pendingSafetyBackup=undefined;epoch++; driveTree = undefined; cleanupPlan = undefined; byId('googleDriveBackupCleanup').hidden = true; pauseSync(); client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); busy = false; savedFileId = ''; clearPreview(); savedPanel.hidden = true;
     closePicker();
     connect.textContent = 'Connect Google Drive';
     status.textContent = 'Google Drive disconnected. Local records and Drive files are kept.'; update(); connect.focus();

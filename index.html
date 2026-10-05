@@ -11,9 +11,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.3.2" defer></script>
+  <script src="assets/version.js?v=1.4.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
+  <script src="assets/shared-dataset-list.js" defer></script>
   <script src="assets/google-drive-ui.js" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
@@ -1230,8 +1231,10 @@
       <div id="sharedDataManagement">
         <p id="sharedDataAccountStatus" class="help">Connect Google to open shared files.</p>
         <button type="button" id="sharedDataConnectButton">Connect Google</button>
+        <p id="googleDriveSharedListSyncStatus" class="drive-feedback" role="status">Your shared-file list is saved in this browser. Connect Google to keep it available on your other devices.</p>
+        <button type="button" id="syncGoogleDriveSharedListButton" disabled>Refresh shared-file list</button>
         <p id="sharedDataConnectionStatus" class="drive-feedback" role="status" hidden></p>
-        <p>View shared data in Logs and Charts. Names are saved only in this browser. Removing a file from this list keeps it in Google Drive.</p>
+        <p>View shared data in Logs and Charts. When connected, file references and names sync through your own Google Drive. Removing a file from this list keeps it in Google Drive.</p>
         <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
         <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
         <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
@@ -1268,7 +1271,7 @@
   <p><strong>Your emotion records are saved on this device.</strong> You can also choose exports, sharing, or optional Google Drive saving and sync. Anonymous pageview statistics are collected as described in the Privacy notice.</p>
   <nav aria-label="App information">
     <span data-app-version></span><span class="sep" aria-hidden="true">·</span>
-    <a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
+    <a href="https://github.com/timdixon82/Emotion-Wheel/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new / changelog</a><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/help.html">Help</a><span class="sep" aria-hidden="true">·</span><a href="docs/help.html#home-screen">Add to phone or computer</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/privacy.html">Privacy</a>

@@ -7,6 +7,14 @@
   const UPLOAD = 'https://www.googleapis.com/upload/drive/v3/';
   const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
 
+  function sharedListContent(list) {
+    const schema = root.EmotionWheelSharedList || (typeof module !== 'undefined' && module.exports ? require('./shared-dataset-list.js') : null);
+    if (!schema) throw new Error('Shared-file list support is unavailable.');
+    const value = schema.validate(list);
+    if (new TextEncoder().encode(JSON.stringify(value)).byteLength > MAX_BACKUP_BYTES) throw new Error('Shared-file list is too large.');
+    return value;
+  }
+
   function validFileId(value) {
     if (typeof value !== 'string' || !/^[A-Za-z0-9_-]{10,200}$/.test(value)) {
       throw new Error('Invalid Google Drive file ID.');
@@ -324,6 +332,40 @@
 
     // v2 exposes the file ETag in JSON, avoiding reliance on CORS-exposed headers.
     // Live stale-ETag rejection must pass before automatic updates are released.
+    async findSharedLists() {
+      const files=await this.listManagedFiles("mimeType = 'application/json' and appProperties has { key='role' and value='shared-list' }");
+      if(files.length>10)throw new Error('Too many shared-list files were found. Review your Drive before continuing.');
+      return files;
+    }
+    async readSharedList(fileId) {
+      validFileId(fileId);const generation=this.#generation;
+      const response=await this.#request(`${API}files/${fileId}?alt=media`,{redirect:'follow'},'reading your shared-file list');
+      const value=JSON.parse(await this.#readText(response));
+      if(generation!==this.#generation)throw new Error('Google Drive connection changed.');
+      return value;
+    }
+    async updateSharedList(fileId,list,expectedEtag) {
+      validFileId(fileId);
+      list=sharedListContent(list);
+      if(typeof expectedEtag!=='string' || !/^"[^"\r\n]+"$/.test(expectedEtag))throw new Error('A safe Drive update baseline is required.');
+      const generation=this.#generation;
+      const response=await this.#request(`https://www.googleapis.com/upload/drive/v2/files/${fileId}?uploadType=media&newRevision=true&fields=id,etag`,{method:'PUT',headers:{'Content-Type':'application/json; charset=UTF-8','If-Match':expectedEtag},body:JSON.stringify(list)},'saving your shared-file list');
+      const result=JSON.parse(await this.#readText(response));
+      if(generation!==this.#generation)throw new Error('Google Drive connection changed.');
+      if(result.id!==fileId || typeof result.etag!=='string' || !/^"[^"\r\n]+"$/.test(result.etag))throw new Error('Shared-file list update is uncertain. Refresh before trying again.');
+      return result;
+    }
+    async createSharedList(list,folderId) {
+      validFileId(folderId);
+      list=sharedListContent(list);
+      const generation=this.#generation,boundary=`emotion_wheel_${root.crypto.randomUUID()}`;
+      const metadata={name:'Emotion Wheel shared files.json',mimeType:'application/json',parents:[folderId],appProperties:{application:'emotion-wheel',role:'shared-list'}};
+      const body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(list)}\r\n--${boundary}--\r\n`;
+      const response=await this.#request(`${UPLOAD}files?uploadType=multipart&fields=id,name`,{method:'POST',headers:{'Content-Type':`multipart/related; boundary=${boundary}`},body},'creating your shared-file list');
+      const result=JSON.parse(await this.#readText(response));
+      if(generation!==this.#generation)throw new Error('Google Drive connection changed.');validFileId(result.id);return result;
+    }
+
     async getUpdateState(fileId) {
       validFileId(fileId);
       const generation = this.#generation;
