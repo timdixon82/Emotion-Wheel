@@ -784,7 +784,12 @@
       if (epoch!==operationEpoch) return;
       fileId=current?.id;
     }
-    if (!fileId) { byId('googleDriveAccessMessage').textContent='No current Drive file yet. Choose Add person to save your data and share it.'; return; }
+    if (!fileId) {
+      accessFileId='';accessOwner=owner;accessPeopleCount=0;shareResultFileId='';stopSharingPlan=undefined;
+      byId('googleDriveAccessBody').replaceChildren();byId('googleDriveAccessTable').hidden=true;byId('googleDriveSharingResult').hidden=true;
+      const message='No current Drive file is available to this app yet. Save to Drive in My Data, or choose Add person to prepare a file for sharing.';
+      byId('googleDriveAccessMessage').textContent=message;status.textContent=message;return;
+    }
     accessPeopleCount=0;byId('googleDriveAccessBody').replaceChildren();byId('googleDriveAccessTable').hidden=true;
     const result=await client.getSharing(fileId,owner);
     if (epoch!==operationEpoch || owner!==connectedEmail || !client.connected) return;
@@ -812,6 +817,7 @@
       row.append(person,role,actions);body.append(row);
     }
     byId('googleDriveAccessTable').hidden=permissions.length===0;
+    status.textContent='Sharing list refreshed from Google Drive.';
     byId('googleDriveAccessMessage').textContent=`${result.file.name || 'Drive file'}: ${permissions.length ? 'people list refreshed from Google Drive.' : 'no people have been given access. Add a person to enable the sharing link.'}`;
   }
   function refreshSharingAccess() {
