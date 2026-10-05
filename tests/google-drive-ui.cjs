@@ -52,6 +52,7 @@ async function main() {
     async createBackup(snapshot, options) { if(options.role==='backup')assert.match(options.name,/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z - .+\.json$/,'Every dated, conflict, restore and migration backup must have a date-first name'); uploads.push(snapshot); uploadOptions.push(options); if(options.role==='current') {currentFile={id:'synthetic_drive_file_123'};return currentFile;}return {id:`synthetic_backup_${uploads.length}`}; }
   }
   const scope = vm.createContext({
+    crypto:require('node:crypto').webcrypto,EmotionWheelSharedList:require('../assets/shared-dataset-list.js'),
     Option: class { constructor(text, value) { this.textContent = text; this.value = value; } },
     localStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, value) },
     document: { addEventListener(type, fn) { documentHandlers[type] = fn; }, getElementById: node, createElement: () => node(`element-${nodes.size}`),
@@ -119,25 +120,27 @@ async function main() {
   assert.equal(uploads.length, 0);
   console.log('PASS: explicit connection loads only supported Google scripts, uses per-file scope and opens separate shared preview without personal log/settings mutation or upload.');
 
-  let pickerCallback, pickerVisible = false;
+  let pickerCallback, pickerVisible = false, pickerBuilds=0;
   const pickerOptions = {};
   scope.gapi = { load(_name, options) { options.callback(); } };
-  scope.google.picker = { Action: { CANCEL: 'cancel', PICKED: 'picked' },
-    DocsView: class { setMimeTypes(types) { pickerOptions.types = types; return this; } },
+  scope.google.picker = { DocsViewMode:{LIST:'list'}, Action: { CANCEL: 'cancel', PICKED: 'picked' },
+    DocsView: class { constructor(){delete pickerOptions.fileIds;} setFileIds(ids){pickerOptions.fileIds=ids;return this;} setMode(mode){pickerOptions.mode=mode;return this;} setMimeTypes(types) { pickerOptions.types = types; return this; } },
     PickerBuilder: class {
       setDeveloperKey(value) { pickerOptions.key = value; return this; }
       setAppId(value) { pickerOptions.appId = value; return this; }
       setOAuthToken(value) { pickerOptions.token = value; return this; }
       setOrigin(value) { pickerOptions.origin = value; return this; }
+      setTitle(value){pickerOptions.title=value;return this;}
       addView() { return this; }
       setCallback(value) { pickerCallback = value; return this; }
-      build() { return { setVisible(value) { pickerVisible = value; } }; }
+      build() { pickerBuilds++;return { setVisible(value) { pickerVisible = value; } }; }
     }
   };
   await clicks('openGoogleDriveButton');
   assert.equal(pickerVisible, true);
   assert.equal(pickerOptions.origin, 'http://localhost:8765');
   assert.equal(pickerOptions.types, 'application/json,text/plain');
+  assert.equal(pickerOptions.fileIds,undefined,'Ordinary Add file keeps the full picker');
   const readsBeforeWrongFile = remoteReads.length;
   await pickerCallback({ action: 'picked', docs: [{ id: 'wrong_synthetic_file_456' }] }); await flush();
   assert.equal(remoteReads.length, readsBeforeWrongFile + 1);
@@ -596,9 +599,20 @@ async function main() {
   scope.location.hash='#drive=synthetic_drive_file_123';documentHandlers.hashchange();await flush();
   clientInstance.readBackup=async()=>{const error=new Error('Synthetic access denied');error.code='drive-access';throw error;};
   await clicks('googleDriveLinkSignInButton');await flush();
-  assert.equal(node('googleDriveLinkPrompt').hidden,false,'Access denial stays in the sharing page');
-  assert.match(node('googleDriveLinkMessage').textContent,/cannot open the file/);
-  assert.match(node('googleDriveLinkStatus').textContent,/access denied/);
+  assert.equal(pickerVisible,true,'First file access denial automatically opens Google approval');
+  assert.equal(pickerOptions.fileIds,'synthetic_drive_file_123','Approval shows only the linked file');
+  assert.equal(pickerOptions.mode,'list');
+  assert.match(pickerOptions.title,/Allow Emotion Wheel/);
+  await pickerCallback({action:'cancel'});await flush();
+  assert.equal(node('googleDriveLinkPrompt').hidden,false,'Cancelled approval stays in the sharing page');
+  assert.match(node('googleDriveLinkMessage').textContent,/needs approval/);
+  assert.equal(pickerVisible,false,'Cancellation does not reopen approval in a loop');
+  await clicks('googleDriveLinkPickerButton');await flush();
+  const buildsAfterRetry=pickerBuilds;
+  await pickerCallback({action:'picked',docs:[{id:'synthetic_drive_file_123'}]});await flush();
+  assert.equal(pickerBuilds,buildsAfterRetry,'A denied picker read must not start another approval loop');
+  assert.equal(pickerVisible,false);
+  assert.match(node('googleDriveLinkStatus').textContent,/Synthetic access denied/);
   assert.equal(node('googleDriveLinkSignInButton').textContent,'Switch Google account');
   assert.equal(node('googleDriveLinkAccessPage').hidden,false);
   assert.equal(scope.currentAppView,'shared','Access denial stays on Data Shared with Me');
@@ -660,6 +674,95 @@ async function main() {
   console.log('PASS: original Drive backups gate rating changes; schema upgrades protect both copies, reject stale reviews and future formats, and stop on backup failure.');
 
 
+
+  scope.dataSchemaMatches=()=>true;scope.currentAppView='maintenance';activeDataset=null;
+  clientInstance.findExistingCurrent=async()=>({id:'synthetic_current_offer',name:'Emotion Wheel current.json',owners:[{emailAddress:email}]});
+  const offerWrites=writes,offerUploads=uploads.length;
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,false,'Existing owned current file offers sync');
+  assert.equal(writes,offerWrites);assert.equal(uploads.length,offerUploads,'Connection discovery is read-only');
+  await clicks('declineGoogleDriveSyncOfferButton');
+  assert.equal(node('googleDriveSyncOffer').hidden,true);
+  assert.equal(writes,offerWrites);
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  let syncStarts=0;const originalStart=node('startGoogleDriveSyncButton').handlers.click;
+  node('startGoogleDriveSyncButton').handlers.click=()=>{syncStarts++;};
+  await clicks('acceptGoogleDriveSyncOfferButton');
+  assert.equal(syncStarts,1,'Consent delegates to the existing guarded sync flow');
+  assert.equal(scope.currentAppView,'maintenance');
+  node('startGoogleDriveSyncButton').handlers.click=originalStart;
+  activeDataset={fileId:'synthetic_shared_offer'};
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Never offer own sync while viewing shared data');
+  activeDataset=null;
+  clientInstance.findExistingCurrent=async()=>null;
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'No current file must not create a sync offer');
+  let finishOffer;
+  clientInstance.findExistingCurrent=async()=>new Promise(resolve=>{finishOffer=resolve;});
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  await clicks('disconnectGoogleDriveButton');
+  finishOffer({id:'synthetic_stale_offer',owners:[{emailAddress:email}]});await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Late discovery cannot offer sync after disconnect');
+  assert.equal(writes,offerWrites);assert.equal(uploads.length,offerUploads);
+  console.log('PASS: connection discovers current files read-only, offers sync with explicit consent, keeps Not now safe, and suppresses shared-data, empty and stale offers.');
+
+  // Enable the new preference transport only for these tests; record methods above remain unchanged.
+  const schema=require('../assets/shared-dataset-list.js');
+  let lists=[],preferenceWrites=[],prefEtag='"prefs-1"';
+  clientInstance.findExistingCurrent=async()=>null;
+  clientInstance.findSharedLists=async()=>lists.map(item=>({id:item.id}));
+  clientInstance.getUpdateState=async id=>({id,etag:prefEtag,editable:true,owners:[{emailAddress:email}]});
+  clientInstance.readSharedList=async id=>structuredClone(lists.find(item=>item.id===id).value);
+  clientInstance.createSharedList=async(value,folder)=>{assert(folder);preferenceWrites.push(structuredClone(value));lists.push({id:'synthetic_preferences_123',value:structuredClone(value)});return {id:'synthetic_preferences_123'};};
+  clientInstance.updateSharedList=async(id,value,expected)=>{assert.equal(expected,prefEtag);preferenceWrites.push(structuredClone(value));lists.find(item=>item.id===id).value=structuredClone(value);return {id,etag:prefEtag};};
+  scope.currentAppView='entry';
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  const store=()=>JSON.parse(storage.get('emotionWheelSharedListSyncV1'));
+  assert.equal(store().owner,email);
+  assert(preferenceWrites.length>0,'Legacy references are uploaded to the first connected account');
+  assert(!JSON.stringify(preferenceWrites).includes('entries'),'Preferences never contain records');
+  assert.equal(writes,offerWrites);assert.equal(uploads.length,offerUploads);
+  let remote=schema.change(schema.empty(),'synthetic_received_123','Shared from another device','other_device');
+  lists[0].value=schema.merge(lists[0].value,remote);
+  await clicks('syncGoogleDriveSharedListButton');await flush();
+  assert(store().accounts[email].items.some(item=>item.id==='synthetic_received_123'&&!item.deleted));
+  remote=schema.change(remote,'synthetic_received_123',null,'other_device');
+  lists[0].value=schema.merge(lists[0].value,remote);
+  await clicks('syncGoogleDriveSharedListButton');await flush();
+  assert(store().accounts[email].items.some(item=>item.id==='synthetic_received_123'&&item.deleted));
+  assert(!JSON.parse(storage.get('emotionWheelSharedDatasetsV1')||'[]').some(item=>item.id==='synthetic_received_123'));
+  const originalEmail=email,originalList=structuredClone(lists),prefWritesBefore=preferenceWrites.length;
+  email='third@example.test';lists=[];
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(store().accounts[email].items.length,0,'Switching accounts never seeds the previous account’s list');
+  assert.equal(preferenceWrites.length,prefWritesBefore,'An empty new account does not create a file');
+  email=originalEmail;lists=originalList;
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert(store().accounts[email].items.length>0,'Switching back restores its own list');
+  const originalRead=clientInstance.readSharedList;let pendingPreferences;
+  clientInstance.readSharedList=()=>new Promise(resolve=>{pendingPreferences=resolve;});
+  await clicks('syncGoogleDriveSharedListButton');await flush();
+  await clicks('disconnectGoogleDriveButton');
+  const beforeLate=storage.get('emotionWheelSharedListSyncV1');
+  pendingPreferences(schema.change(schema.empty(),'synthetic_late_123','Late response','other_device'));await flush();await flush();
+  assert.equal(storage.get('emotionWheelSharedListSyncV1'),beforeLate,'Disconnect discards an in-flight response');
+  clientInstance.readSharedList=originalRead;
+  assert.match(node('googleDriveSharedListSyncStatus').textContent,/disconnected/);
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  const beforeInvalidPreferences=storage.get('emotionWheelSharedListSyncV1');
+  clientInstance.readSharedList=async()=>({kind:'emotion-wheel-shared-datasets',version:2,items:[]});
+  await clicks('syncGoogleDriveSharedListButton');await flush();
+  assert.equal(storage.get('emotionWheelSharedListSyncV1'),beforeInvalidPreferences);
+  assert.match(node('googleDriveSharedListSyncStatus').textContent,/supported version.*local list is kept/);
+  clientInstance.readSharedList=originalRead;
+  let stateReads=0;
+  clientInstance.getUpdateState=async id=>({id,etag:`"changing-${++stateReads}"`,editable:true,owners:[{emailAddress:email}]});
+  await clicks('syncGoogleDriveSharedListButton');await flush();
+  assert.equal(storage.get('emotionWheelSharedListSyncV1'),beforeInvalidPreferences);
+  assert.match(node('googleDriveSharedListSyncStatus').textContent,/changed while reading.*retrying/);
+  await clicks('disconnectGoogleDriveButton');
+  console.log('PASS: shared-file list merges cross-device additions and removals, isolates accounts, uploads no records and ignores late responses after disconnect.');
 
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

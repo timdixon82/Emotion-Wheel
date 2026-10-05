@@ -102,6 +102,9 @@ jobs:
       - name: Verify optional Google Drive controls
         run: node tests/google-drive-ui.cjs
 
+      - name: Verify shared dataset list reconciliation
+        run: node tests/shared-dataset-list.cjs
+
       - name: Verify shared dataset review
         run: node tests/review-datasets.cjs
       - name: Two-way sync reconciliation
