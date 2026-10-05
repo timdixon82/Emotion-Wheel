@@ -11,11 +11,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.4.1" defer></script>
+  <script src="assets/version.js?v=1.5.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
-  <script src="assets/google-drive-ui.js" defer></script>
+  <script src="assets/google-drive-ui.js?v=1.5.0" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
     @font-face {
@@ -139,6 +139,7 @@
     .drive-name-editor { margin-top: .5rem; }
     .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
     .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
+    .google-reconnect-banner { border-color: var(--focus); }
     .drive-feedback { padding: .75rem; border-left: 4px solid var(--focus); overflow-wrap: anywhere; }
     .sync-copy-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow-y: auto; }
 
@@ -483,6 +484,10 @@
 </header>
 <main id="main-content" tabindex="-1">
 
+  <section id="googleDriveReconnectBanner" class="sync-issue-banner google-reconnect-banner" aria-label="Reconnect Google" hidden>
+    <p role="status">Google is disconnected. This browser was previously connected. Reconnect to use Google Drive backups, sync and shared files.</p>
+    <button type="button" id="reconnectGoogleDriveButton">Reconnect Google</button>
+  </section>
   <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
     <p id="googleDriveSyncIssueMessage" role="alert"></p>
     <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>

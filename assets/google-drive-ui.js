@@ -12,6 +12,9 @@
   const refresh = byId('refreshGoogleDrivePreviewButton');
   const datasetSelect = byId('reviewDatasetSelect');
   const datasetStorageKey = 'emotionWheelSharedDatasetsV1';
+  const connectionHistoryKey = 'emotionWheelGooglePreviouslyConnectedV1';
+  let previouslyConnected = false;
+  try { previouslyConnected = localStorage.getItem(connectionHistoryKey) === 'true'; } catch { /* Remember for this page if storage is unavailable. */ }
   const bookmarks = new Map();
   const fileOwners = new Map();
   const nameDrafts=new Map(),editingNames=new Set(),fileEditButtons=new Map(),fileNameInputs=new Map();
@@ -131,8 +134,12 @@
   let syncOffer;
   let syncTarget, syncTimer, syncRunning=false, syncWanted=false, syncSafetyVerified = true; // Live stale-ETag rejection verified on the synthetic file.
   const syncStorageKey = 'emotionWheelDriveSyncV1';
+  // Existing installations may already have evidence of a verified connection.
+  try { previouslyConnected ||= Boolean(sharedListStore.owner || JSON.parse(localStorage.getItem(syncStorageKey) || 'null')?.owner); } catch { /* Ignore unreadable history. */ }
   try {const remembered=JSON.parse(localStorage.getItem(syncStorageKey)||'null');if(remembered?.syncError){syncError=remembered.syncError;syncFailedAt=remembered.syncFailedAt||'';lastSyncedAt=remembered.lastSyncedAt||'';}}catch{}
   function update() {
+    byId('googleDriveReconnectBanner').hidden = !previouslyConnected || client.connected;
+    byId('reconnectGoogleDriveButton').disabled = busy || preparingGoogle;
     byId('syncGoogleDriveSharedListButton').disabled=sharedListBusy || !client.connected || !connectedEmail;
     if(syncOffer && (!client.connected || syncOffer.epoch!==epoch || syncOffer.owner!==connectedEmail || syncTarget || getReviewDataset()))syncOffer=undefined;
     byId('googleDriveSyncOffer').hidden=!syncOffer;
@@ -442,8 +449,13 @@
     if(currentAppView!=='maintenance' || !client.connected || !connectedEmail || busy || typeof client.findExistingBackupFolder!=='function')return;
     operation(async operationEpoch=>{await refreshBackupList(operationEpoch);if(epoch===operationEpoch)status.textContent='Backup list refreshed from Google Drive.';},'Refreshing backups from Google Drive…','backups');
   }
-  window.addEventListener('focus',()=>{refreshVisibleBackups();syncSharedList();});
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){refreshVisibleBackups();syncSharedList();}});
+  window.addEventListener('focus',()=>{update();refreshVisibleBackups();syncSharedList();});
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){update();refreshVisibleBackups();syncSharedList();}});
+  byId('reconnectGoogleDriveButton').addEventListener('click',()=>{
+    if(busy || preparingGoogle)return;
+    if(!linkedFileId && !invalidSharingLink)selectAppView(maintenanceTab,false);
+    connect.focus();connect.click();
+  });
   byId('sharedDataConnectButton').addEventListener('click',()=>connect.click());
   connect.addEventListener('click', () => {
     if (!tokenClient) {
@@ -464,6 +476,8 @@
       } else {
         try {
           client.setAccessToken(response);
+          previouslyConnected = true;
+          try { localStorage.setItem(connectionHistoryKey, 'true'); } catch { /* Connection still works without persistent storage. */ }
           accountExpiryTimer = setTimeout(update, Math.max(0, Number(response.expires_in) * 1000 - 5000));
           accountExpiryTimer?.unref?.();
           busy = true;
