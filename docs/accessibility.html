@@ -2,6 +2,12 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
+  <link rel="icon" href="../assets/icons/favicon.ico?v=20261005" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="../assets/icons/favicon-32.png?v=20261005" sizes="32x32">
+  <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png?v=20261005" sizes="180x180">
+  <link rel="manifest" href="../assets/manifest.webmanifest">
+  <meta name="theme-color" content="#0c3b64">
+  <meta name="apple-mobile-web-app-title" content="Emotion Wheel">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Accessibility and design - Emotion Wheel</title>
   <script src="../assets/theme.js"></script>
@@ -11,7 +17,7 @@
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
-<header><div class="header-inner"><span class="brand">Emotion Tracking Wheel</span><div class="header-actions"><div class="theme-control"><label for="info-theme">Theme</label><select class="info-theme-select" id="info-theme"><option value="light">Light</option><option value="dark">Dark</option><option value="muted-light">Muted Light</option><option value="muted-dark">Muted Dark</option></select></div><a class="button" href="../index.html">Back to the app</a></div></div></header>
+<header><div class="header-inner"><span class="brand"><img class="brand-icon" src="../assets/icons/icon-192.png?v=20261005" width="40" height="40" alt="">Emotion Wheel</span><div class="header-actions"><div class="theme-control"><label for="info-theme">Theme</label><select class="info-theme-select" id="info-theme"><option value="light">Light</option><option value="dark">Dark</option><option value="muted-light">Muted Light</option><option value="muted-dark">Muted Dark</option></select></div><a class="button" href="../index.html">Back to the app</a></div></div></header>
 <main id="main-content" tabindex="-1">
   <h1>Accessibility and design</h1>
   <p>Emotion Wheel follows Tim Dixon's design system.</p>
@@ -36,17 +42,18 @@
       <li>Hidden controls are removed from the visual layout and accessibility tree.</li>
       <li>Intensity uses labelled decrease and increase buttons with announced values instead of requiring a screen-reader slider gesture.</li>
       <li>The mobile in-flow action area uses the same Record button rather than adding an overlay or duplicate control.</li>
-      <li>Logs, Charts and Maintenance sections expand when their tab opens. Log filters have visible labels and an announced result count.</li>
+      <li>Logs, Charts and My Data sections expand when their tab opens. Log filters have visible labels and an announced result count.</li>
       <li>Dense log tables use keyboard-focusable horizontal scrolling rather than cramped text wrapping. Emotion colours are supplementary to the written emotion names.</li>
       <li>Tables include captions and column headings. Less-dense tables become labelled row cards on small screens; log tables retain columns and expose labelled horizontal scrolling.</li>
       <li>Charts include visible keys, written summaries and matching data tables. Shared chart images include the displayed key.</li>
+      <li>Backup restore, cleanup and conflict choices appear within the page, with labelled controls. A visible sync-error banner links to the issue in My Data. Google’s own sign-in and file picker use interfaces provided by Google, which may open a separate account window.</li>
     </ul>
   </section>
   <section class="panel">
     <h2>Responsive behaviour</h2>
-    <p>On smaller screens, Entry, Review Logs, Review Charts, Maintenance and the theme selector collapse into one header Menu button. The selected entry actions stay reachable at the bottom of the viewport. Chart controls expose only the picker relevant to the selected day, week or month view.</p>
+    <p>On smaller screens, Entry, Logs, Charts, My Data, Data Shared with Me, Help, the data-set selector, Sync status and the theme selector collapse into one header Menu button. The selected entry actions stay reachable at the bottom of the viewport. Chart controls expose only the picker relevant to the selected day, week or month view.</p>
   </section>
 </main>
-<footer><nav aria-label="Information pages"><span data-app-version></span><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span><a href="licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html">Privacy</a><span class="sep" aria-hidden="true">·</span><a href="accessibility.html" aria-current="page">Accessibility and design</a><span class="sep" aria-hidden="true">·</span><a href="about.html">About</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/contact/" target="_blank" rel="noopener">Contact / feedback</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/" target="_blank" rel="noopener">© Tim Dixon</a></nav></footer>
+<footer><nav aria-label="Information pages"><a href="help.html">Help</a><span class="sep" aria-hidden="true">·</span><span data-app-version></span><span class="sep" aria-hidden="true">·</span><a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span><a href="licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span><a href="privacy.html">Privacy</a><span class="sep" aria-hidden="true">·</span><a href="accessibility.html" aria-current="page">Accessibility and design</a><span class="sep" aria-hidden="true">·</span><a href="about.html">About</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/contact/" target="_blank" rel="noopener">Contact / feedback</a><span class="sep" aria-hidden="true">·</span><a href="https://www.timdixon.net/" target="_blank" rel="noopener">© Tim Dixon</a></nav></footer>
 </body>
 </html>

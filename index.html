@@ -2,10 +2,19 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
+  <link rel="icon" href="assets/icons/favicon.ico?v=20261005" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="assets/icons/favicon-32.png?v=20261005" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=20261005" sizes="180x180">
+  <link rel="manifest" href="assets/manifest.webmanifest">
+  <meta name="theme-color" content="#0c3b64">
+  <meta name="apple-mobile-web-app-title" content="Emotion Wheel">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
   <script src="assets/version.js" defer></script>
+  <script src="assets/google-drive.js" defer></script>
+  <script src="assets/google-drive-sync.js" defer></script>
+  <script src="assets/google-drive-ui.js" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
     @font-face {
@@ -65,7 +74,8 @@
       max-width: 980px; min-height: 4.25rem; margin: 0 auto; padding: .625rem 1rem;
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .app-brand { display: flex; line-height: 1.1; min-width: 0; }
+    .app-brand { display: flex; align-items: center; gap: .625rem; line-height: 1.1; min-width: 0; }
+    .app-brand-icon { width: 2.5rem; height: 2.5rem; flex: none; border-radius: .5rem; }
     .app-brand-name { color: var(--nav-active); font-size: 1.25rem; font-weight: 800; margin: 0; }
     .header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
     .theme-control { display: flex; align-items: center; gap: .5rem; }
@@ -76,18 +86,18 @@
     .menu-toggle { display: none; }
     .app-navigation { max-width: 980px; margin: 0 auto; padding: 0 1rem .75rem; }
     .app-nav-list, .app-nav-sublist {
-      display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
+      flex-wrap: wrap; display: flex; align-items: center; gap: .5rem; list-style: none; margin: 0; padding: 0;
     }
     .app-nav-group { display: flex; align-items: center; gap: .5rem; }
     .app-nav-label {
       position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
     }
-    .menu-toggle, .app-navigation button {
+    .menu-toggle, .app-navigation button, .app-navigation a.button {
       min-height: 2.75rem; padding: .5rem .875rem; border-color: #ffffff80;
       background: transparent; color: var(--nav-active);
     }
-    .menu-toggle:hover, .app-navigation button:hover {
+    .menu-toggle:hover, .app-navigation button:hover, .app-navigation a.button:hover {
       background: rgb(255 255 255 / 12%); color: var(--nav-active);
     }
     .app-navigation button[aria-current="page"] {
@@ -109,6 +119,29 @@
     }
     .settings-panel, .status, .log-panel { background: var(--panel); }
     .workspace-panel { margin-top: 1rem; }
+    .nav-data-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: .5rem; }
+    .nav-data-controls .dataset-picker { flex: 1 1 18rem; max-width: 26rem; margin: 0; }
+    .nav-drive-controls { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .dataset-picker { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin: .75rem 0 0; }
+    .dataset-picker label { font-weight: 700; color: var(--nav-active); }
+    .dataset-picker select { flex: 1; min-width: 0; max-width: 100%; }
+    .mobile-dataset-indicator { display: none; }
+    .drive-task { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .drive-task h2 { margin-top: 0; }
+    .table-scroll { max-width: 100%; overflow-x: auto; }
+    #sharedDriveFilesTable, #googleDriveBackupsTable { min-width: 42rem; }
+    #sharedDriveFilesTable td[colspan="3"], #googleDriveBackupsTable td[colspan="3"] { width: auto; }
+    .drive-feedback:focus, #googleDriveConflictHeading:focus, #googleMaintenanceAccountStatus:focus, #googleDriveLastSyncStatus:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    #sharedDriveFilesTable button, #googleDriveBackupsTable button { margin: .25rem; }
+    #sharedDriveFilesTable td:first-child, #googleDriveBackupsTable td:first-child { width: 45%; min-width: 20rem; }
+    .drive-name-input, #googleDriveBackupComment, #googleDriveBackupName, #googleDriveRecipientEmail, #googleDriveShareLink { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; min-height: 3.25rem; padding: .75rem; font-size: 1.1rem; }
+    .drive-name-editor { margin-top: .5rem; }
+    .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
+    .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
+    .drive-feedback { padding: .75rem; border-left: 4px solid var(--focus); overflow-wrap: anywhere; }
+    .sync-copy-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow-y: auto; }
+
+
     details {
       border: 1px solid var(--border); border-radius: .625rem; background: var(--bg);
       margin: 1rem 0; box-shadow: var(--shadow);
@@ -284,11 +317,18 @@
     .site-footer .sep { color: var(--muted); }
     @media (max-width: 600px) {
       .app-header-inner { min-height: 0; align-items: center; flex-direction: row; flex-wrap: wrap; gap: .5rem; }
-      .header-actions { gap: .4rem; }
+      .app-brand { flex: 1; }
+      .app-brand-name { font-size: 1rem; }
+      .header-actions { flex: 0 0 auto; gap: .4rem; }
       .desktop-theme-control { display: none; }
       .menu-toggle { display: inline-flex; padding: .5rem .65rem; }
       .app-navigation { display: none; padding: .25rem .75rem .75rem; }
-      .app-navigation.is-open { display: block; }
+      .app-navigation.is-open { display: block; max-height: calc(100dvh - 4.25rem); overflow-y: auto; }
+      .mobile-dataset-indicator { display: block; width: calc(100% - 1.5rem); margin: 0 .75rem; padding: .25rem 0; min-height: 2rem; border: 0; font-size: .875rem; background: transparent; color: var(--nav-active); }
+      .nav-data-controls { flex-direction: column; align-items: stretch; }
+      .nav-data-controls .dataset-picker { flex: none; width: 100%; max-width: 100%; }
+      .nav-drive-controls { display: grid; grid-template-columns: 1fr 1fr; }
+      .dataset-picker { flex-direction: column; align-items: stretch; }
       .app-nav-list, .app-nav-sublist { display: grid; grid-template-columns: minmax(0, 1fr); gap: .35rem; }
       .app-nav-group { display: grid; gap: .35rem; }
       .app-nav-label {
@@ -296,13 +336,25 @@
         overflow: visible; clip: auto; white-space: normal; color: var(--nav-text); font-weight: 700;
       }
       .app-nav-sublist { padding-left: 1rem; }
-      .app-navigation button { width: 100%; }
+      .app-navigation button, .app-navigation a.button { width: 100%; }
       .mobile-theme-control {
         display: flex; align-items: stretch; flex-direction: column; gap: .25rem;
         margin-top: .75rem; padding-top: .75rem; border-top: 1px solid #ffffff80;
       }
       .mobile-theme-control label { color: var(--nav-text); font-weight: 700; }
       .mobile-theme-control select { width: 100%; }
+      #sharedDriveFilesTable, #googleDriveBackupsTable { min-width: 0; }
+      #sharedDriveFilesTable, #sharedDriveFilesTable tbody, #sharedDriveFilesTable tr, #googleDriveBackupsTable, #googleDriveBackupsTable tbody, #googleDriveBackupsTable tr { display: block; width: 100%; }
+      #sharedDriveFilesTable caption, #googleDriveBackupsTable caption { display: block; }
+      #sharedDriveFilesTable thead, #googleDriveBackupsTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+      #sharedDriveFilesTable tbody tr, #googleDriveBackupsTable tbody tr { margin: .75rem 0; border: 1px solid var(--border); border-radius: .5rem; }
+      #sharedDriveFilesTable td, #sharedDriveFilesTable td:first-child, #googleDriveBackupsTable td, #googleDriveBackupsTable td:first-child { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .5rem; width: 100%; min-width: 0; border: 0; }
+      #sharedDriveFilesTable td::before, #googleDriveBackupsTable td::before { content: attr(data-label); font-weight: 700; }
+      #sharedDriveFilesTable td.drive-file-actions, #sharedDriveFilesTable td[colspan="3"], #googleDriveBackupsTable td.drive-file-actions, #googleDriveBackupsTable td[colspan="3"] { display: block; }
+      #sharedDriveFilesTable td.drive-file-actions::before, #googleDriveBackupsTable td.drive-file-actions::before { display: block; }
+      #sharedDriveFilesTable td[colspan="3"]::before, #googleDriveBackupsTable td[colspan="3"]::before { display: none; }
+      #sharedDriveFilesTable .drive-file-actions button, #googleDriveBackupsTable .drive-file-actions button { width: calc(50% - .5rem); justify-content: center; }
+      .drive-name-editor button { width: calc(50% - .5rem); margin-top: .5rem; }
       main { padding: .75rem; }
       h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
       .intro { margin: 0 0 .75rem; font-size: .95rem; }
@@ -377,6 +429,7 @@
 <header class="app-header">
   <div class="app-header-inner">
     <div class="app-brand">
+      <img class="app-brand-icon" src="assets/icons/icon-192.png?v=20261005" width="40" height="40" alt="">
       <h1 class="app-brand-name">Emotion Wheel - Tracking your emotions</h1>
     </div>
     <div class="header-actions">
@@ -402,8 +455,19 @@
           <li><button type="button" id="chartsTab" aria-controls="chartsPanel">Charts</button></li>
         </ul>
       </li>
-      <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">Maintenance</button></li>
+      <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">My Data</button></li>
+      <li><button type="button" id="shareMyDataMenuButton" aria-controls="googleDriveSharingSection">Share My Data</button></li>
+      <li><button type="button" id="sharedDataTab" aria-controls="sharedDataPanel">Data Shared with Me</button></li>
+      <li><a class="button" href="docs/help.html">Help</a></li>
     </ul>
+    <div class="nav-data-controls">
+  <div id="reviewDatasetPicker" class="dataset-picker">
+    <label for="reviewDatasetSelect">Data to view</label>
+    <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
+    <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Data Shared with Me.</p>
+  </div>
+  <div class="nav-drive-controls"><button type="button" id="googleDriveSyncSummaryButton">Sync Off</button></div>
+    </div>
     <div class="theme-control mobile-theme-control">
       <label for="mobileThemeMode">Theme</label>
       <select id="mobileThemeMode">
@@ -414,12 +478,17 @@
       </select>
     </div>
   </nav>
+  <button type="button" id="reviewDatasetIndicator" class="mobile-dataset-indicator" hidden>Shared data · read only</button>
 </header>
 <main id="main-content" tabindex="-1">
+  <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
+    <p id="googleDriveSyncIssueMessage" role="alert"></p>
+    <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
+  </section>
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
     <h2 id="dataUpgradeHeading">New features are here!</h2>
     <p id="dataUpgradeDescription">Back up your records before updating.</p>
-    <p>Download a backup, check that it has saved, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
+    <p>Save an original backup to this device or Google Drive, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
     <section aria-labelledby="dataUpgradeWhatsNewHeading">
       <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
       <ul>
@@ -431,6 +500,7 @@
       <p>These extra capture fields are optional. Your existing records and older backups remain supported.</p>
     </section>
     <button type="button" id="downloadBeforeUpgrade">Download original data backup</button>
+    <button type="button" id="driveBeforeUpgrade">Connect Google and back up</button>
     <button type="button" id="continueDataUpgrade" disabled>Backup saved — update</button>
     <p id="dataUpgradeStatus" role="status"></p>
   </section>
@@ -482,8 +552,9 @@
               <p id="ratingScaleWarning"></p>
               <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
               <p id="ratingScaleExample"></p>
-              <p>Save a backup first so you can keep your original ratings. Check the file has saved before confirming below.</p>
+              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
               <button type="button" id="downloadBeforeScaleChange">Download backup</button>
+              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
               <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
               <p id="ratingScaleConversionStatus" role="status" aria-live="polite"></p>
               <div class="actions">
@@ -628,7 +699,7 @@
     <section id="entryNoteSection" class="comment-field" aria-labelledby="entryNoteHeading">
       <h3 id="entryNoteHeading">Add an optional note</h3>
       <label for="entryComment">Note</label>
-      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
+      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It is saved with your record, including in any exports or Google Drive backups and sync you choose.</p>
       <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
     </section>
 
@@ -663,10 +734,12 @@
   </section>
 
   <section id="reviewPanel" class="workspace-panel" hidden>
+
+
   <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
     <h2 id="log-heading">Local emotion log</h2>
-    <p class="help">Records are stored only in this browser on this device using local storage. They are not sent anywhere.</p>
+    <p id="logSourceHelp" class="help">Records are stored in this browser. Optional Drive sync shares changes only when you enable it.</p>
     <p id="logSummary" aria-live="polite" tabindex="-1">No emotions recorded yet.</p>
     <button type="button" id="emptyLogEntryButton" class="empty-action">Record your first emotion</button>
     <div id="logActionNotice" class="confirmation" tabindex="-1" hidden>
@@ -754,12 +827,12 @@
             <th scope="col">Middle circle</th>
             <th scope="col">Outer circle</th>
             <th scope="col">Appropriate</th>
-            <th scope="col">Expected intensity</th>
-            <th scope="col">Actual intensity</th>
+            <th scope="col" id="logExpectedHeading">Expected intensity</th>
+            <th scope="col" id="logActualHeading">Actual intensity</th>
             <th scope="col">Alignment</th>
             <th scope="col">Physical sensations</th>
             <th scope="col">Tags</th>
-            <th scope="col">Emotion bucket level</th>
+            <th scope="col" id="logBucketHeading">Emotion bucket level</th>
             <th scope="col">Note</th>
             <th scope="col">Actions</th>
           </tr>
@@ -839,7 +912,7 @@
       <h3>Emotions by bucket level</h3>
       <label>Filter by tag <select id="bucketAnalysisTag"><option value="">All tags</option></select></label>
       <p id="bucketEmotionSummary" class="help" aria-live="polite"></p>
-      <p class="help">Cell numbers show entry counts; darker cells mean more entries. 10 is full. Select a cell to review matching logs. Detailed emotions are grouped under their inner-circle category.</p>
+      <p class="help">Cell numbers show entry counts; darker cells mean more entries. The highest level is full. Select a cell to review matching logs. Detailed emotions are grouped under their inner-circle category.</p>
       <section class="scroll-table log-table" tabindex="0" aria-label="Emotion and bucket level heatmap. Scroll horizontally to see every level."><table><caption>Emotion counts at each bucket level</caption><thead id="bucketEmotionHead"></thead><tbody id="bucketEmotionBody"></tbody></table></section>
       </div>
     </details>
@@ -1005,17 +1078,17 @@
   </section>
   </section>
 
-  <section id="maintenancePanel" class="workspace-panel" aria-label="Maintenance" tabindex="-1" hidden>
+  <section id="maintenancePanel" class="workspace-panel" aria-label="My Data" tabindex="-1" hidden>
   <details id="export-data" class="export-panel" open>
-    <summary>Save, load, and manage data</summary>
+    <summary>Back up or load your own data</summary>
     <div class="details-content">
-    <p class="help">CSV files are for reading and sharing. Backup files are JSON so they can be loaded back into this page. Clearing the local log only affects this browser.</p>
+    <p class="help">Save a backup to keep a copy of your own records. Load a backup to add its records or replace your current log. CSV exports can be read in a spreadsheet.</p>
     <div class="actions">
-      <button type="button" id="exportTallyButton" disabled>Export tally as CSV</button>
-      <button type="button" id="exportLogButton" disabled>Export full log as CSV</button>
+      <button type="button" id="exportTallyButton" disabled>Export emotion counts (CSV)</button>
+      <button type="button" id="exportLogButton" disabled>Export records (CSV)</button>
       <button type="button" id="saveBackupButton" disabled>Save backup file</button>
-      <button type="button" id="loadMergeButton">Load and merge</button>
-      <button type="button" id="loadReplaceButton">Load and replace</button>
+      <button type="button" id="loadMergeButton">Add records from a backup</button>
+      <button type="button" id="loadReplaceButton">Replace log from a backup</button>
       <button type="button" id="clearLogButton" class="danger" disabled>Clear local log</button>
     </div>
     <label for="loadBackupInput" class="visually-hidden">Choose a backup file to load (JSON format)</label>
@@ -1023,9 +1096,153 @@
     <p id="loadBackupStatus" class="help" aria-live="polite"></p>
     </div>
   </details>
+  <details id="google-drive" class="export-panel" open>
+    <summary>Google Drive (optional)</summary>
+    <div class="details-content">
+      <p id="googleMaintenanceAccountStatus" class="help" tabindex="-1">Google Drive is disconnected.</p>
+      <p class="help">Connect your Google account to save your data online or open files people have shared with you. Google Drive is optional.</p>
+      <div class="actions">
+        <button type="button" id="connectGoogleDriveButton">Connect Google Drive</button>
+        <button type="button" id="disconnectGoogleDriveButton" disabled>Disconnect Google Drive</button>
+      </div>
+      <p id="googleDriveConnectionStatus" class="help" role="status"></p>
+      <section class="drive-task" aria-labelledby="myDriveDataHeading">
+        <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
+        <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
+        <div id="googleDriveOwnDataPrompt" hidden><p>You are viewing another dataset. Switch to My local data before saving, starting sync or restoring your own data. Any automatic sync already running continues to sync only your own local data.</p><button type="button" id="useLocalDataForDriveButton">Use My local data</button></div>
+        <div class="actions">
+          <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
+          <button type="button" id="saveGoogleDriveButton" disabled>Save to Drive</button>
+        </div>
+        <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
+        <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
+        <section id="googleDriveConflict" aria-labelledby="googleDriveConflictHeading" hidden>
+          <h3 id="googleDriveConflictHeading" tabindex="-1">Resolve conflicting changes</h3>
+          <p id="googleDriveConflictExplanation">Choose which version to keep for each conflicting record. Other changes are merged automatically. Both original copies will be saved as recovery backups first.</p>
+          <div id="googleDriveConflictRecords"></div>
+          <div class="actions"><button type="button" id="confirmGoogleDriveConflictButton">Save recovery backups and apply choices</button><button type="button" id="cancelGoogleDriveConflictButton">Keep sync paused</button></div>
+        </section>
+        <p id="googleDriveStatus" class="drive-feedback" role="status" hidden></p>
+        <section aria-labelledby="googleDriveBackupsHeading">
+          <h3 id="googleDriveBackupsHeading" tabindex="-1">Your Drive backups</h3>
+          <label for="googleDriveBackupComment">Backup comment (optional, up to 80 characters)</label><input id="googleDriveBackupComment" type="text" maxlength="80" placeholder="For example, before changing ratings">
+          <div class="actions"><button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button><button type="button" id="restoreGoogleDriveBackupButton" disabled>Refresh backups</button></div>
+          <p id="googleDriveBackupListMessage">Connect Google to see your dated backups.</p>
+          <table id="googleDriveBackupsTable"><caption>Dated backups — newest first</caption><thead><tr><th scope="col">Backup name</th><th scope="col">Created</th><th scope="col">Comment</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveBackupsBody"></tbody></table>
+          <p id="googleDriveBackupsStatus" class="drive-feedback" role="status"></p>
+          <section id="googleDriveBackupTrashPanel" aria-labelledby="googleDriveBackupTrashHeading" hidden>
+            <h4 id="googleDriveBackupTrashHeading" tabindex="-1">Move backup to Trash?</h4>
+            <p id="googleDriveBackupTrashSummary"></p>
+            <button type="button" id="confirmGoogleDriveBackupTrashButton">Move this backup to Trash</button><button type="button" id="cancelGoogleDriveBackupTrashButton">Keep backup</button>
+          </section>
+        <details id="googleDriveBackupSettings">
+          <summary>Backup settings</summary>
+          <div class="details-content">
+            <label for="googleDriveBackupName">Backup file name</label><input id="googleDriveBackupName" type="text" maxlength="80" value="Emotion Wheel backup">
+            <label for="googleDriveBackupLimit">Backups to keep</label><input id="googleDriveBackupLimit" type="number" min="1" max="100" step="1" value="5">
+            <p class="help">Extra backups are listed oldest first. You choose whether to move them to Trash; your current file is always kept.</p>
+            <p class="help">Current file: Emotion Wheel / Emotion Wheel current.json<br>Backups: Emotion Wheel / Backups / date/time - backup name - optional comment.json</p>
+          </div>
+        </details>
+        <section id="googleDriveBackupCleanup" aria-labelledby="googleDriveCleanupHeading" hidden>
+          <h4 id="googleDriveCleanupHeading" tabindex="-1">Review older backups</h4>
+          <p id="googleDriveCleanupSummary"></p><ul id="googleDriveCleanupList"></ul>
+          <button type="button" id="confirmGoogleDriveCleanupButton">Move these backups to Trash</button><button type="button" id="cancelGoogleDriveCleanupButton">Keep all backups</button>
+        </section>
+        </section>
+        <section id="googleDriveRestorePanel" aria-labelledby="googleDriveRestoreHeading" hidden>
+          <h3 id="googleDriveRestoreHeading" tabindex="-1">Restore a Drive backup</h3>
+          <p>You selected a backup from your Emotion Wheel / Backups folder. Restoring replaces your local data and your current Drive file, including ratings and capture settings. People you share with will see the restored data. Automatic sync pauses until you start it again.</p>
+          <p id="googleDriveRestoreSummary" role="status"></p>
+          <p>Your device and current Drive data will be saved as recovery backups before anything is replaced. Other devices with unsynced changes must review them before syncing.</p>
+          <button type="button" id="confirmGoogleDriveRestoreButton" disabled>Restore this backup</button>
+          <button type="button" id="cancelGoogleDriveRestoreButton">Cancel</button>
+          <p id="googleDriveRestoreStatus" class="drive-feedback" role="status"></p>
+        </section>
+      </section>
+    </div>
+  </details>
   </section>
 
 
+
+      <section id="googleDriveSharingSection" class="workspace-panel" aria-labelledby="shareMyDataHeading" tabindex="-1" hidden>
+        <h2 id="shareMyDataHeading" tabindex="-1">Share My Data</h2>
+        <p id="sharingGoogleAccountStatus" class="help">Google is disconnected.</p>
+        <p id="sharingGoogleConnectionStatus" class="drive-feedback" role="status" hidden></p>
+        <p>Give someone read-only access to your current Drive file, then send them the link. It stays up to date when you save or sync. Google checks their account before opening it.</p>
+        <div class="actions"><button type="button" id="sharingConnectGoogleButton">Connect Google</button><span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Add person</button></span><button type="button" id="refreshGoogleDriveSharingButton" disabled>Refresh who has access</button></div>
+        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
+        <p id="googleDriveAccessMessage" role="status">Connect Google to see who has access.</p>
+        <table id="googleDriveAccessTable" hidden><caption>People with access to this file</caption><thead><tr><th scope="col">Person</th><th scope="col">Permission</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveAccessBody"></tbody></table>
+        <p class="help">The link is the same for everyone. Stopping access cannot remove copies already downloaded.</p>
+        <section id="googleDriveStopSharingPanel" hidden aria-labelledby="googleDriveStopSharingHeading"><h3 id="googleDriveStopSharingHeading" tabindex="-1">Stop sharing?</h3><p id="googleDriveStopSharingMessage"></p><div class="actions"><button type="button" id="confirmGoogleDriveStopSharingButton">Stop sharing</button><button type="button" id="cancelGoogleDriveStopSharingButton">Keep access</button></div></section>
+      <section id="googleDriveSharingResult" aria-labelledby="googleDriveShareLinkHeading" hidden>
+        <h3 id="googleDriveShareLinkHeading" tabindex="-1">Send this link</h3>
+        <p id="googleDriveShareLinkMessage"></p>
+        <label for="googleDriveShareLink">Emotion Wheel sharing link</label>
+        <input id="googleDriveShareLink" type="url" readonly>
+        <div class="actions"><button type="button" id="shareGoogleDriveLinkButton">Share link</button><button type="button" id="copyGoogleDriveResultLinkButton">Copy link</button><button type="button" id="closeGoogleDriveSharingResultButton" hidden>Done</button></div>
+        <p id="googleDriveShareSheetStatus" role="status"></p>
+      </section>
+      <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
+        <h3 id="googleDriveSharingHeading" tabindex="-1">Share your data</h3>
+        <p id="googleDriveSharingSelectedFile"></p>
+        <p class="help">They can view and download all records, including notes. They cannot edit your Drive file.</p>
+        <label for="googleDriveRecipientEmail">Their Google account email</label>
+        <input id="googleDriveRecipientEmail" type="email" maxlength="254" required autocomplete="email">
+        <div class="actions">
+          <button type="button" id="giveGoogleDriveAccessButton">Give access and get link</button>
+          <button type="button" id="cancelGoogleDriveSharingButton">Cancel</button>
+        </div>
+        <details id="googleDriveShareOptions">
+          <summary>Share options</summary>
+          <div class="details-content">
+            <button type="button" id="chooseGoogleDriveSharingFileButton">Choose another file I own</button>
+            <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification</label>
+            <p class="help">Removing access later cannot remove copies they have already downloaded.</p>
+          </div>
+        </details>
+      </section>
+      </section>
+
+  <section id="sharedDataPanel" class="workspace-panel" aria-label="Data Shared with Me" tabindex="-1" hidden>
+      <div>
+        <h2 id="manageDriveFilesHeading">Data Shared with Me</h2>
+  <section id="googleDriveLinkPrompt" hidden tabindex="-1" aria-labelledby="googleDriveLinkHeading" aria-describedby="googleDriveLinkMessage">
+    <h3 id="googleDriveLinkHeading">Open shared data</h3>
+    <p id="googleDriveLinkMessage">Connect your Google account to access the shared data.</p>
+    <p class="help">Shared logs and charts are read only. Your own records stay unchanged.</p>
+    <p id="googleDriveLinkStatus" class="drive-feedback" role="status"></p>
+    <div class="actions">
+      <button type="button" id="googleDriveLinkSignInButton">Connect Google</button>
+      <button type="button" id="googleDriveLinkPickerButton" hidden>Choose the shared file</button>
+      <button type="button" id="googleDriveLinkCancelButton">Use my own data</button>
+    </div>
+    <p><a id="googleDriveLinkAccessPage" href="https://drive.google.com/" target="_blank" rel="noopener noreferrer" hidden>Request access in Google Drive</a></p>
+  </section>
+      <div id="sharedDataManagement">
+        <p id="sharedDataAccountStatus" class="help">Connect Google to open shared files.</p>
+        <button type="button" id="sharedDataConnectButton">Connect Google</button>
+        <p id="sharedDataConnectionStatus" class="drive-feedback" role="status" hidden></p>
+        <p>View shared data in Logs and Charts. Names are saved only in this browser. Removing a file from this list keeps it in Google Drive.</p>
+        <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
+        <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
+        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
+        <p id="sharedDriveFilesEmpty">No shared files added yet.</p>
+        <div class="table-scroll"><table id="sharedDriveFilesTable" hidden>
+          <caption>Files you can view</caption><thead><tr><th scope="col">Name</th><th scope="col">Owner</th><th scope="col">Actions</th></tr></thead>
+          <tbody id="sharedDriveFilesBody"></tbody>
+        </table></div>
+    <p id="reviewDatasetStatus" hidden>Viewing my local data.</p>
+      <div id="googleDriveSharedPreview" hidden>
+        <p id="googleDriveSharedSummary" hidden></p>
+        <button type="button" id="refreshGoogleDrivePreviewButton" hidden>Refresh shared backup</button>
+        <button type="button" id="closeGoogleDrivePreviewButton" hidden>Return to my local data</button>
+      </div>
+      </div>
+      </div>
+  </section>
 
   <dialog id="backupConflictDialog" aria-labelledby="backupConflictHeading">
     <h2 id="backupConflictHeading">Choose which record to keep</h2>
@@ -1042,11 +1259,12 @@
 </main>
 
 <footer class="site-footer">
-  <p><strong>Your emotion records stay on this device</strong> unless you deliberately export, copy, or share them. Anonymous pageview statistics are collected as described in the Privacy notice.</p>
+  <p><strong>Your emotion records are saved on this device.</strong> You can also choose exports, sharing, or optional Google Drive saving and sync. Anonymous pageview statistics are collected as described in the Privacy notice.</p>
   <nav aria-label="App information">
     <span data-app-version></span><span class="sep" aria-hidden="true">·</span>
     <a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span>
+    <a href="docs/help.html">Help</a><span class="sep" aria-hidden="true">·</span><a href="docs/help.html#home-screen">Add to phone or computer</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/privacy.html">Privacy</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/accessibility.html">Accessibility and design</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/about.html">About</a>
@@ -1250,7 +1468,11 @@ const sensationsChartBody = document.getElementById('sensationsChartBody');
 const menuToggle = document.getElementById('menuToggle');
 const appNavigation = document.getElementById('appNavigation');
 const entryTab = document.getElementById('entryTab');
+const sharedDataTab = document.getElementById('sharedDataTab');
+const sharedDataPanel = document.getElementById('sharedDataPanel');
 const maintenanceTab = document.getElementById('maintenanceTab');
+const shareMyDataTab = document.getElementById('shareMyDataMenuButton');
+const shareMyDataPanel = document.getElementById('googleDriveSharingSection');
 const entryPanel = document.getElementById('entryPanel');
 const reviewPanel = document.getElementById('reviewPanel');
 const maintenancePanel = document.getElementById('maintenancePanel');
@@ -1265,6 +1487,38 @@ let selectedOuter = null;
 let ratingScale = loadRatingScale();
 let captureSettings = loadSettings();
 let logEntries = loadLog();
+let reviewDataset = null;
+
+function getReviewDataset() {
+  return reviewDataset;
+}
+
+function getReviewEntries() {
+  return reviewDataset ? reviewDataset.entries : logEntries;
+}
+
+function getReviewScale() {
+  return reviewDataset ? reviewDataset.ratingScale : ratingScale;
+}
+
+function getReviewTags() {
+  return reviewDataset
+    ? normalizeTags([...(reviewDataset.tags || []), ...reviewDataset.entries.flatMap(entry => normalizeTags(entry.tags))])
+    : getAvailableTags();
+}
+
+function setReviewDataset(dataset) {
+  reviewDataset = dataset;
+  resetLogFilters();
+  resetChartFilters();
+  chartPeriod.value = 'all';
+  logActionNotice.hidden = true;
+  entryTab.disabled = Boolean(dataset);
+  if (dataset && currentAppView === 'entry') selectAppView(logsTab);
+  renderAll();
+  liveStatus.textContent = dataset ? `Viewing ${dataset.label}. Shared data is read only; Entry is unavailable.` : 'Viewing my local data. Entry and log editing are available.';
+  document.dispatchEvent(new Event('reviewdatasetchange'));
+}
 const upgradeDisabledControls = new Map();
 let upgradeEditingObserver;
 let pendingLoadMode = 'merge';
@@ -1310,14 +1564,18 @@ function setMenuOpen(open) {
 }
 
 function selectAppView(selectedButton, focusContent = false) {
+  if (selectedButton === entryTab && getReviewDataset()) return;
   const views = [
     { name: 'entry', button: entryTab, panel: entryPanel },
     { name: 'logs', button: logsTab, panel: logsPanel },
     { name: 'charts', button: chartsTab, panel: chartsPanel },
+    { name: 'shared', button: sharedDataTab, panel: sharedDataPanel },
+    { name: 'sharing', button: shareMyDataTab, panel: shareMyDataPanel },
     { name: 'maintenance', button: maintenanceTab, panel: maintenancePanel }
   ];
   const selectedView = views.find(view => view.button === selectedButton) || views[0];
   currentAppView = selectedView.name;
+  document.dispatchEvent(new Event('appviewchange'));
 
   views.forEach(view => {
     if (view === selectedView) view.button.setAttribute('aria-current', 'page');
@@ -1327,9 +1585,12 @@ function selectAppView(selectedButton, focusContent = false) {
   reviewPanel.hidden = !['logs', 'charts'].includes(currentAppView);
   logsPanel.hidden = currentAppView !== 'logs';
   chartsPanel.hidden = currentAppView !== 'charts';
+  document.querySelector('.intro').hidden=currentAppView!=='entry';
+  sharedDataPanel.hidden = currentAppView !== 'shared';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
+  shareMyDataPanel.hidden = currentAppView !== 'sharing';
   if (currentAppView !== 'entry') {
-    selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters)').forEach(details => {
+    selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters):not(#googleDriveBackupSettings):not(#googleDriveShareOptions)').forEach(details => {
       details.open = true;
     });
   }
@@ -1361,11 +1622,11 @@ function serializeDataset(entries, scale = ratingScale) {
   return JSON.stringify({ schemaVersion: dataSchemaVersion, ratingScale: scale, entries });
 }
 
-function migrateLocalDataset() {
+function migrateLocalDataset(prepared) {
   const raw = localStorage.getItem(storageKey);
   const dataset = parseLocalDataset(raw);
   const entries = dataset.entries;
-  const migrated = entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
+  const migrated = prepared?.entries || entries.map(entry => ({ ...ensureEntryIdentity(entry), ...(!entry.id ? { legacyIdentity: true } : {}) }));
   // Preserve the exact original before any write; a failed snapshot blocks migration.
   if (!localStorage.getItem(`${storageKey}BeforeSchemaMigration`)) localStorage.setItem(`${storageKey}BeforeSchemaMigration`, JSON.stringify({ schemaVersion: Number(localStorage.getItem(schemaVersionKey)) || 1, rawEntries: raw, rawSettings: localStorage.getItem(settingsKey) }));
   localStorage.setItem(storageKey, serializeDataset(migrated, dataset.ratingScale));
@@ -1421,13 +1682,15 @@ function checkLocalDataSchema() {
   download.addEventListener('click', () => {
     const originalDataset = parseLocalDataset(raw);
     const originalEntries = originalDataset.entries;
-    downloadText('emotion-wheel-before-update.json', JSON.stringify({ version: 3, schemaVersion: version, ratingScale: originalDataset.ratingScale, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
+    downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-before-update.json`, JSON.stringify({ version: 3, schemaVersion: version, ratingScale: originalDataset.ratingScale, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
     proceed.disabled = false;
     status.textContent = 'Backup download requested. Check the file has saved before selecting “Backup saved — update”.';
   });
-  proceed.addEventListener('click', () => {
+  proceed.addEventListener('click', async () => {
+    proceed.disabled=true;
     try {
-      migrateLocalDataset();
+      const prepared=await window.EmotionWheelDriveUI?.prepareLocalUpgrade();
+      migrateLocalDataset(prepared);
       if (!dataSchemaMatches()) throw new Error('Data schema version did not match after migration');
       upgradeEditingObserver.disconnect();
       upgradeDisabledControls.forEach((disabled, control) => { control.disabled = disabled; });
@@ -1435,8 +1698,9 @@ function checkLocalDataSchema() {
       renderAll();
       dialog.hidden = true;
       liveStatus.textContent = 'Data upgrade complete. Editing is now available.';
+      window.EmotionWheelDriveUI?.afterLocalUpgrade();
     }
-    catch (error) { status.textContent = 'The update could not complete. Your original data is retained in the local recovery snapshot if a write occurred. Keep your downloaded backup and free some browser storage before trying again.'; }
+    catch (error) { proceed.disabled=false;status.textContent = `${error.message} ` + 'The update could not complete. Your original data is retained in the local recovery snapshot if a write occurred. Keep your downloaded backup and free some browser storage before trying again.'; }
   });
   dialog.hidden = false;
 }
@@ -1716,8 +1980,9 @@ function renderOuter() {
 }
 
 function renderSelection() {
-  recordButton.disabled = !selectedInner;
+  recordButton.disabled = Boolean(getReviewDataset()) || !selectedInner;
   recordButton.textContent = editingEntry ? 'Save changes' : 'Record this emotion';
+  if (getReviewDataset()) return;
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -1750,6 +2015,7 @@ function clearEntryForm() {
 }
 
 function prepareEntry(entry, announcement, edit = false) {
+  if (getReviewDataset()) return;
   clearEntryForm();
   editingEntry = edit ? entry : null;
   selectedInner = entry.inner;
@@ -1892,7 +2158,15 @@ function renderRatingScale() {
   document.getElementById('advancedSettingsSummary').textContent = `Advanced settings — ratings out of ${ratingScale}`;
   document.getElementById('intensityScaleHelp').textContent = `Use the decrease and increase buttons to choose an intensity from 1 to ${ratingScale}. New ratings are aligned only when expected and actual are equal.`;
   document.getElementById('bucketHelp').textContent = `How full does your emotional bucket feel? Choose 1–${ratingScale}, where 1 is the lowest level and ${ratingScale} is full. This is separate from emotion intensity. It starts at ${Math.ceil(ratingScale / 2)} when enabled for capture.`;
-  document.getElementById('bucketChartScaleHelp').textContent = `Levels use a scale from 1 to ${ratingScale}, where ${ratingScale} is full. Missing levels are excluded from the average.`;
+  renderReviewScale();
+}
+
+function renderReviewScale() {
+  const scale = getReviewScale();
+  document.getElementById('bucketChartScaleHelp').textContent = `Levels use a scale from 1 to ${scale}, where ${scale} is full. Missing levels are excluded from the average.`;
+  document.getElementById('logExpectedHeading').textContent = `Expected intensity (1–${scale})`;
+  document.getElementById('logActualHeading').textContent = `Actual intensity (1–${scale})`;
+  document.getElementById('logBucketHeading').textContent = `Emotion bucket level (1–${scale})`;
   for (const prefix of ['', 'chart']) {
     for (const field of ['logExpectedFilter', 'logActualFilter', 'logBucketFilter']) {
       const container = document.getElementById(`${prefix}${field}`);
@@ -1900,9 +2174,9 @@ function renderRatingScale() {
       container.querySelectorAll('input').forEach(input => {
         if (input.value === '__missing') return;
         const label = input.closest('label');
-        label.hidden = Number(input.value) > ratingScale;
+        label.hidden = Number(input.value) > scale;
         if (label.hidden) input.checked = false;
-        label.lastChild.textContent = ` ${input.value}${field === 'logBucketFilter' && Number(input.value) === ratingScale ? ' — Full' : ''}`;
+        label.lastChild.textContent = ` ${input.value}${field === 'logBucketFilter' && Number(input.value) === scale ? ' — Full' : ''}`;
       });
     }
   }
@@ -1973,7 +2247,7 @@ document.getElementById('downloadBeforeScaleChange').addEventListener('click', (
   try {
     if (localStorage.getItem(storageKey) !== pendingRatingScaleChange.raw) throw new Error('The log changed. Cancel and try again.');
     const original = parseLocalDataset(pendingRatingScaleChange.raw);
-    downloadText('emotion-wheel-before-scale-change.json', JSON.stringify({
+    downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-before-scale-change.json`, JSON.stringify({
       version: 3, schemaVersion: dataSchemaVersion, ratingScale: original.ratingScale,
       exportedAt: new Date().toISOString(), settings: captureSettings, tags: getAvailableTags(), entries: original.entries
     }, null, 2), 'application/json;charset=utf-8');
@@ -2040,7 +2314,7 @@ function getTallyRows(entries = logEntries) {
   return rows;
 }
 
-function getFilteredLogEntries(entries = logEntries, filters = { logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo }) {
+function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo }) {
   const search = filters.logSearch.value.trim().toLowerCase();
   return entries.filter(entry => {
     const selectedEmotions = getCheckedFilterValues(filters.logInnerFilter);
@@ -2223,13 +2497,13 @@ function getChartFilterValues() {
 }
 
 function getChartEntries() {
-  if (chartUsesAdvancedFilters()) return getFilteredLogEntries(logEntries, getChartFilterValues());
-  if (chartPeriod.value === 'all') return logEntries;
+  if (chartUsesAdvancedFilters()) return getFilteredLogEntries(getReviewEntries(), getChartFilterValues());
+  if (chartPeriod.value === 'all') return getReviewEntries();
   const selectedDate = getSelectedChartDate();
-  if (!selectedDate || Number.isNaN(selectedDate.getTime())) return logEntries;
+  if (!selectedDate || Number.isNaN(selectedDate.getTime())) return getReviewEntries();
   const start = startOfPeriod(selectedDate, chartPeriod.value);
   const end = addPeriod(start, chartPeriod.value);
-  return logEntries.filter(entry => {
+  return getReviewEntries().filter(entry => {
     const date = new Date(entry.timestamp);
     return !Number.isNaN(date.getTime()) && date >= start && date < end;
   });
@@ -2245,7 +2519,7 @@ function getPreviousChartEntries() {
   if (chartPeriod.value === 'day') previousStart.setUTCDate(previousStart.getUTCDate() - 1);
   if (chartPeriod.value === 'week') previousStart.setUTCDate(previousStart.getUTCDate() - 7);
   if (chartPeriod.value === 'month') previousStart.setUTCMonth(previousStart.getUTCMonth() - 1, 1);
-  return logEntries.filter(entry => {
+  return getReviewEntries().filter(entry => {
     const date = new Date(entry.timestamp);
     return !Number.isNaN(date.getTime()) && date >= previousStart && date < currentStart;
   });
@@ -2548,8 +2822,8 @@ function renderMetricCards(metrics) {
 
   const rows = [
     ['Records with intensity', String(metrics.count)],
-    [`Average expected intensity (1–${ratingScale})`, metrics.expectedAverage.toFixed(1)],
-    [`Average actual intensity (1–${ratingScale})`, metrics.actualAverage.toFixed(1)],
+    [`Average expected intensity (1–${getReviewScale()})`, metrics.expectedAverage.toFixed(1)],
+    [`Average actual intensity (1–${getReviewScale()})`, metrics.actualAverage.toFixed(1)],
     ['Average actual minus expected', metrics.differenceAverage.toFixed(1)]
   ];
 
@@ -2592,8 +2866,8 @@ function renderTimeTable(timeRows, timeSeries) {
 }
 
 function renderCharts() {
-  const hasEntries = logEntries.length > 0;
-  emptyChartEntryButton.hidden = hasEntries;
+  const hasEntries = getReviewEntries().length > 0;
+  emptyChartEntryButton.hidden = hasEntries || Boolean(getReviewDataset());
   const chartEntries = getChartEntries();
   const topEmotions = getTopEmotionRows(chartEntries);
   const previousTopEmotions = getTopEmotionRows(getPreviousChartEntries());
@@ -2613,7 +2887,9 @@ function renderCharts() {
 
   renderChartPeriodControls();
   innerSeriesControls.hidden = timeMeasure.value !== 'inner';
-  chartsSummary.textContent = hasEntries
+  chartsSummary.textContent = getReviewDataset()?.state === 'loading' ? 'Loading the selected file…'
+    : getReviewDataset()?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Data Shared with Me.'
+    : hasEntries
     ? `${chartEntries.length} emotion record${chartEntries.length === 1 ? '' : 's'} available for charts in ${getChartPeriodLabel()}.`
     : 'No emotions recorded yet. Charts will appear after records are added.';
   shareEmotionChartButton.disabled = !topEmotions.length;
@@ -2694,21 +2970,21 @@ function renderCharts() {
     else {
       const count = rows.reduce((total, row) => total + row.count, 0);
       const average = count ? rows.reduce((total, row) => total + Number(row.label) * row.count, 0) / count : 0;
-      summary.textContent = count ? `Average bucket level: ${average.toFixed(1)} out of ${ratingScale}, from ${count} records. ${ratingScale} is full.` : 'No bucket levels recorded in this period.';
+      summary.textContent = count ? `Average bucket level: ${average.toFixed(1)} out of ${getReviewScale()}, from ${count} records. ${getReviewScale()} is full.` : 'No bucket levels recorded in this period.';
     }
     renderBarChart(document.getElementById(`${key}Chart`), summary, rows, 'Not recorded in this period.');
     addTableRows(document.getElementById(`${key}ChartBody`), rows, 'Not recorded in this period.', row => [row.label, String(row.count)], 2);
   });
   renderContextAnalysis();
   const chartStatus = document.getElementById('chartlogFilterStatus');
-  if (chartStatus) chartStatus.textContent = `Showing ${chartEntries.length} of ${logEntries.length} records in charts.`;
+  if (chartStatus) chartStatus.textContent = `Showing ${chartEntries.length} of ${getReviewEntries().length} records in charts.`;
   queueDisplayedChartImages();
 }
 
 function getContextCounts(entries, field) {
   const counts = new Map();
   entries.forEach(entry => {
-    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= ratingScale ? [entry.bucketLevel] : []);
+    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= getReviewScale() ? [entry.bucketLevel] : []);
     values.forEach(value => {
       const key = String(value).toLocaleLowerCase();
       const row = counts.get(key) || { label: String(value), count: 0 };
@@ -2719,9 +2995,9 @@ function getContextCounts(entries, field) {
   return [...counts.values()].sort((a, b) => field === 'tags' ? b.count - a.count || a.label.localeCompare(b.label) : Number(a.label) - Number(b.label));
 }
 
-function getLogRows(entries = logEntries) {
+function getLogRows(entries = logEntries, scale = ratingScale) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${ratingScale})`, `Actual intensity (1–${ratingScale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${ratingScale})`, 'Note']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${scale})`, 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -2771,24 +3047,31 @@ function formatRowsAsHtmlTable(caption, rows) {
 }
 
 function renderLog() {
-  const hasEntries = logEntries.length > 0;
+  const entries = getReviewEntries();
+  const shared = getReviewDataset();
+  const hasEntries = entries.length > 0;
   const filteredEntries = getFilteredLogEntries();
   const hasFilteredEntries = filteredEntries.length > 0;
-  emptyLogEntryButton.hidden = hasEntries;
+  emptyLogEntryButton.hidden = hasEntries || Boolean(shared);
   shareTallyButton.disabled = !hasFilteredEntries;
   shareLogButton.disabled = !hasFilteredEntries;
   copyTallyHtmlButton.disabled = !hasFilteredEntries;
   copyLogHtmlButton.disabled = !hasFilteredEntries;
-  exportTallyButton.disabled = !hasEntries;
-  exportLogButton.disabled = !hasEntries;
-  saveBackupButton.disabled = !hasEntries;
-  clearLogButton.disabled = !hasEntries;
+  exportTallyButton.disabled = !logEntries.length;
+  exportLogButton.disabled = !logEntries.length;
+  saveBackupButton.disabled = !logEntries.length;
+  clearLogButton.disabled = !logEntries.length;
 
-  logSummary.textContent = hasEntries
-    ? `${logEntries.length} emotion record${logEntries.length === 1 ? '' : 's'} stored locally.`
-    : 'No emotions recorded yet.';
+  document.getElementById('log-heading').textContent = shared ? `${shared.label} — read-only log` : 'Local emotion log';
+  document.getElementById('logSourceHelp').textContent = shared
+    ? 'Showing a shared Drive dataset. These records are separate from your local data and cannot be edited here.'
+    : 'Records are stored in this browser. Optional Drive sync shares changes only when you enable it.';
+  logSummary.textContent = shared?.state === 'loading' ? 'Loading the selected shared dataset…'
+    : shared?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Data Shared with Me.'
+    : shared ? `${entries.length} shared emotion record${entries.length === 1 ? '' : 's'}.`
+    : hasEntries ? `${entries.length} emotion record${entries.length === 1 ? '' : 's'} stored locally.` : 'No emotions recorded yet.';
   logFilterStatus.textContent = hasEntries
-    ? `Showing ${filteredEntries.length} of ${logEntries.length} record${logEntries.length === 1 ? '' : 's'}.`
+    ? `Showing ${filteredEntries.length} of ${entries.length} record${entries.length === 1 ? '' : 's'}.`
     : '';
 
   clearNode(tallyBody);
@@ -2836,41 +3119,46 @@ function renderLog() {
         tr.appendChild(td);
       });
       const actionCell = document.createElement('td');
-      const actions = document.createElement('div');
-      actions.className = 'table-actions';
-      const path = getEntryPathLabel(entry);
-      const useButton = document.createElement('button');
-      useButton.type = 'button';
-      useButton.textContent = 'Use as new';
-      useButton.setAttribute('aria-label', `Use ${path} as a new entry`);
-      useButton.addEventListener('click', () => {
-        prepareEntry(entry, `Prepared ${path} as a new entry.`);
-      });
-      const editButton = document.createElement('button');
-      editButton.type = 'button';
-      editButton.textContent = 'Edit';
-      editButton.setAttribute('aria-label', `Edit ${path} recorded ${formatDateTime(entry.timestamp)}`);
-      editButton.addEventListener('click', () => {
-        prepareEntry(entry, `Editing ${path}. Change the fields, then save.`, true);
-      });
-      const deleteButton = document.createElement('button');
-      deleteButton.type = 'button';
-      deleteButton.textContent = 'Delete';
-      deleteButton.className = 'danger';
-      deleteButton.setAttribute('aria-label', `Delete ${path} recorded ${formatDateTime(entry.timestamp)}`);
-      deleteButton.addEventListener('click', () => {
-        const index = logEntries.indexOf(entry);
-        if (index < 0) return;
-        deletedEntryForUndo = { entry, index };
-        logEntries.splice(index, 1);
-        saveLog();
-        renderAll();
-        logActionText.textContent = `Deleted ${path}.`;
-        logActionNotice.hidden = false;
-        logActionNotice.focus();
-      });
-      actions.append(useButton, editButton, deleteButton);
-      actionCell.appendChild(actions);
+      if (shared) {
+        actionCell.textContent = 'Read only';
+      } else {
+        const actions = document.createElement('div');
+        actions.className = 'table-actions';
+        const path = getEntryPathLabel(entry);
+        const useButton = document.createElement('button');
+        useButton.type = 'button';
+        useButton.textContent = 'Use as new';
+        useButton.setAttribute('aria-label', `Use ${path} as a new entry`);
+        useButton.addEventListener('click', () => {
+          prepareEntry(entry, `Prepared ${path} as a new entry.`);
+        });
+        const editButton = document.createElement('button');
+        editButton.type = 'button';
+        editButton.textContent = 'Edit';
+        editButton.setAttribute('aria-label', `Edit ${path} recorded ${formatDateTime(entry.timestamp)}`);
+        editButton.addEventListener('click', () => {
+          prepareEntry(entry, `Editing ${path}. Change the fields, then save.`, true);
+        });
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.textContent = 'Delete';
+        deleteButton.className = 'danger';
+        deleteButton.setAttribute('aria-label', `Delete ${path} recorded ${formatDateTime(entry.timestamp)}`);
+        deleteButton.addEventListener('click', () => {
+          if (getReviewDataset()) return;
+          const index = logEntries.indexOf(entry);
+          if (index < 0) return;
+          deletedEntryForUndo = { entry, index };
+          logEntries.splice(index, 1);
+          saveLog();
+          renderAll();
+          logActionText.textContent = `Deleted ${path}.`;
+          logActionNotice.hidden = false;
+          logActionNotice.focus();
+        });
+        actions.append(useButton, editButton, deleteButton);
+        actionCell.appendChild(actions);
+      }
       tr.appendChild(actionCell);
       logBody.appendChild(tr);
     }
@@ -2922,7 +3210,7 @@ function setCheckedFilterValues(container, values) {
 function renderLogTagFilters() {
   const selected = getCheckedFilterValues(logTagFilter);
   logTagFilter.replaceChildren();
-  [['__missing', 'Not recorded'], ...getAvailableTags().map(tag => [`tag:${tag.toLocaleLowerCase()}`, tag])].forEach(([value, text]) => {
+  [['__missing', 'Not recorded'], ...getReviewTags().map(tag => [`tag:${tag.toLocaleLowerCase()}`, tag])].forEach(([value, text]) => {
     const label = document.createElement('label');
     const input = document.createElement('input'); input.type = 'checkbox'; input.value = value;
     input.checked = selected.includes(value);
@@ -2934,7 +3222,7 @@ function updateTagOptions(select, includeMissing = true) {
   const selected = select.value;
   select.replaceChildren(new Option('All tags', ''));
   if (includeMissing) select.add(new Option('Not recorded', '__missing'));
-  getAvailableTags().forEach(tag => select.add(new Option(tag, `tag:${tag.toLocaleLowerCase()}`)));
+  getReviewTags().forEach(tag => select.add(new Option(tag, `tag:${tag.toLocaleLowerCase()}`)));
   select.value = selected;
 }
 
@@ -3013,11 +3301,11 @@ function renderContextAnalysis() {
   const bucketTag = document.getElementById('bucketAnalysisTag').value;
   const bucketEntries = entriesForTag(entries, bucketTag);
   document.getElementById('bucketEmotionSummary').textContent = `${bucketEntries.length} matching entries; ${bucketEntries.filter(entry => entry.bucketLevel == null).length} without a recorded bucket level.`;
-  const levels = [...Array.from({length:ratingScale}, (_,i) => String(i+1)), '__missing'];
+  const levels = [...Array.from({length:getReviewScale()}, (_,i) => String(i+1)), '__missing'];
   const head = document.getElementById('bucketEmotionHead');
   head.replaceChildren();
   const header = document.createElement('tr');
-  ['Emotion', ...levels.map(level => level === '__missing' ? 'Not recorded' : level === String(ratingScale) ? `${ratingScale} — Full` : level), 'Total'].forEach(label => {
+  ['Emotion', ...levels.map(level => level === '__missing' ? 'Not recorded' : level === String(getReviewScale()) ? `${getReviewScale()} — Full` : level), 'Total'].forEach(label => {
     const th = document.createElement('th'); th.scope = 'col'; th.textContent = label; header.append(th);
   }); head.append(header);
   const body = document.getElementById('bucketEmotionBody'); body.replaceChildren();
@@ -3044,7 +3332,7 @@ function renderContextAnalysis() {
 function renderAll() {
   const selectedPath = logPathFilter.value;
   logPathFilter.replaceChildren(new Option('All paths', ''));
-  [...new Set(logEntries.map(getEntryPathLabel))].sort().forEach(path => logPathFilter.add(new Option(path, path)));
+  [...new Set(getReviewEntries().map(getEntryPathLabel))].sort().forEach(path => logPathFilter.add(new Option(path, path)));
   logPathFilter.value = selectedPath;
   [document.getElementById('analysisTag'), document.getElementById('bucketAnalysisTag')].forEach(select => updateTagOptions(select));
   renderLogTagFilters();
@@ -3193,8 +3481,8 @@ function getChartShareData(type) {
   const intensityAverages = getIntensityAverages(chartEntries);
   const metricRows = intensityAverages ? [
     { label: 'Records with intensity', value: String(intensityAverages.count) },
-    { label: `Average expected intensity (1–${ratingScale})`, value: intensityAverages.expectedAverage.toFixed(1) },
-    { label: `Average actual intensity (1–${ratingScale})`, value: intensityAverages.actualAverage.toFixed(1) },
+    { label: `Average expected intensity (1–${getReviewScale()})`, value: intensityAverages.expectedAverage.toFixed(1) },
+    { label: `Average actual intensity (1–${getReviewScale()})`, value: intensityAverages.actualAverage.toFixed(1) },
     { label: 'Average actual minus expected', value: intensityAverages.differenceAverage.toFixed(1) }
   ] : [];
 
@@ -3394,8 +3682,16 @@ async function shareChartImage(type) {
   }
 }
 
-function saveBackupFile() {
-  const backup = {
+function getOriginalBackupSnapshot() {
+  const rawEntries=localStorage.getItem(storageKey), rawSettings=localStorage.getItem(settingsKey);
+  const original=parseLocalDataset(rawEntries);
+  return JSON.parse(JSON.stringify({version:3,schemaVersion:original.schemaVersion || Number(localStorage.getItem(schemaVersionKey)) || 1,
+    ratingScale:original.ratingScale,entries:original.entries,settings:captureSettings,tags:getAvailableTags(),
+    exportedAt:new Date().toISOString(),recovery:{rawEntries,rawSettings}}));
+}
+
+function getBackupSnapshot() {
+  return JSON.parse(JSON.stringify({
     version: 3,
     schemaVersion: dataSchemaVersion,
     ratingScale,
@@ -3403,8 +3699,40 @@ function saveBackupFile() {
     exportedAt: new Date().toISOString(),
     tags: getAvailableTags(),
     entries: logEntries
-  };
-  downloadText('emotion-wheel-backup.json', `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
+  }));
+}
+
+function applyDriveSyncSnapshot(snapshot, expectedLocal) {
+  if (editingEntry || pendingRatingScaleChange) throw new Error('Finish the current edit or scale review before applying Drive changes.');
+  if (!dataSchemaMatches() || JSON.stringify(getBackupSnapshot().entries) !== JSON.stringify(expectedLocal.entries) ||
+      JSON.stringify(captureSettings) !== JSON.stringify(expectedLocal.settings) || ratingScale !== expectedLocal.ratingScale) {
+    throw new Error('Local data changed during sync. Sync paused; refresh and try again.');
+  }
+  const parsed = getBackupEntriesFromText(JSON.stringify(snapshot));
+  if (parsed.skipped || parsed.validEntries.length !== snapshot.entries.length) throw new Error('Sync received invalid records. Both copies are kept.');
+  const validatedEntries=parsed.validEntries.map((entry,index)=>({...snapshot.entries[index],...entry}));
+  const originalEntries = localStorage.getItem(storageKey), originalSettings = localStorage.getItem(settingsKey);
+  localStorage.setItem(`${storageKey}BeforeDriveSync`, JSON.stringify(expectedLocal));
+  try {
+    localStorage.setItem(settingsKey, JSON.stringify(snapshot.settings));
+    localStorage.setItem(storageKey, serializeDataset(validatedEntries, parsed.ratingScale));
+  } catch (error) {
+    // Best-effort rollback; the full recovery snapshot was saved before writing.
+    try {
+      if (originalSettings === null) localStorage.removeItem(settingsKey); else localStorage.setItem(settingsKey, originalSettings);
+      if (originalEntries === null) localStorage.removeItem(storageKey); else localStorage.setItem(storageKey, originalEntries);
+    } catch { /* Recovery snapshot remains available. */ }
+    throw error;
+  }
+  logEntries = validatedEntries;
+  captureSettings = normalizeSettings(snapshot.settings);
+  adoptRatingScale(parsed.ratingScale);
+  renderAll();
+}
+
+function saveBackupFile() {
+  const backup = dataSchemaMatches()?getBackupSnapshot():getOriginalBackupSnapshot();
+  downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-backup.json`, `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
   liveStatus.textContent = 'Backup file saved.';
   loadBackupStatus.textContent = 'Backup file saved to this device.';
 }
@@ -3674,7 +4002,7 @@ function copyHtmlWithSelection(html, text) {
   return copied || copyTextWithSelection(text);
 }
 
-[entryTab, logsTab, chartsTab, maintenanceTab].forEach(button => {
+[entryTab, logsTab, chartsTab, sharedDataTab, maintenanceTab].forEach(button => {
   button.addEventListener('click', () => selectAppView(button, true));
 });
 [logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo].forEach(control => {
@@ -3684,7 +4012,7 @@ document.querySelectorAll('[data-clear-filter]').forEach(button => button.addEve
   setCheckedFilterValues(document.getElementById(button.dataset.clearFilter), []);
   renderLog();
 }));
-clearLogFilters.addEventListener('click', () => {
+function resetLogFilters() {
   logSearch.value = '';
   setCheckedFilterValues(logInnerFilter, []);
   logLevelFilter.value = '';
@@ -3695,9 +4023,14 @@ clearLogFilters.addEventListener('click', () => {
   [logExpectedFilter, logActualFilter, logAlignmentFilter].forEach(container => setCheckedFilterValues(container, []));
   logDateFrom.value = '';
   logDateTo.value = '';
+}
+
+clearLogFilters.addEventListener('click', () => {
+  resetLogFilters();
   renderLog();
   logSearch.focus();
 });
+
 menuToggle.addEventListener('click', () => {
   setMenuOpen(menuToggle.getAttribute('aria-expanded') !== 'true');
 });
@@ -3742,6 +4075,7 @@ innerSeriesCheckboxes.forEach(input => {
 });
 
 undoRecordButton.addEventListener('click', () => {
+  if (getReviewDataset()) return;
   if (!lastRecordedEntry) return;
   const index = logEntries.indexOf(lastRecordedEntry);
   if (index >= 0) {
@@ -3761,6 +4095,7 @@ recordAgainButton.addEventListener('click', () => {
 });
 
 undoDeleteButton.addEventListener('click', () => {
+  if (getReviewDataset()) return;
   if (!deletedEntryForUndo) return;
   logEntries.splice(deletedEntryForUndo.index, 0, deletedEntryForUndo.entry);
   saveLog();
@@ -3842,6 +4177,7 @@ closeFallbackButton.addEventListener('click', () => {
 });
 
 recordButton.addEventListener('click', () => {
+  if (getReviewDataset()) return;
   if (!selectedInner) return;
 
   const expected = Number(expectedIntensity.value);
@@ -3914,7 +4250,7 @@ shareTallyButton.addEventListener('click', () => {
 
 shareLogButton.addEventListener('click', () => {
   const recent = [...getFilteredLogEntries()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
-  shareRows('Filtered recent emotion entries', getLogRows(recent));
+  shareRows('Filtered recent emotion entries', getLogRows(recent, getReviewScale()));
 });
 
 shareWheelButton.addEventListener('click', () => {
@@ -3961,7 +4297,7 @@ copyTallyHtmlButton.addEventListener('click', () => {
 
 copyLogHtmlButton.addEventListener('click', () => {
   const recent = [...getFilteredLogEntries()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
-  copyRowsAsHtmlTable('Filtered recent emotion entries', 'Most recent recorded emotions matching the current filters', getLogRows(recent));
+  copyRowsAsHtmlTable('Filtered recent emotion entries', 'Most recent recorded emotions matching the current filters', getLogRows(recent, getReviewScale()));
 });
 
 copyWheelHtmlButton.addEventListener('click', () => {
