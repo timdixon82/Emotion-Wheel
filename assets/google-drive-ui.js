@@ -483,7 +483,7 @@
           else if(currentAppView==='sharing')await refreshSharingAccess();
           else if(currentAppView==='maintenance' && typeof client.findExistingBackupFolder==='function')await operation(refreshBackupList,'Loading your dated backups…','backups');
           if(epoch===requestEpoch && connectedEmail && typeof client.findSharedLists==='function'){selectSharedListAccount(connectedEmail);await syncSharedList();}
-          if(epoch===requestEpoch && !busy && !connectedFromShared && !linkedFileId && currentAppView!=='shared' && !getReviewDataset() && dataSchemaMatches())await offerExistingSync();
+          if(epoch===requestEpoch && !busy && !connectedFromShared && !linkedFileId && currentAppView==='maintenance' && !getReviewDataset() && dataSchemaMatches())await offerExistingSync();
         } catch (error) { busy = false; status.textContent = error.message; }
       }
       update();

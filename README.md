@@ -125,7 +125,7 @@ Logs, filters, chart averages, bucket heatmaps and accessible recording controls
 
 Drive saves use `Emotion Wheel/Emotion Wheel current.json`, keeping the same sharing link. Named, dated copies go in `Emotion Wheel/Backups`. The default backup limit is five; extra backups are listed oldest first and move to Trash only after confirmation. Save to Drive manually checks and merges both copies. Start Sync enables automatic checks; those two controls then become Sync Now and Pause Sync. The Data Shared with Me page lists shared files in a table with View data, Edit name, Refresh and Remove. View data opens Logs; shared data remains read only.
 
-Share my data defaults to your current Drive file. Within the sharing form you may choose another file you own; its filename is shown before you choose Give access and get link. Shared-file rows cannot copy links or grant access.
+Share my data defaults to your current Drive file. Within the sharing form you may choose another file you own; its filename is shown before you choose Give Viewer access. Shared-file rows cannot copy links or grant access.
 
 Sync failures are flagged by a banner on every app page and the Sync menu button; selecting either opens My Data at the error. The sync section shows the last successful date. Conflicting records show both versions for individual selection; other changes still merge. Before applying choices, the app keeps both original copies locally and in dated Drive recovery backups, and checks that neither copy changed during review. Filename and email fields use larger full-width controls.
 
