@@ -887,7 +887,7 @@
     const permissions=result.permissions.filter(permission=>permission.role!=='owner' && permission.type==='user');
     accessPeopleCount=permissions.length;shareResultFileId=fileId;
     byId('googleDriveShareLink').value=EmotionWheelDrive.sharingUrl(location.href,fileId);
-    byId('googleDriveShareLinkMessage').textContent='Send this link to someone listed above. They need to connect the Google account that has access.';
+    byId('googleDriveShareLinkMessage').textContent=accessPeopleCount ? 'Send this link to someone listed above. They need to connect the Google account that has access.' : 'Add a person above before sending this link. Copy link and Share link become available after you give someone access.';
     byId('googleDriveSharingResult').hidden=false;
     for (const permission of permissions) {
       const label=permission.type==='anyone'?'Anyone with the link':permission.type==='domain'?`Everyone at ${permission.domain || 'this domain'}`:permission.emailAddress || permission.displayName || 'Google account';

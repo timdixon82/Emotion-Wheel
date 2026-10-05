@@ -1184,32 +1184,32 @@
         <table id="googleDriveAccessTable" hidden><caption>People with access to this file</caption><thead><tr><th scope="col">Person</th><th scope="col">Permission</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveAccessBody"></tbody></table>
         <p class="help">The link is the same for everyone. Stopping access cannot remove copies already downloaded.</p>
         <section id="googleDriveStopSharingPanel" hidden aria-labelledby="googleDriveStopSharingHeading"><h3 id="googleDriveStopSharingHeading" tabindex="-1">Stop sharing?</h3><p id="googleDriveStopSharingMessage"></p><div class="actions"><button type="button" id="confirmGoogleDriveStopSharingButton">Stop sharing</button><button type="button" id="cancelGoogleDriveStopSharingButton">Keep access</button></div></section>
-      <section id="googleDriveSharingResult" aria-labelledby="googleDriveShareLinkHeading" hidden>
+      <section id="googleDriveSharingForm" class="drive-task" aria-labelledby="googleDriveSharingHeading" hidden>
+        <h3 id="googleDriveSharingHeading" tabindex="-1">Add a person</h3>
+        <p id="googleDriveSharingSelectedFile"></p>
+        <p class="help">They can view and download all records, including notes. They cannot edit your Drive file.</p>
+        <label for="googleDriveRecipientEmail">Their Google account email</label>
+        <input id="googleDriveRecipientEmail" type="email" maxlength="254" required autocomplete="email">
+        <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification (optional)</label>
+        <div class="actions">
+          <button type="button" id="giveGoogleDriveAccessButton">Give Viewer access</button>
+          <button type="button" id="cancelGoogleDriveSharingButton">Cancel</button>
+        </div>
+        <details id="googleDriveShareOptions">
+          <summary>Use a different file</summary>
+          <div class="details-content">
+            <button type="button" id="chooseGoogleDriveSharingFileButton">Choose another file I own</button>
+            <p class="help">Removing access later cannot remove copies they have already downloaded.</p>
+          </div>
+        </details>
+      </section>
+      <section id="googleDriveSharingResult" class="drive-task" aria-labelledby="googleDriveShareLinkHeading" hidden>
         <h3 id="googleDriveShareLinkHeading" tabindex="-1">Send this link</h3>
         <p id="googleDriveShareLinkMessage"></p>
         <label for="googleDriveShareLink">Emotion Wheel sharing link</label>
         <input id="googleDriveShareLink" type="url" readonly>
         <div class="actions"><button type="button" id="shareGoogleDriveLinkButton">Share link</button><button type="button" id="copyGoogleDriveResultLinkButton">Copy link</button><button type="button" id="closeGoogleDriveSharingResultButton" hidden>Done</button></div>
         <p id="googleDriveShareSheetStatus" role="status"></p>
-      </section>
-      <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
-        <h3 id="googleDriveSharingHeading" tabindex="-1">Share your data</h3>
-        <p id="googleDriveSharingSelectedFile"></p>
-        <p class="help">They can view and download all records, including notes. They cannot edit your Drive file.</p>
-        <label for="googleDriveRecipientEmail">Their Google account email</label>
-        <input id="googleDriveRecipientEmail" type="email" maxlength="254" required autocomplete="email">
-        <div class="actions">
-          <button type="button" id="giveGoogleDriveAccessButton">Give access and get link</button>
-          <button type="button" id="cancelGoogleDriveSharingButton">Cancel</button>
-        </div>
-        <details id="googleDriveShareOptions">
-          <summary>Share options</summary>
-          <div class="details-content">
-            <button type="button" id="chooseGoogleDriveSharingFileButton">Choose another file I own</button>
-            <label><input id="googleDriveNotifyRecipient" type="checkbox"> Send a Google Drive email notification</label>
-            <p class="help">Removing access later cannot remove copies they have already downloaded.</p>
-          </div>
-        </details>
       </section>
       </section>
 
