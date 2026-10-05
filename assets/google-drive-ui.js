@@ -58,10 +58,15 @@
   let conflictReview, conflictChoice, lastSyncedAt='', syncError='', syncFailedAt='', feedbackArea='connection';
   let pendingSafetyBackup, schemaUpgradePlan;
   let restorePlan,restoreFiles=new Map(),backupListOwner='',backupListLoaded=false,backupTrashPlan;
+  let syncOffer;
   let syncTarget, syncTimer, syncRunning=false, syncWanted=false, syncSafetyVerified = true; // Live stale-ETag rejection verified on the synthetic file.
   const syncStorageKey = 'emotionWheelDriveSyncV1';
   try {const remembered=JSON.parse(localStorage.getItem(syncStorageKey)||'null');if(remembered?.syncError){syncError=remembered.syncError;syncFailedAt=remembered.syncFailedAt||'';lastSyncedAt=remembered.lastSyncedAt||'';}}catch{}
   function update() {
+    if(syncOffer && (!client.connected || syncOffer.epoch!==epoch || syncOffer.owner!==connectedEmail || syncTarget || getReviewDataset()))syncOffer=undefined;
+    byId('googleDriveSyncOffer').hidden=!syncOffer;
+    byId('acceptGoogleDriveSyncOfferButton').disabled=busy || !syncOffer || !client.connected;
+    byId('declineGoogleDriveSyncOfferButton').disabled=busy;
     if (!client.connected || accessOwner !== connectedEmail) {
       accessFileId=''; accessOwner=''; accessPeopleCount=0; stopSharingPlan=undefined;
       byId('googleDriveAccessBody').replaceChildren(); byId('googleDriveAccessTable').hidden=true;
@@ -369,6 +374,7 @@
       return;
     }
     if (busy) return;
+    const connectedFromShared=Boolean(getReviewDataset());
     feedbackArea='connection'; epoch++; const requestEpoch = epoch;
     driveTree = undefined; cleanupPlan = undefined; byId('googleDriveBackupCleanup').hidden = true;
     pauseSync(); client.disconnect(); clearTimeout(accountExpiryTimer); connectedEmail = ''; resetSharing(); savedFileId = ''; savedPanel.hidden = true; clearPreview();
@@ -396,8 +402,9 @@
           if(pendingSafetyBackup){const kind=pendingSafetyBackup;pendingSafetyBackup=undefined;backupBeforeChange(kind);}
           else if (linkedFileId) operation(operationEpoch => openPreview(linkedFileId, operationEpoch), 'Opening the shared backup…');
           else if(!dataSchemaMatches())checkDriveBeforeUpgrade();
-          else if(currentAppView==='sharing')refreshSharingAccess();
-          else if(currentAppView==='maintenance' && typeof client.findExistingBackupFolder==='function')operation(refreshBackupList,'Loading your dated backups…','backups');
+          else if(currentAppView==='sharing')await refreshSharingAccess();
+          else if(currentAppView==='maintenance' && typeof client.findExistingBackupFolder==='function')await operation(refreshBackupList,'Loading your dated backups…','backups');
+          if(epoch===requestEpoch && !busy && !connectedFromShared && !linkedFileId && currentAppView!=='shared' && !getReviewDataset() && dataSchemaMatches())await offerExistingSync();
         } catch (error) { busy = false; status.textContent = error.message; }
       }
       update();
@@ -1102,6 +1109,25 @@
     }
     throw new Error('Google accepted a stale update. Do not enable sync until conditional updates are fixed.');
   }, 'Testing stale-update rejection on the approved synthetic backup…'));
+  async function offerExistingSync() {
+    if(!client.connected || !connectedEmail || busy || getReviewDataset() || syncTarget || typeof client.findExistingCurrent!=='function')return;
+    await operation(async operationEpoch=>{
+      const owner=connectedEmail;
+      const current=await client.findExistingCurrent();
+      if(epoch!==operationEpoch || owner!==connectedEmail || !client.connected || getReviewDataset())return;
+      if(current?.id && current.owners?.some(item=>item.emailAddress===owner)) {
+        syncOffer={epoch:operationEpoch,owner,id:current.id};
+        byId('googleDriveSyncOfferMessage').textContent=`Found ${current.name || 'your current Emotion Wheel file'} in ${owner}’s Google Drive. Would you like to start automatic sync?`;
+        status.textContent='Your current Drive file was found. Choose Start syncing or Not now.';
+        update();byId('googleDriveSyncOfferHeading').focus();
+      } else status.textContent='Google Drive connected. No existing current file was found. You can save your local data or start sync in My Data.';
+    },'Checking for your current sync file…','connection');
+  }
+  byId('declineGoogleDriveSyncOfferButton').addEventListener('click',()=>{syncOffer=undefined;update();byId('googleDriveSyncSummaryButton').focus();});
+  byId('acceptGoogleDriveSyncOfferButton').addEventListener('click',()=>{
+    if(!syncOffer || syncOffer.epoch!==epoch || syncOffer.owner!==connectedEmail || !client.connected || busy || getReviewDataset())return;
+    syncOffer=undefined;update();byId('startGoogleDriveSyncButton').click();selectAppView(maintenanceTab,false);byId('googleDriveLastSyncStatus').focus();
+  });
   byId('startGoogleDriveSyncButton').addEventListener('click', async () => {
     if(syncTarget){if(!busy){pauseSync();feedbackArea='connection';update();}return;}
     if (!syncSafetyVerified || !connectedEmail || !client.connected || busy) return;

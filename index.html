@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.3.1" defer></script>
+  <script src="assets/version.js?v=1.3.2" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/google-drive-ui.js" defer></script>
@@ -481,6 +481,12 @@
   <button type="button" id="reviewDatasetIndicator" class="mobile-dataset-indicator" hidden>Shared data · read only</button>
 </header>
 <main id="main-content" tabindex="-1">
+  <section id="googleDriveSyncOffer" class="drive-task" aria-labelledby="googleDriveSyncOfferHeading" hidden>
+    <h2 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h2>
+    <p id="googleDriveSyncOfferMessage"></p>
+    <p>Sync checks your local log and Drive file and merges changes. If both copies changed the same record, you choose which version to keep.</p>
+    <div class="actions"><button type="button" id="acceptGoogleDriveSyncOfferButton">Start syncing</button><button type="button" id="declineGoogleDriveSyncOfferButton">Not now</button></div>
+  </section>
   <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
     <p id="googleDriveSyncIssueMessage" role="alert"></p>
     <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
@@ -1080,9 +1086,9 @@
 
   <section id="maintenancePanel" class="workspace-panel" aria-label="My Data" tabindex="-1" hidden>
   <details id="export-data" class="export-panel" open>
-    <summary>Back up or load your own data</summary>
+    <summary>Local data — back up or load a file</summary>
     <div class="details-content">
-    <p class="help">Save a backup to keep a copy of your own records. Load a backup to add its records or replace your current log. CSV exports can be read in a spreadsheet.</p>
+    <p class="help">These controls use your data on this device. Save a backup file to your device, or load a file to add records or replace your local log. CSV exports can be read in a spreadsheet.</p>
     <div class="actions">
       <button type="button" id="exportTallyButton" disabled>Export emotion counts (CSV)</button>
       <button type="button" id="exportLogButton" disabled>Export records (CSV)</button>
@@ -1110,12 +1116,12 @@
         <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
         <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
         <div id="googleDriveOwnDataPrompt" hidden><p>You are viewing another dataset. Switch to My local data before saving, starting sync or restoring your own data. Any automatic sync already running continues to sync only your own local data.</p><button type="button" id="useLocalDataForDriveButton">Use My local data</button></div>
+        <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
         <div class="actions">
           <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
           <button type="button" id="saveGoogleDriveButton" disabled>Save to Drive</button>
         </div>
         <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
-        <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
         <section id="googleDriveConflict" aria-labelledby="googleDriveConflictHeading" hidden>
           <h3 id="googleDriveConflictHeading" tabindex="-1">Resolve conflicting changes</h3>
           <p id="googleDriveConflictExplanation">Choose which version to keep for each conflicting record. Other changes are merged automatically. Both original copies will be saved as recovery backups first.</p>
@@ -1125,10 +1131,10 @@
         <p id="googleDriveStatus" class="drive-feedback" role="status" hidden></p>
         <section aria-labelledby="googleDriveBackupsHeading">
           <h3 id="googleDriveBackupsHeading" tabindex="-1">Your Drive backups</h3>
-          <label for="googleDriveBackupComment">Backup comment (optional, up to 80 characters)</label><input id="googleDriveBackupComment" type="text" maxlength="80" placeholder="For example, before changing ratings">
-          <div class="actions"><button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button><button type="button" id="restoreGoogleDriveBackupButton" disabled>Refresh backups</button></div>
           <p id="googleDriveBackupListMessage">Connect Google to see your dated backups.</p>
           <table id="googleDriveBackupsTable"><caption>Dated backups — newest first</caption><thead><tr><th scope="col">Backup name</th><th scope="col">Created</th><th scope="col">Comment</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveBackupsBody"></tbody></table>
+          <label for="googleDriveBackupComment">Backup comment (optional, up to 80 characters)</label><input id="googleDriveBackupComment" type="text" maxlength="80" placeholder="For example, before changing ratings">
+          <div class="actions"><button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button><button type="button" id="restoreGoogleDriveBackupButton" disabled>Refresh backups</button></div>
           <p id="googleDriveBackupsStatus" class="drive-feedback" role="status"></p>
           <section id="googleDriveBackupTrashPanel" aria-labelledby="googleDriveBackupTrashHeading" hidden>
             <h4 id="googleDriveBackupTrashHeading" tabindex="-1">Move backup to Trash?</h4>
@@ -1136,7 +1142,7 @@
             <button type="button" id="confirmGoogleDriveBackupTrashButton">Move this backup to Trash</button><button type="button" id="cancelGoogleDriveBackupTrashButton">Keep backup</button>
           </section>
         <details id="googleDriveBackupSettings">
-          <summary>Backup settings</summary>
+          <summary>Advanced Backup Settings</summary>
           <div class="details-content">
             <label for="googleDriveBackupName">Backup file name</label><input id="googleDriveBackupName" type="text" maxlength="80" value="Emotion Wheel backup">
             <label for="googleDriveBackupLimit">Backups to keep</label><input id="googleDriveBackupLimit" type="number" min="1" max="100" step="1" value="5">

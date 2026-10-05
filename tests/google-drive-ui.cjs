@@ -661,5 +661,37 @@ async function main() {
 
 
 
+  scope.dataSchemaMatches=()=>true;scope.currentAppView='maintenance';activeDataset=null;
+  clientInstance.findExistingCurrent=async()=>({id:'synthetic_current_offer',name:'Emotion Wheel current.json',owners:[{emailAddress:email}]});
+  const offerWrites=writes,offerUploads=uploads.length;
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,false,'Existing owned current file offers sync');
+  assert.equal(writes,offerWrites);assert.equal(uploads.length,offerUploads,'Connection discovery is read-only');
+  await clicks('declineGoogleDriveSyncOfferButton');
+  assert.equal(node('googleDriveSyncOffer').hidden,true);
+  assert.equal(writes,offerWrites);
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  let syncStarts=0;const originalStart=node('startGoogleDriveSyncButton').handlers.click;
+  node('startGoogleDriveSyncButton').handlers.click=()=>{syncStarts++;};
+  await clicks('acceptGoogleDriveSyncOfferButton');
+  assert.equal(syncStarts,1,'Consent delegates to the existing guarded sync flow');
+  assert.equal(scope.currentAppView,'maintenance');
+  node('startGoogleDriveSyncButton').handlers.click=originalStart;
+  activeDataset={fileId:'synthetic_shared_offer'};
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Never offer own sync while viewing shared data');
+  activeDataset=null;
+  clientInstance.findExistingCurrent=async()=>null;
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'No current file must not create a sync offer');
+  let finishOffer;
+  clientInstance.findExistingCurrent=async()=>new Promise(resolve=>{finishOffer=resolve;});
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  await clicks('disconnectGoogleDriveButton');
+  finishOffer({id:'synthetic_stale_offer',owners:[{emailAddress:email}]});await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Late discovery cannot offer sync after disconnect');
+  assert.equal(writes,offerWrites);assert.equal(uploads.length,offerUploads);
+  console.log('PASS: connection discovers current files read-only, offers sync with explicit consent, keeps Not now safe, and suppresses shared-data, empty and stale offers.');
+
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
