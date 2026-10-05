@@ -694,7 +694,10 @@ async function main() {
   activeDataset={fileId:'synthetic_shared_offer'};
   await clicks('connectGoogleDriveButton');await flush();await flush();
   assert.equal(node('googleDriveSyncOffer').hidden,true,'Never offer own sync while viewing shared data');
-  activeDataset=null;
+  activeDataset=null;scope.currentAppView='sharing';
+  await clicks('connectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Own sync setup must not interrupt the sharing page');
+  scope.currentAppView='maintenance';
   clientInstance.findExistingCurrent=async()=>null;
   await clicks('connectGoogleDriveButton');await flush();await flush();
   assert.equal(node('googleDriveSyncOffer').hidden,true,'No current file must not create a sync offer');

@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.4.0" defer></script>
+  <script src="assets/version.js?v=1.4.1" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
@@ -482,12 +482,7 @@
   <button type="button" id="reviewDatasetIndicator" class="mobile-dataset-indicator" hidden>Shared data · read only</button>
 </header>
 <main id="main-content" tabindex="-1">
-  <section id="googleDriveSyncOffer" class="drive-task" aria-labelledby="googleDriveSyncOfferHeading" hidden>
-    <h2 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h2>
-    <p id="googleDriveSyncOfferMessage"></p>
-    <p>Sync checks your local log and Drive file and merges changes. If both copies changed the same record, you choose which version to keep.</p>
-    <div class="actions"><button type="button" id="acceptGoogleDriveSyncOfferButton">Start syncing</button><button type="button" id="declineGoogleDriveSyncOfferButton">Not now</button></div>
-  </section>
+
   <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
     <p id="googleDriveSyncIssueMessage" role="alert"></p>
     <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
@@ -594,10 +589,7 @@
       <summary>Emotion reference table</summary>
       <div class="details-content">
         <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The round colour marker identifies the inner-circle emotion category; the written label carries the same information without relying on colour.</p>
-        <div class="actions">
-          <button type="button" id="shareWheelButton">Share full table</button>
-          <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
-        </div>
+
         <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
           <table>
             <caption>All available emotion paths</caption>
@@ -605,6 +597,10 @@
             <tbody id="wheelTableBody"></tbody>
           </table>
         </section>
+<div class="actions">
+          <button type="button" id="shareWheelButton">Share full table</button>
+          <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
+        </div>
       </div>
     </details>
 
@@ -789,10 +785,7 @@
     <details open>
       <summary>Emotion tally</summary>
       <div class="details-content">
-      <div class="actions">
-        <button type="button" id="shareTallyButton" disabled>Share tally data</button>
-        <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
-      </div>
+
       <p class="help">Swipe or scroll the table horizontally to see every column.</p>
       <section class="scroll-table log-table tally-table" tabindex="0" aria-label="Number of times each emotion selection has been recorded. Scroll horizontally to see all columns.">
       <table>
@@ -812,16 +805,17 @@
         </tbody>
       </table>
       </section>
+<div class="actions">
+        <button type="button" id="shareTallyButton" disabled>Share tally data</button>
+        <button type="button" id="copyTallyHtmlButton" disabled>Copy as HTML table</button>
+      </div>
       </div>
     </details>
 
     <details open>
       <summary>Recent entries</summary>
       <div class="details-content">
-      <div class="actions">
-        <button type="button" id="shareLogButton" disabled>Share recent entries</button>
-        <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
-      </div>
+
       <p class="help">Swipe or scroll the table horizontally to see every column.</p>
       <section class="scroll-table log-table" tabindex="0" aria-label="Most recent recorded emotions. Scroll horizontally to see all columns.">
       <table>
@@ -849,6 +843,10 @@
         </tbody>
       </table>
       </section>
+<div class="actions">
+        <button type="button" id="shareLogButton" disabled>Share recent entries</button>
+        <button type="button" id="copyLogHtmlButton" disabled>Copy as HTML table</button>
+      </div>
       </div>
     </details>
   </section>
@@ -928,7 +926,7 @@
       <div class="details-content">
       <div class="section-heading">
         <h3 id="emotion-chart-heading">Most recorded emotions</h3>
-        <button type="button" id="shareEmotionChartButton">Share chart image</button>
+
       </div>
       <p id="emotionChartSummary" class="help" aria-live="polite">No emotion records available yet.</p>
       <div id="emotionChartKey" class="chart-key" role="group" aria-label="Most recorded emotions chart key" hidden></div>
@@ -940,6 +938,7 @@
           <tbody id="emotionChartBody"><tr><td colspan="3">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
+      <div class="actions"><button type="button" id="shareEmotionChartButton">Share chart image</button></div>
       </div>
     </details>
 
@@ -948,7 +947,7 @@
       <div class="details-content">
       <div class="section-heading">
         <h3 id="level-chart-heading">Recorded level mix</h3>
-        <button type="button" id="shareLevelChartButton">Share chart image</button>
+
       </div>
       <p id="levelChartSummary" class="help" aria-live="polite">No recorded levels available yet.</p>
       <div id="levelChartKey" class="chart-key" role="group" aria-label="Recorded level chart key" hidden></div>
@@ -960,6 +959,7 @@
           <tbody id="levelChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
+      <div class="actions"><button type="button" id="shareLevelChartButton">Share chart image</button></div>
       </div>
     </details>
 
@@ -968,7 +968,7 @@
       <div class="details-content">
       <div class="section-heading">
         <h3 id="time-chart-heading">Records over time</h3>
-        <button type="button" id="shareTimeChartButton">Share chart image</button>
+
       </div>
       <div class="time-controls">
         <label>
@@ -1010,6 +1010,7 @@
           <tbody id="timeChartBody"><tr><td colspan="2">No emotions recorded yet.</td></tr></tbody>
         </table>
       </section>
+      <div class="actions"><button type="button" id="shareTimeChartButton">Share chart image</button></div>
       </div>
     </details>
 
@@ -1018,7 +1019,7 @@
       <div class="details-content">
       <div class="section-heading">
         <h3 id="reflection-chart-heading">Reflection summary</h3>
-        <button type="button" id="shareReflectionChartButton">Share chart image</button>
+
       </div>
       <p id="reflectionChartSummary" class="help">No reflection data available yet.</p>
       <div id="reflectionChartKey" class="chart-key" role="group" aria-label="Reflection charts key" hidden></div>
@@ -1079,6 +1080,7 @@
           <tbody id="sensationsChartBody"><tr><td colspan="2">No physical sensations recorded yet.</td></tr></tbody>
         </table>
       </section>
+      <div class="actions"><button type="button" id="shareReflectionChartButton">Share chart image</button></div>
       </div>
     </details>
   </section>
@@ -1117,6 +1119,12 @@
         <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
         <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
         <div id="googleDriveOwnDataPrompt" hidden><p>You are viewing another dataset. Switch to My local data before saving, starting sync or restoring your own data. Any automatic sync already running continues to sync only your own local data.</p><button type="button" id="useLocalDataForDriveButton">Use My local data</button></div>
+  <section id="googleDriveSyncOffer" class="drive-task" aria-labelledby="googleDriveSyncOfferHeading" hidden>
+    <h3 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h3>
+    <p id="googleDriveSyncOfferMessage"></p>
+    <p>Sync checks your local log and Drive file and merges changes. If both copies changed the same record, you choose which version to keep.</p>
+    <div class="actions"><button type="button" id="acceptGoogleDriveSyncOfferButton">Start syncing</button><button type="button" id="declineGoogleDriveSyncOfferButton">Not now</button></div>
+  </section>
         <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
         <div class="actions">
           <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
@@ -1232,18 +1240,18 @@
       <div id="sharedDataManagement">
         <p id="sharedDataAccountStatus" class="help">Connect Google to open shared files.</p>
         <button type="button" id="sharedDataConnectButton">Connect Google</button>
-        <p id="googleDriveSharedListSyncStatus" class="drive-feedback" role="status">Your shared-file list is saved in this browser. Connect Google to keep it available on your other devices.</p>
-        <button type="button" id="syncGoogleDriveSharedListButton" disabled>Refresh shared-file list</button>
         <p id="sharedDataConnectionStatus" class="drive-feedback" role="status" hidden></p>
         <p>View shared data in Logs and Charts. When connected, file references and names sync through your own Google Drive. Removing a file from this list keeps it in Google Drive.</p>
         <button type="button" id="openGoogleDriveButton" hidden>Find a file in Google Drive</button>
-        <button type="button" id="addReviewDatasetButton">Add a Drive file</button>
-        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
         <p id="sharedDriveFilesEmpty">No shared files added yet.</p>
         <div class="table-scroll"><table id="sharedDriveFilesTable" hidden>
           <caption>Files you can view</caption><thead><tr><th scope="col">Name</th><th scope="col">Owner</th><th scope="col">Actions</th></tr></thead>
           <tbody id="sharedDriveFilesBody"></tbody>
         </table></div>
+        <div class="actions"><button type="button" id="addReviewDatasetButton">Add a Drive file</button><button type="button" id="syncGoogleDriveSharedListButton" disabled>Refresh shared-file list</button></div>
+        <p id="googleDriveSharedListSyncStatus" class="drive-feedback" role="status">Your shared-file list is saved in this browser. Connect Google to keep it available on your other devices.</p>
+        <p id="googleDriveFilesStatus" class="drive-feedback" role="status" hidden></p>
+
     <p id="reviewDatasetStatus" hidden>Viewing my local data.</p>
       <div id="googleDriveSharedPreview" hidden>
         <p id="googleDriveSharedSummary" hidden></p>
