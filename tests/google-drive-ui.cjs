@@ -540,6 +540,13 @@ async function main() {
   scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
   await clicks('connectGoogleDriveButton'); await flush();
   clientInstance.readBackup=async id=>({metadata:{name:'Emotion Wheel current.json',owners:[{emailAddress:email}],appProperties:{role:'current'}},text:JSON.stringify(cloud)});
+  const findExistingForSharing=clientInstance.findExistingCurrent;
+  clientInstance.findExistingCurrent=async()=>null;
+  await clicks('shareMyDataMenuButton');await flush();
+  assert.match(node('googleDriveAccessMessage').textContent,/No current Drive file/);
+  assert.match(node('googleDriveSharingStatus').textContent,/No current Drive file/);
+  assert.equal(node('copyGoogleDriveResultLinkButton').disabled,true);
+  clientInstance.findExistingCurrent=findExistingForSharing;
   const uploadsBeforeSharing=uploads.length;
   await clicks('shareGoogleDriveCopyButton'); await flush();
   assert.equal(uploads.length,uploadsBeforeSharing,'Sharing an existing current file must not upload or sync first');
