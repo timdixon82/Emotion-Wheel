@@ -126,8 +126,18 @@ footer {
   gap: 1rem;
 }
 
-.brand { display: flex; align-items: center; gap: .625rem; font-weight: 800; }
-.brand-icon { width: 2.5rem; height: 2.5rem; flex: none; border-radius: .5rem; }
+.brand {
+  display: flex;
+  align-items: center;
+  gap: .625rem;
+  font-weight: 800;
+}
+.brand-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: none;
+  border-radius: .5rem;
+}
 
 .header-actions,
 .theme-control {
