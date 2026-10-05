@@ -2,6 +2,14 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.5.0
+
+Released 5 October 2026.
+
+- A top banner asks previously connected browsers to reconnect Google after reload or connection expiry, with a direct reconnect button.
+- The reminder disappears once connected and remains available if sign-in is cancelled or fails. First-time local users do not see it.
+- Help and Privacy explain the remembered connection flag. Access tokens remain in memory; automatic sync still requires Start Sync.
+
 ## 1.4.1
 
 Released 5 October 2026.

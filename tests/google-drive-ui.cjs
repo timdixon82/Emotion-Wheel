@@ -23,7 +23,7 @@ async function main() {
   let activeDataset = null, email = 'owner@example.test';
   const personal = { ratingScale: 10, entries: [{ inner: 'Sad', comment: 'Personal synthetic data' }], settings: { mode: 'phase1' } };
   const personalBefore = JSON.stringify(personal);
-  let allowConfig = false, tokenOptions, clientInstance, revoked = false, readFailure, finishRead;
+  let allowConfig = false, tokenOptions, clientInstance, revoked = false, readFailure, finishRead, accountExpiryCallback;
   let configOrigin = 'http://localhost:8765';
   let delayRead = false, currentFile = null;
   node('googleDriveBackupLimit').value = '5';
@@ -65,7 +65,7 @@ async function main() {
       { clientId: 'synthetic-client', apiKey: 'synthetic-key', appId: '123', origins: [configOrigin] } : {} }; },
     google: { accounts: { oauth2: { hasGrantedAllScopes: () => true, initTokenClient(options) { tokenOptions = options; return { ...options,
       requestAccessToken() { tokenOptions.callback({ access_token: 'synthetic', expires_in: 60 }); } }; } } } },
-    URL, URLSearchParams, setTimeout, clearTimeout,
+    URL, URLSearchParams, setTimeout(callback, delay) { if(delay===55000)accountExpiryCallback=callback;return setTimeout(callback,delay); }, clearTimeout,
     currentAppView: 'entry', selectAppView(button) { scope.currentAppView = button; }, maintenanceTab: 'maintenance', shareMyDataTab: 'sharing', sharedDataTab:'shared', logsTab: 'logs', chartsTab: 'charts',
     getReviewDataset: () => activeDataset, setReviewDataset: dataset => { activeDataset = dataset; }, dataSchemaMatches: () => true,
     getBackupSnapshot: () => JSON.parse(JSON.stringify(personal)),
@@ -78,6 +78,20 @@ async function main() {
     showCopyFallback() {}
   });
   vm.runInContext(source, scope);
+  const connectionHistoryKey = 'emotionWheelGooglePreviouslyConnectedV1';
+  assert.equal(node('googleDriveReconnectBanner').hidden, true, 'First-time local users get no reconnect reminder');
+  for(const [key,value] of [
+    [connectionHistoryKey,'true'],
+    ['emotionWheelDriveSyncV1',JSON.stringify({owner:email})],
+    ['emotionWheelSharedListSyncV1',JSON.stringify({device:'synthetic_device',owner:email,accounts:{}})]
+  ]) {
+    storage.set(key,value);vm.runInContext(source,scope);
+    assert.equal(node('googleDriveReconnectBanner').hidden,false,'Remembered connections, including existing sync and shared-list accounts, show the banner on load');
+    assert.equal(requests.length,0,'Displaying the reminder makes no Google requests');
+    assert.equal(scripts.length,0);
+    storage.delete(key);
+  }
+  vm.runInContext(source,scope);
   assert.equal(requests.length, 0);
   assert.equal(scripts.length, 0);
   assert.equal(remoteReads.length, 0);
@@ -102,6 +116,11 @@ async function main() {
   assert.equal(scope.currentAppView,'shared','The link opens Data Shared with Me rather than settings');
   assert.match(node('googleDriveLinkMessage').textContent,/Connect your Google account/);
   assert.equal(node('googleDriveLinkSignInButton').textContent,'Connect Google');
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>false;
+  await clicks('googleDriveLinkSignInButton');await flush();
+  assert.equal(storage.has(connectionHistoryKey),false,'Unauthorised connections are not remembered');
+  assert.equal(node('googleDriveReconnectBanner').hidden,true);
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
   await clicks('googleDriveLinkSignInButton');
   assert.equal(scripts.length, 1);
   assert.equal(scripts[0], 'https://accounts.google.com/gsi/client');
@@ -112,6 +131,12 @@ async function main() {
   assert.equal(node('googleDriveLinkPrompt').hidden,true,'Successful access closes the sign-in page');
   assert.equal(activeDataset.ratingScale, 5);
   assert.equal(activeDataset.entries[0].comment, '<script>synthetic</script>');
+  assert.equal(storage.get(connectionHistoryKey),'true','Successful connections persist only a history flag');
+  assert.equal(node('googleDriveReconnectBanner').hidden,true,'A connected browser has no reconnect banner');
+  clientInstance.connected=false;accountExpiryCallback();
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'Token expiry shows the reconnect banner');
+  clientInstance.connected=true;documentHandlers.appviewchange();
+  assert.equal(node('googleDriveReconnectBanner').hidden,true);
 
   assert.match(node('googleMaintenanceAccountStatus').textContent,/owner@example.test/);
   assert.match(node('googleMaintenanceAccountStatus').textContent,/owner@example.test/);
@@ -766,6 +791,38 @@ async function main() {
   assert.match(node('googleDriveSharedListSyncStatus').textContent,/changed while reading.*retrying/);
   await clicks('disconnectGoogleDriveButton');
   console.log('PASS: shared-file list merges cross-device additions and removals, isolates accounts, uploads no records and ignores late responses after disconnect.');
+
+  scope.currentAppView='entry';scope.location.hash='';activeDataset=null;
+  const requestsBeforeReminderReload=requests.length,scriptsBeforeReminderReload=scripts.length;
+  vm.runInContext(source,scope);
+  assert.equal(clientInstance.connected,false);
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'Reload remembers a previous successful connection');
+  assert.equal(requests.length,requestsBeforeReminderReload);assert.equal(scripts.length,scriptsBeforeReminderReload);
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>false;
+  await clicks('reconnectGoogleDriveButton');await flush();
+  assert.equal(scope.currentAppView,'maintenance','Reconnect opens My Data with connection feedback');
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'Cancelled or unauthorised reconnect keeps the reminder');
+  assert.equal(node('reconnectGoogleDriveButton').disabled,false,'Reconnect can be retried');
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
+  await clicks('reconnectGoogleDriveButton');await flush();
+  assert.equal(node('googleDriveReconnectBanner').hidden,true,'Successful banner reconnection hides the reminder');
+  await clicks('disconnectGoogleDriveButton');
+  assert.equal(node('googleDriveReconnectBanner').hidden,false);
+  clientInstance.connected=true;documentHandlers.focus();
+  assert.equal(node('googleDriveReconnectBanner').hidden,true);
+  clientInstance.connected=false;scope.document.visibilityState='visible';documentHandlers.visibilitychange();
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'Returning to a suspended page checks connection expiry');
+  scope.currentAppView='entry';
+  const normalStorage=scope.localStorage;
+  scope.localStorage={getItem(){throw new Error('Storage unavailable');},setItem(){throw new Error('Storage unavailable');}};
+  vm.runInContext(source,scope);
+  assert.equal(node('googleDriveReconnectBanner').hidden,true,'Unavailable history does not prevent local use');
+  await clicks('connectGoogleDriveButton');await flush();
+  assert.equal(clientInstance.connected,true,'Unavailable storage does not prevent connecting');
+  await clicks('disconnectGoogleDriveButton');
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'The current page still remembers a connection without storage');
+  scope.localStorage=normalStorage;
+  console.log('PASS: reconnect reminders cover previous connections, reload, expiry, retry, legacy history and unavailable storage without automatic sign-in.');
 
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });
