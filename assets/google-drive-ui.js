@@ -33,7 +33,7 @@
   let accessFileId='', accessOwner='', accessPeopleCount=0, stopSharingPlan;
   let driveTree, cleanupPlan, shareResultFileId = '', linkAccessProblem = false;
   let busy = false, epoch = 0, savedFileId = '', previewFileId = '', linkedFileId = '';
-  let invalidSharingLink = false;
+  let invalidSharingLink = false, fileApprovalAttempt = '';
   function receiveSharingLink() {
     const fragment = new URLSearchParams(location.hash.slice(1));
     if (!fragment.has('drive')) return;
@@ -180,7 +180,7 @@
     byId('googleDriveLinkAccessPage').hidden = !linkedFileId || !linkAccessProblem;
     if (linkedFileId) byId('googleDriveLinkAccessPage').href = `https://drive.google.com/file/d/${linkedFileId}/view`;
     byId('googleDriveLinkMessage').textContent = invalidSharingLink ? 'This link cannot be opened. Ask the sender for a new sharing link.' : linkAccessProblem
-      ? 'This account cannot open the file. If the owner already gave you access, choose the shared file below to let Emotion Wheel open it. Otherwise ask the owner for Viewer access, or open Google Drive to request it.'
+      ? 'Google needs approval to open this file in Emotion Wheel. The Google approval screen shows only the shared file from your link. Confirm that file to continue. If it is not shown, switch Google account or ask the owner for Viewer access.'
       : client.connected ? `Connected as ${connectedEmail || 'your Google account'}. We will check your access to the shared data.` : 'Connect your Google account to access the shared data. Choose the account the owner shared it with.';
 
     save.disabled = byId('createGoogleDriveBackupButton').disabled = busy || !client.connected || !connectedEmail || Boolean(getReviewDataset());
@@ -250,6 +250,7 @@
   async function operation(action, message, area='save') {
     if (busy) return;
     const operationEpoch = epoch;
+    let requestFileApproval=false;
     feedbackArea=area;
     busy = true; status.textContent = message; update();
     try { return await action(operationEpoch); }
@@ -260,10 +261,15 @@
       if(epoch===operationEpoch && (area==='sync' || error.code==='sync-conflict'))recordSyncFailure(error.message);
       if (epoch === operationEpoch && error.code === 'drive-access' && linkedFileId && client.connected) {
         linkAccessProblem = true;selectAppView(sharedDataTab,true);
-        status.textContent += ' If you have access in Drive, choose Add a Drive file and select this file to grant the app access.';
+        status.textContent += ' Google needs approval to open this shared file in Emotion Wheel. The approval screen shows only the file from your link. If it is not shown, switch to the account the owner shared with or request access.';
+        const attempt=`${operationEpoch}:${linkedFileId}`;
+        if(fileApprovalAttempt!==attempt){fileApprovalAttempt=attempt;requestFileApproval=true;}
       }
     } finally {
-      if (epoch === operationEpoch) { busy = false; update(); }
+      if (epoch === operationEpoch) {
+        busy = false; update();
+        if(requestFileApproval && client.connected && linkedFileId)open.click();
+      }
     }
   }
   async function readConfig() {
@@ -812,12 +818,15 @@
     if (epoch !== operationEpoch) return;
     await new Promise((resolve, reject) => {
       const forSharing = pickingShareFile; pickingShareFile = false;
-      const view = new google.picker.DocsView().setMimeTypes('application/json,text/plain');
+      const approvalFileId=!forSharing && linkedFileId ? EmotionWheelDrive.validFileId(linkedFileId) : '';
+      const view = new google.picker.DocsView().setMimeTypes('application/json,text/plain').setMode(google.picker.DocsViewMode.LIST);
+      if(approvalFileId)view.setFileIds(approvalFileId);
       let selected = false;
       finishPicker = resolve;
       const picker = new google.picker.PickerBuilder().setDeveloperKey(config.apiKey)
         .setAppId(config.appId).setOAuthToken(client.getPickerToken()).addView(view)
         .setOrigin(location.origin)
+        .setTitle(approvalFileId?'Allow Emotion Wheel to open this shared file':'Select a Drive file')
         .setCallback(async data => {
           if (epoch !== operationEpoch) { resolve(); return; }
           if (selected) return;

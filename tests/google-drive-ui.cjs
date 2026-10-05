@@ -120,25 +120,27 @@ async function main() {
   assert.equal(uploads.length, 0);
   console.log('PASS: explicit connection loads only supported Google scripts, uses per-file scope and opens separate shared preview without personal log/settings mutation or upload.');
 
-  let pickerCallback, pickerVisible = false;
+  let pickerCallback, pickerVisible = false, pickerBuilds=0;
   const pickerOptions = {};
   scope.gapi = { load(_name, options) { options.callback(); } };
-  scope.google.picker = { Action: { CANCEL: 'cancel', PICKED: 'picked' },
-    DocsView: class { setMimeTypes(types) { pickerOptions.types = types; return this; } },
+  scope.google.picker = { DocsViewMode:{LIST:'list'}, Action: { CANCEL: 'cancel', PICKED: 'picked' },
+    DocsView: class { constructor(){delete pickerOptions.fileIds;} setFileIds(ids){pickerOptions.fileIds=ids;return this;} setMode(mode){pickerOptions.mode=mode;return this;} setMimeTypes(types) { pickerOptions.types = types; return this; } },
     PickerBuilder: class {
       setDeveloperKey(value) { pickerOptions.key = value; return this; }
       setAppId(value) { pickerOptions.appId = value; return this; }
       setOAuthToken(value) { pickerOptions.token = value; return this; }
       setOrigin(value) { pickerOptions.origin = value; return this; }
+      setTitle(value){pickerOptions.title=value;return this;}
       addView() { return this; }
       setCallback(value) { pickerCallback = value; return this; }
-      build() { return { setVisible(value) { pickerVisible = value; } }; }
+      build() { pickerBuilds++;return { setVisible(value) { pickerVisible = value; } }; }
     }
   };
   await clicks('openGoogleDriveButton');
   assert.equal(pickerVisible, true);
   assert.equal(pickerOptions.origin, 'http://localhost:8765');
   assert.equal(pickerOptions.types, 'application/json,text/plain');
+  assert.equal(pickerOptions.fileIds,undefined,'Ordinary Add file keeps the full picker');
   const readsBeforeWrongFile = remoteReads.length;
   await pickerCallback({ action: 'picked', docs: [{ id: 'wrong_synthetic_file_456' }] }); await flush();
   assert.equal(remoteReads.length, readsBeforeWrongFile + 1);
@@ -597,9 +599,20 @@ async function main() {
   scope.location.hash='#drive=synthetic_drive_file_123';documentHandlers.hashchange();await flush();
   clientInstance.readBackup=async()=>{const error=new Error('Synthetic access denied');error.code='drive-access';throw error;};
   await clicks('googleDriveLinkSignInButton');await flush();
-  assert.equal(node('googleDriveLinkPrompt').hidden,false,'Access denial stays in the sharing page');
-  assert.match(node('googleDriveLinkMessage').textContent,/cannot open the file/);
-  assert.match(node('googleDriveLinkStatus').textContent,/access denied/);
+  assert.equal(pickerVisible,true,'First file access denial automatically opens Google approval');
+  assert.equal(pickerOptions.fileIds,'synthetic_drive_file_123','Approval shows only the linked file');
+  assert.equal(pickerOptions.mode,'list');
+  assert.match(pickerOptions.title,/Allow Emotion Wheel/);
+  await pickerCallback({action:'cancel'});await flush();
+  assert.equal(node('googleDriveLinkPrompt').hidden,false,'Cancelled approval stays in the sharing page');
+  assert.match(node('googleDriveLinkMessage').textContent,/needs approval/);
+  assert.equal(pickerVisible,false,'Cancellation does not reopen approval in a loop');
+  await clicks('googleDriveLinkPickerButton');await flush();
+  const buildsAfterRetry=pickerBuilds;
+  await pickerCallback({action:'picked',docs:[{id:'synthetic_drive_file_123'}]});await flush();
+  assert.equal(pickerBuilds,buildsAfterRetry,'A denied picker read must not start another approval loop');
+  assert.equal(pickerVisible,false);
+  assert.match(node('googleDriveLinkStatus').textContent,/Synthetic access denied/);
   assert.equal(node('googleDriveLinkSignInButton').textContent,'Switch Google account');
   assert.equal(node('googleDriveLinkAccessPage').hidden,false);
   assert.equal(scope.currentAppView,'shared','Access denial stays on Data Shared with Me');
