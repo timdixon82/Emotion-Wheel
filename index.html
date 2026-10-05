@@ -1178,10 +1178,11 @@
         <p id="sharingGoogleAccountStatus" class="help">Google is disconnected.</p>
         <p id="sharingGoogleConnectionStatus" class="drive-feedback" role="status" hidden></p>
         <p>Give someone read-only access to your current Drive file, then send them the link. It stays up to date when you save or sync. Google checks their account before opening it.</p>
-        <div class="actions"><button type="button" id="sharingConnectGoogleButton">Connect Google</button><span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Add person</button></span><button type="button" id="refreshGoogleDriveSharingButton" disabled>Refresh who has access</button></div>
-        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
+        <div class="actions"><button type="button" id="sharingConnectGoogleButton">Connect Google</button></div>
         <p id="googleDriveAccessMessage" role="status">Connect Google to see who has access.</p>
         <table id="googleDriveAccessTable" hidden><caption>People with access to this file</caption><thead><tr><th scope="col">Person</th><th scope="col">Permission</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveAccessBody"></tbody></table>
+        <div class="actions"><span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Add person</button></span><button type="button" id="refreshGoogleDriveSharingButton" disabled>Refresh who has access</button></div>
+        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
         <p class="help">The link is the same for everyone. Stopping access cannot remove copies already downloaded.</p>
         <section id="googleDriveStopSharingPanel" hidden aria-labelledby="googleDriveStopSharingHeading"><h3 id="googleDriveStopSharingHeading" tabindex="-1">Stop sharing?</h3><p id="googleDriveStopSharingMessage"></p><div class="actions"><button type="button" id="confirmGoogleDriveStopSharingButton">Stop sharing</button><button type="button" id="cancelGoogleDriveStopSharingButton">Keep access</button></div></section>
       <section id="googleDriveSharingForm" class="drive-task" aria-labelledby="googleDriveSharingHeading" hidden>
