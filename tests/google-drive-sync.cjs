@@ -4,6 +4,14 @@ const { reconcile, getConflicts, canonical, content } = require('../assets/googl
 const record = (id, note='original') => ({id, inner:'Happy', timestamp:'2026-10-04T10:00:00Z', comment:note, extra:{kept:true}});
 const snapshot = entries => ({version:3,schemaVersion:2,ratingScale:5,settings:{captureMode:'phase1'},tags:['Work'],entries});
 const base = snapshot([record('one'),record('two')]);
+const restoredCopy={...snapshot([record('restored')]),driveSync:{version:1,deletedIds:['one','two'],restoreRevision:'restore-test'}};
+assert.deepEqual(reconcile(base,base,restoredCopy),restoredCopy,'Unchanged older devices adopt a restored dataset');
+const offlineEdits=structuredClone(base);offlineEdits.entries.push(record('offline'));
+assert.throws(()=>reconcile(base,offlineEdits,restoredCopy),/backup was restored/);
+assert.equal(getConflicts(base,offlineEdits,restoredCopy)[0].key,'dataset');
+assert.deepEqual(reconcile(base,offlineEdits,restoredCopy,{choices:{dataset:'remote'}}).entries,restoredCopy.entries);
+assert.equal(reconcile(base,offlineEdits,restoredCopy,{choices:{dataset:'remote'}}).driveSync.restoreRevision,'restore-test');
+assert.equal(reconcile(restoredCopy,snapshot([record('restored')]),restoredCopy).driveSync.restoreRevision,'restore-test','Normal sync retains the restore marker');
 const local = structuredClone(base), remote = structuredClone(base);
 local.entries[0].comment='local edit'; remote.entries.push(record('three'));
 const before=canonical([base,local,remote]);

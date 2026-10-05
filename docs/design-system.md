@@ -17,6 +17,6 @@ Emotion Wheel follows Tim Dixon's design system as its visual and interaction fo
 
 ## Local adaptations
 
-Emotion Wheel keeps its own name, emotion-wheel artwork, privacy wording, and local-only data model. It uses the design system to make the recording, review, and maintenance journey consistent and easier to navigate.
+Emotion Wheel keeps its own name, emotion-wheel artwork, privacy wording, and local-first data model with optional Google Drive saving and sync. It uses the design system to make the recording, review, and My Data journey consistent and easier to navigate.
 
-On smaller screens, the header navigation collapses into a Menu button containing Entry, the grouped Review destinations, My Data, and the theme selector. On wider screens Entry, Logs, Charts, and My Data form one flat row, with the theme selector at the top right. Entry actions remain in document flow after the always-visible optional note, so visual position and screen-reader order agree. Tables become labelled row cards instead of forcing horizontal scrolling. Chart period controls expose only the picker relevant to the selected day, week, or month view.
+On smaller screens, the header navigation collapses into a Menu button containing Entry, Logs, Charts, My Data, Data Shared with Me, Help, the data-set selector, Sync status and the theme selector. Wider screens use compact navigation and the same destinations. Entry actions remain in document flow after the always-visible optional note, so visual position and screen-reader order agree. Tables become labelled row cards instead of forcing horizontal scrolling. Chart period controls expose only the picker relevant to the selected day, week, or month view.

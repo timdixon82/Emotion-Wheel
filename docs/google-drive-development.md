@@ -5,12 +5,12 @@ push a release, or change Pages deployment until local testing is complete and
 Tim authorises release. Google Drive remains optional; the local app and file
 backups must keep working without a Google account or Google scripts.
 
-Current Google project: `emotion-wheel-510615`, project number `391356585675`.
+Test Google project: **Emotion Wheel Test**, `emotion-wheel-510615`, project number `391356585675`.
 Drive and Picker APIs have been enabled. OAuth branding is created with
 `tjdixon@gmail.com` for support and developer contact. Tim approved Google's
 User Data Policy; the OAuth configuration is created in External / Testing mode,
 with `tjdixon@gmail.com` and `tim@dixon-net.com` added as test users. The approved Web client
-is created with only `http://localhost:8765` authorised. The approved Picker key
+authorises `http://localhost:8765` and the approved private Tailscale HTTPS origin described below. The approved Picker key
 is created with website restrictions `http://localhost:8765/*` and
 `https://docs.google.com/*`, and API restrictions for Drive and Picker only.
 The consent configuration declares `drive.file`, `openid` and `userinfo.email`. Drive access remains per-file; the basic identity scopes display the verified connected email.
@@ -25,14 +25,50 @@ the shared backup, and a revocation test blocked further reading. The in-app bro
 account popup to automation, so Tim completed account selection directly.
 
 The local preview now has explicit connection, saving and shared-preview controls.
-The current transport only creates new backup files; protected updates and
-automatic sync remain later work. Development credentials belong in ignored
+The transport now supports protected current-file updates, two-way sync, dated backups with comments, backup restore and read-only shared datasets. Development credentials belong in ignored
 `assets/google-drive-config.local.json`, with `clientId`, `apiKey`, `appId` and
-`origins` (including `http://localhost:8765`). The committed configuration is
-blank. Only localhost checks for the ignored development file, and no
-configuration is requested until the user chooses Connect.
+`origins` (including `http://localhost:8765`). The committed configuration now contains the production public client ID and restricted browser key. Only localhost checks for the ignored development file. Google sign-in is prepared when a Google data page is opened; connection and authorisation still require an explicit Connect action.
 
 ## Google setup
+
+### Private phone preview
+
+Use Tailscale Serve to test this branch on a phone without deploying to Pages.
+The Mac must remain awake and the phone must be connected to the same tailnet.
+The preview server serves only the app, assets and documentation; repository
+metadata, directory listings and the ignored local credential file are blocked.
+
+```sh
+python3 scripts/preview-server.py
+/Applications/Tailscale.app/Contents/MacOS/Tailscale serve --bg http://127.0.0.1:8787
+```
+
+Preview address: `https://tims-macbook-pro.cod-hammerhead.ts.net/`.
+This is a new browser origin: localhost records and settings do not appear
+automatically. Use synthetic records or explicitly open the existing test Drive
+file. Keep the production site and real data separate during testing.
+
+Google configuration for this address requires approval and then saving the
+exact HTTPS origin in the existing test OAuth client, and its `/*` referrer in
+the restricted Picker key. Retain localhost and `https://docs.google.com/*`.
+After those changes are saved, restart the server with:
+
+```sh
+python3 scripts/preview-server.py --google-origin https://tims-macbook-pro.cod-hammerhead.ts.net
+```
+
+This serves the browser credentials through the normal public configuration
+endpoint only for the preview process; it does not change the committed blank
+production configuration or expose an OAuth client secret. Tim approved the
+Google changes on 5 October 2026; both were saved and the HTTPS configuration
+endpoint was verified with the preview origin present. Phone sign-in remains
+to be checked after Google's configuration propagation.
+
+To stop access, stop the Python preview process and disable this proxy:
+
+```sh
+/Applications/Tailscale.app/Contents/MacOS/Tailscale serve --https=443 off
+```
 
 Use a dedicated Google Cloud project owned by Tim. Begin in Testing with only
 named test accounts. Do not enable billing or publish the OAuth app for this
@@ -140,8 +176,7 @@ level of the configured scale.
 
 The local browser is available for manual testing. Real owner Google sign-in,
 upload, Picker selection, download and refresh passed. Cross-account Viewer
-reading, refresh and revocation also passed. Automatic sync is not implemented; this preview creates an
-explicit new backup on each save.
+reading, refresh and revocation also passed. At that initial test stage, saving created a new backup. The later sync, current-file, restore and backup-table work is described below; those initial checks do not establish coverage of the latest features.
 
 Tim approved uploading only the single synthetic Happy record and test settings.
 One `Emotion Wheel backup.json` was created privately in the owner account.
@@ -369,3 +404,11 @@ Original-data backups for rating changes and schema updates can be saved directl
 Header status controls are now two small buttons: Google Connected/Disconnected opens account details in My Data, and Sync On/Off opens sync controls. The email and last successful date remain in My Data; screen-reader names also include the relevant details. The global issue banner carries failures, avoiding long status text in the header. Public help and unavailable-file messages use My Data and Data Shared with Me; historical development notes retain their earlier screen names.
 
 When the connected device needs a local data upgrade, connecting checks the existing owned current Drive file read-only before upgrade decisions. Discovery never creates folders or files. The update banner explains conflicting or unsupported copies. Original-backup uploads remain a separate explicit action, with both local and remote originals protected before confirmation. Local file backups also retain the original schema while editing is locked.
+
+## Production setup progress — 5 October 2026
+
+Tim reports the phone/computer testing is complete. The separate **Emotion Wheel Production** project was created with Google-assigned ID `poetic-diorama-510718-i4`. The original project was renamed **Emotion Wheel Test**; its ID and credentials are unchanged.
+
+Production OAuth app registration exists as Emotion Wheel with `tjdixon@gmail.com` as support/developer contact and External audience initially in Testing. Tim approved its Google API Services User Data Policy. Branding links were saved for `https://emotionwheel.timdixon.net/` and `https://emotionwheel.timdixon.net/docs/privacy.html`, with authorised domain `timdixon.net`. Production APIs and restricted credentials have since been configured, as recorded below. Domain/branding verification and public audience setup remain to be checked.
+
+Production Drive and Picker APIs are enabled. A production web client and browser key were created after Tim’s approval. The web client allows only `https://emotionwheel.timdixon.net`; the key is restricted to Drive/Picker and the public site plus `https://docs.google.com/*`. Restricted public browser configuration is now in `assets/google-drive-config.json`; no client secret was retained. The declared scopes are `drive.file`, `openid` and `userinfo.email`, all listed by Google as non-sensitive. Audience remains in Testing pending production/branding verification steps.

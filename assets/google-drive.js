@@ -167,6 +167,47 @@
       return account.email;
     }
 
+    async #requireSharingOwner(fileId, ownerEmail) {
+      const generation = this.#generation;
+      validFileId(fileId);
+      if (!ownerEmail) throw new Error('Reconnect Google to check the file owner.');
+      const response = await this.#request(`${API}files/${fileId}?fields=id,name,trashed,owners(emailAddress)`);
+      const file = JSON.parse(await this.#readText(response));
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      if (file.trashed || !file.owners?.some(owner => owner.emailAddress === ownerEmail)) throw new Error('You can manage sharing only for a file you own.');
+      return file;
+    }
+
+    async getSharing(fileId, ownerEmail) {
+      const generation = this.#generation;
+      const file = await this.#requireSharingOwner(fileId, ownerEmail);
+      const permissions = [], seen = new Set();
+      let pageToken;
+      do {
+        const params = new URLSearchParams({fields:'nextPageToken,permissions(id,type,role,emailAddress,displayName,domain,deleted)',pageSize:'100'});
+        if (pageToken) params.set('pageToken', pageToken);
+        const response = await this.#request(`${API}files/${fileId}/permissions?${params}`);
+        const page = JSON.parse(await this.#readText(response));
+        if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+        if (!Array.isArray(page.permissions)) throw new Error('Google did not return the sharing list.');
+        permissions.push(...page.permissions.filter(permission => !permission.deleted));
+        pageToken = page.nextPageToken;
+        if (pageToken && (seen.has(pageToken) || permissions.length > 10000)) throw new Error('The sharing list could not be completed. Check access in Google Drive.');
+        seen.add(pageToken);
+      } while (pageToken);
+      return {file, permissions};
+    }
+
+    async stopSharing(fileId, permissionId, ownerEmail) {
+      if (typeof permissionId !== 'string' || !/^[a-zA-Z0-9_-]{1,200}$/.test(permissionId)) throw new Error('Invalid Google permission. Refresh the sharing list.');
+      const generation = this.#generation;
+      const sharing = await this.getSharing(fileId, ownerEmail);
+      const permission = sharing.permissions.find(item => item.id === permissionId);
+      if (!permission || permission.role === 'owner' || !['user','group','domain','anyone'].includes(permission.type)) throw new Error('This access cannot be removed here. Refresh the sharing list.');
+      if (generation !== this.#generation) throw new Error('Google Drive connection changed.');
+      await this.#request(`${API}files/${fileId}/permissions/${encodeURIComponent(permissionId)}`, {method:'DELETE'}, 'removing sharing access');
+    }
+
     async shareWithViewer(fileId, email, notify = false) {
       validFileId(fileId);
       if (typeof email !== 'string' || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -189,7 +230,7 @@
       let pageToken;
       do {
         const params = new URLSearchParams({ q: `trashed = false and 'me' in owners and appProperties has { key='application' and value='emotion-wheel' } and (${query})`,
-          fields: 'incompleteSearch,nextPageToken,files(id,name,mimeType,createdTime,parents,appProperties,owners(emailAddress))', pageSize: '100', orderBy: 'createdTime asc,name' });
+          fields: 'incompleteSearch,nextPageToken,files(id,name,description,mimeType,createdTime,parents,appProperties,owners(emailAddress))', pageSize: '100', orderBy: 'createdTime asc,name' });
         if (pageToken) params.set('pageToken',pageToken);
         const response = await this.#request(`${API}files?${params}`);
         const result = JSON.parse(await this.#readText(response));
@@ -227,6 +268,14 @@
       const folders=await this.listManagedFiles("mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='role' and value='root-folder' } and 'root' in parents");
       if(folders.length>1)throw new Error('More than one Emotion Wheel folder was found. Review them in Drive before updating.');
       return folders.length?this.findCurrent(folders[0].id):null;
+    }
+    async findExistingBackupFolder() {
+      const roots=await this.listManagedFiles("mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='role' and value='root-folder' } and 'root' in parents");
+      if(roots.length>1)throw new Error('More than one Emotion Wheel folder was found. Review Drive before managing backups.');
+      if(!roots.length)return null;
+      const folders=await this.listManagedFiles(`mimeType = 'application/vnd.google-apps.folder' and appProperties has { key='role' and value='backups-folder' } and '${validFileId(roots[0].id)}' in parents`);
+      if(folders.length>1)throw new Error('More than one backup folder was found. Review Drive before managing backups.');
+      return folders.length?{folderId:roots[0].id,backupsId:folders[0].id}:null;
     }
 
     async findCurrent(folderId) {
@@ -306,7 +355,7 @@
       return result;
     }
 
-    async createBackup(backup, { name = 'Emotion Wheel backup.json', parentId, role = 'backup' } = {}) {
+    async createBackup(backup, { name = 'Emotion Wheel backup.json', parentId, role = 'backup', description = '' } = {}) {
       const generation = this.#generation;
       if (!backup || !Array.isArray(backup.entries)) throw new Error('No valid backup to save.');
       const content = JSON.stringify(backup);
@@ -314,9 +363,11 @@
         throw new Error('The backup is too large to save to Drive. Use a file backup.');
       }
       const boundary = `emotion_wheel_${root.crypto.randomUUID()}`;
-      if (typeof name !== 'string' || !name.trim() || name.length > 180) throw new Error('Enter a file name of up to 180 characters.');
+      if(typeof name==='string' && name.trim() && role==='backup' && !/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}(?:\.\d{3})?Z - /.test(name))name=`${new Date().toISOString().replace(/:/g,'-')} - ${name}`;
+      if (typeof name !== 'string' || !name.trim() || name.length > 240) throw new Error('Enter a file name of up to 240 characters.');
+      if(typeof description!=='string' || description.length>80)throw new Error('Enter a backup comment of up to 80 characters.');
       if (parentId) validFileId(parentId);
-      const metadata = { name: name.trim(), mimeType: 'application/json',
+      const metadata = { name: name.trim(), mimeType: 'application/json', ...(description?{description}:{}),
         appProperties: { application: 'emotion-wheel', role }, ...(parentId ? { parents: [parentId] } : {}) };
       const body = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +
         `${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n` +

@@ -44,6 +44,26 @@ async function main() {
   guardedReplies = [new Response(JSON.stringify({id:fileId}))];
   await assert.rejects(guarded.getUpdateState(fileId), /baseline/);
   console.log('PASS: guarded updates require an exact ETag, preserve revisions and pause on stale or missing baselines.');
+  const permissionCalls=[];let permissionReplies=[];
+  const sharingClient=new DriveClient({fetch:async(url,options)=>{permissionCalls.push({url,options});return permissionReplies.shift();}});
+  sharingClient.setAccessToken({access_token:'synthetic',expires_in:60});
+  const ownerFile={id:fileId,name:'Current',owners:[{emailAddress:'owner@example.test'}]};
+  const permissionJson=value=>new Response(JSON.stringify(value));
+  permissionReplies=[permissionJson(ownerFile),permissionJson({permissions:[{id:'owner',type:'user',role:'owner'}],nextPageToken:'second'}),permissionJson({permissions:[{id:'viewer',type:'user',role:'reader',emailAddress:'viewer@example.test'}]})];
+  assert.equal((await sharingClient.getSharing(fileId,'owner@example.test')).permissions.length,2);
+  assert(permissionCalls.at(-1).url.includes('pageToken=second'));
+  assert(permissionCalls.every(call=>!call.options.method));
+  permissionReplies=[permissionJson(ownerFile),permissionJson({permissions:[{id:'viewer',type:'user',role:'reader'}]}),new Response(null,{status:204})];
+  await sharingClient.stopSharing(fileId,'viewer','owner@example.test');
+  assert.equal(permissionCalls.at(-1).options.method,'DELETE');
+  assert(permissionCalls.at(-1).url.endsWith('/permissions/viewer'));
+  const deletesBefore=permissionCalls.filter(call=>call.options.method==='DELETE').length;
+  permissionReplies=[permissionJson(ownerFile),permissionJson({permissions:[{id:'owner',type:'user',role:'owner'}]})];
+  await assert.rejects(sharingClient.stopSharing(fileId,'owner','owner@example.test'),/cannot be removed/);
+  permissionReplies=[permissionJson(ownerFile)];
+  await assert.rejects(sharingClient.stopSharing(fileId,'viewer','stranger@example.test'),/file you own/);
+  assert.equal(permissionCalls.filter(call=>call.options.method==='DELETE').length,deletesBefore);
+  console.log('PASS: sharing lists paginate read-only; removal targets the confirmed permission and rejects owners and non-owned files.');
   const original = JSON.stringify(backup);
   const calls = [];
   let time = 0;
@@ -74,6 +94,7 @@ async function main() {
 
   replies = [json({ id: fileId, name: 'Emotion Wheel backup.json' })];
   await client.createBackup(backup);
+  assert.match(calls.at(-1).options.body,/"name":"\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}\.\d{3}Z - Emotion Wheel backup\.json"/,'Default Drive backups also have a date-first name');
   const upload = calls.at(-1);
   assert.equal(upload.options.method, 'POST');
   assert.equal(upload.options.redirect, 'error');
@@ -105,8 +126,9 @@ async function main() {
   assert.equal((await client.listBackups(backupsId)).length,2);
   assert(new URL(calls.at(-1).url).searchParams.has('pageToken'));
   replies=[json({id:fileId})];
-  await client.createBackup(backup,{name:'Named backup 2026.json',parentId:backupsId,role:'backup'});
-  assert(calls.at(-1).options.body.includes('Named backup 2026.json'));
+  await client.createBackup(backup,{name:'2026-10-05T18-00-00Z - Named backup - Before ratings.json',description:'Before ratings',parentId:backupsId,role:'backup'});
+  assert(calls.at(-1).options.body.includes('2026-10-05T18-00-00Z - Named backup - Before ratings.json'));
+  assert(calls.at(-1).options.body.includes('"description":"Before ratings"'));
   assert(calls.at(-1).options.body.includes(backupsId));
   const baseline={id:fileId,etag:'"stable"',editable:true,owners:[{emailAddress:'owner@example.test'}]};
   const managed={id:fileId,mimeType:'application/json',parents:[backupsId],owners:[{emailAddress:'owner@example.test'}],appProperties:{application:'emotion-wheel',role:'backup'}};

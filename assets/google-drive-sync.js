@@ -38,6 +38,18 @@
       }
     }
     const left = content(local), right = content(remote), ancestor = base && content(base);
+    for(const copy of [local,remote]) {
+      index(copy.entries);
+      if(copy.driveSync && (copy.driveSync.version!==1 || !Array.isArray(copy.driveSync.deletedIds) || copy.driveSync.deletedIds.some(id=>typeof id!=='string' || !id) || (copy.driveSync.restoreRevision!==undefined && (typeof copy.driveSync.restoreRevision!=='string' || !copy.driveSync.restoreRevision))))conflict('The sync deletion or restore markers need review.');
+    }
+    // A deliberate restore replaces the whole dataset. Older devices must not
+    // merge their previous log back into it without reviewing their own edits.
+    if ((remote.driveSync?.restoreRevision || '') !== (base?.driveSync?.restoreRevision || '')) {
+      if(ancestor && canonical(left)===canonical(ancestor))return JSON.parse(JSON.stringify(remote));
+      if(options.choices?.dataset)return resolveUsingCopy(local,remote,options.choices.dataset);
+      if(collect){collect.push({key:'dataset',local,remote,base});return local;}
+      conflict('A backup was restored on another device. Review which complete dataset to keep.');
+    }
     if (ancestor && (left.ratingScale !== ancestor.ratingScale || right.ratingScale !== ancestor.ratingScale) &&
         canonical(left) !== canonical(ancestor) && canonical(right) !== canonical(ancestor) && canonical(left) !== canonical(right)) {
       if(options.choices?.dataset)return resolveUsingCopy(local,remote,options.choices.dataset);
@@ -69,7 +81,7 @@
     }
     merged.entries = entries.sort((a,b) => String(a.id).localeCompare(String(b.id)));
     merged.tags = pick(ancestor?.tags, left.tags || [], right.tags || [], 'the tag list');
-    merged.driveSync = { version: 1, deletedIds: [...deleted].sort() };
+    merged.driveSync = { version: 1, deletedIds: [...deleted].sort(), ...(remote.driveSync?.restoreRevision ? {restoreRevision:remote.driveSync.restoreRevision} : {}) };
     return merged;
   }
   function resolveUsingCopy(local, remote, side) {
@@ -79,7 +91,7 @@
     const deleted = new Set([...(local.driveSync?.deletedIds || []), ...(remote.driveSync?.deletedIds || [])]);
     for (const entry of [...local.entries,...remote.entries]) if (!ids.has(entry.id)) deleted.add(entry.id);
     for (const id of ids) deleted.delete(id);
-    chosen.driveSync={version:1,deletedIds:[...deleted].sort()};
+    chosen.driveSync={version:1,deletedIds:[...deleted].sort(),...(chosen.driveSync?.restoreRevision?{restoreRevision:chosen.driveSync.restoreRevision}:{})};
     return chosen;
   }
   function getConflicts(base,local,remote){const collect=[];reconcile(base,local,remote,{collect});return collect;}

@@ -1,0 +1,31 @@
+{
+  "id": "../",
+  "name": "Emotion Wheel",
+  "short_name": "Emotion Wheel",
+  "description": "Record emotions, review patterns and optionally save or sync with your Google Drive.",
+  "start_url": "../",
+  "scope": "../",
+  "display": "standalone",
+  "theme_color": "#9ca3af",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

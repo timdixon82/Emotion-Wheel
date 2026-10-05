@@ -2,6 +2,12 @@
 <html lang="en-GB">
 <head>
   <meta charset="utf-8">
+  <link rel="icon" href="assets/icons/favicon.ico?v=20261005" sizes="16x16 32x32 48x48">
+  <link rel="icon" type="image/png" href="assets/icons/favicon-32.png?v=20261005" sizes="32x32">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png?v=20261005" sizes="180x180">
+  <link rel="manifest" href="assets/manifest.webmanifest">
+  <meta name="theme-color" content="#0c3b64">
+  <meta name="apple-mobile-web-app-title" content="Emotion Wheel">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
@@ -68,7 +74,8 @@
       max-width: 980px; min-height: 4.25rem; margin: 0 auto; padding: .625rem 1rem;
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
     }
-    .app-brand { display: flex; line-height: 1.1; min-width: 0; }
+    .app-brand { display: flex; align-items: center; gap: .625rem; line-height: 1.1; min-width: 0; }
+    .app-brand-icon { width: 2.5rem; height: 2.5rem; flex: none; border-radius: .5rem; }
     .app-brand-name { color: var(--nav-active); font-size: 1.25rem; font-weight: 800; margin: 0; }
     .header-actions { display: flex; align-items: center; gap: .75rem; margin-left: auto; }
     .theme-control { display: flex; align-items: center; gap: .5rem; }
@@ -122,12 +129,12 @@
     .drive-task { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
     .drive-task h2 { margin-top: 0; }
     .table-scroll { max-width: 100%; overflow-x: auto; }
-    #sharedDriveFilesTable { min-width: 42rem; }
-    #sharedDriveFilesTable td[colspan="3"] { width: auto; }
+    #sharedDriveFilesTable, #googleDriveBackupsTable { min-width: 42rem; }
+    #sharedDriveFilesTable td[colspan="3"], #googleDriveBackupsTable td[colspan="3"] { width: auto; }
     .drive-feedback:focus, #googleDriveConflictHeading:focus, #googleMaintenanceAccountStatus:focus, #googleDriveLastSyncStatus:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
-    #sharedDriveFilesTable button { margin: .25rem; }
-    #sharedDriveFilesTable td:first-child { width: 45%; min-width: 20rem; }
-    .drive-name-input, #googleDriveBackupName, #googleDriveRecipientEmail, #googleDriveShareLink { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; min-height: 3.25rem; padding: .75rem; font-size: 1.1rem; }
+    #sharedDriveFilesTable button, #googleDriveBackupsTable button { margin: .25rem; }
+    #sharedDriveFilesTable td:first-child, #googleDriveBackupsTable td:first-child { width: 45%; min-width: 20rem; }
+    .drive-name-input, #googleDriveBackupComment, #googleDriveBackupName, #googleDriveRecipientEmail, #googleDriveShareLink { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; min-height: 3.25rem; padding: .75rem; font-size: 1.1rem; }
     .drive-name-editor { margin-top: .5rem; }
     .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
     .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
@@ -336,17 +343,17 @@
       }
       .mobile-theme-control label { color: var(--nav-text); font-weight: 700; }
       .mobile-theme-control select { width: 100%; }
-      #sharedDriveFilesTable { min-width: 0; }
-      #sharedDriveFilesTable, #sharedDriveFilesTable tbody, #sharedDriveFilesTable tr { display: block; width: 100%; }
-      #sharedDriveFilesTable caption { display: block; }
-      #sharedDriveFilesTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
-      #sharedDriveFilesTable tbody tr { margin: .75rem 0; border: 1px solid var(--border); border-radius: .5rem; }
-      #sharedDriveFilesTable td, #sharedDriveFilesTable td:first-child { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .5rem; width: 100%; min-width: 0; border: 0; }
-      #sharedDriveFilesTable td::before { content: attr(data-label); font-weight: 700; }
-      #sharedDriveFilesTable td.drive-file-actions, #sharedDriveFilesTable td[colspan="3"] { display: block; }
-      #sharedDriveFilesTable td.drive-file-actions::before { display: block; }
-      #sharedDriveFilesTable td[colspan="3"]::before { display: none; }
-      #sharedDriveFilesTable .drive-file-actions button { width: calc(50% - .5rem); justify-content: center; }
+      #sharedDriveFilesTable, #googleDriveBackupsTable { min-width: 0; }
+      #sharedDriveFilesTable, #sharedDriveFilesTable tbody, #sharedDriveFilesTable tr, #googleDriveBackupsTable, #googleDriveBackupsTable tbody, #googleDriveBackupsTable tr { display: block; width: 100%; }
+      #sharedDriveFilesTable caption, #googleDriveBackupsTable caption { display: block; }
+      #sharedDriveFilesTable thead, #googleDriveBackupsTable thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
+      #sharedDriveFilesTable tbody tr, #googleDriveBackupsTable tbody tr { margin: .75rem 0; border: 1px solid var(--border); border-radius: .5rem; }
+      #sharedDriveFilesTable td, #sharedDriveFilesTable td:first-child, #googleDriveBackupsTable td, #googleDriveBackupsTable td:first-child { display: grid; grid-template-columns: 4rem minmax(0, 1fr); gap: .5rem; width: 100%; min-width: 0; border: 0; }
+      #sharedDriveFilesTable td::before, #googleDriveBackupsTable td::before { content: attr(data-label); font-weight: 700; }
+      #sharedDriveFilesTable td.drive-file-actions, #sharedDriveFilesTable td[colspan="3"], #googleDriveBackupsTable td.drive-file-actions, #googleDriveBackupsTable td[colspan="3"] { display: block; }
+      #sharedDriveFilesTable td.drive-file-actions::before, #googleDriveBackupsTable td.drive-file-actions::before { display: block; }
+      #sharedDriveFilesTable td[colspan="3"]::before, #googleDriveBackupsTable td[colspan="3"]::before { display: none; }
+      #sharedDriveFilesTable .drive-file-actions button, #googleDriveBackupsTable .drive-file-actions button { width: calc(50% - .5rem); justify-content: center; }
       .drive-name-editor button { width: calc(50% - .5rem); margin-top: .5rem; }
       main { padding: .75rem; }
       h1 { font-size: 1.55rem; margin: .75rem 0 .5rem; }
@@ -422,6 +429,7 @@
 <header class="app-header">
   <div class="app-header-inner">
     <div class="app-brand">
+      <img class="app-brand-icon" src="assets/icons/icon-192.png?v=20261005" width="40" height="40" alt="">
       <h1 class="app-brand-name">Emotion Wheel - Tracking your emotions</h1>
     </div>
     <div class="header-actions">
@@ -448,6 +456,7 @@
         </ul>
       </li>
       <li><button type="button" id="maintenanceTab" aria-controls="maintenancePanel">My Data</button></li>
+      <li><button type="button" id="shareMyDataMenuButton" aria-controls="googleDriveSharingSection">Share My Data</button></li>
       <li><button type="button" id="sharedDataTab" aria-controls="sharedDataPanel">Data Shared with Me</button></li>
       <li><a class="button" href="docs/help.html">Help</a></li>
     </ul>
@@ -457,7 +466,7 @@
     <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
     <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Data Shared with Me.</p>
   </div>
-  <div class="nav-drive-controls"><button type="button" id="googleAccountStatus">Google Disconnected</button><button type="button" id="googleDriveSyncSummaryButton">Sync Off</button></div>
+  <div class="nav-drive-controls"><button type="button" id="googleDriveSyncSummaryButton">Sync Off</button></div>
     </div>
     <div class="theme-control mobile-theme-control">
       <label for="mobileThemeMode">Theme</label>
@@ -690,7 +699,7 @@
     <section id="entryNoteSection" class="comment-field" aria-labelledby="entryNoteHeading">
       <h3 id="entryNoteHeading">Add an optional note</h3>
       <label for="entryComment">Note</label>
-      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It stays on this device unless you export or share it.</p>
+      <p id="entryCommentHelp" class="help">Capture a thought, situation, or anything else you want to remember with this entry. It is saved with your record, including in any exports or Google Drive backups and sync you choose.</p>
       <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
     </section>
 
@@ -1100,46 +1109,80 @@
       <section class="drive-task" aria-labelledby="myDriveDataHeading">
         <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
         <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
+        <div id="googleDriveOwnDataPrompt" hidden><p>You are viewing another dataset. Switch to My local data before saving, starting sync or restoring your own data. Any automatic sync already running continues to sync only your own local data.</p><button type="button" id="useLocalDataForDriveButton">Use My local data</button></div>
         <div class="actions">
           <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>
           <button type="button" id="saveGoogleDriveButton" disabled>Save to Drive</button>
         </div>
         <button type="button" id="testGoogleDriveSyncGuardButton" hidden>Test conflict protection on synthetic backup</button>
-        <p id="googleDriveLastSyncStatus" tabindex="-1">Sync status: off. Not synced yet.</p>
-        <p id="googleDriveSyncStatus" tabindex="-1" class="drive-feedback" role="status" hidden></p>
+        <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
         <section id="googleDriveConflict" aria-labelledby="googleDriveConflictHeading" hidden>
           <h3 id="googleDriveConflictHeading" tabindex="-1">Resolve conflicting changes</h3>
           <p id="googleDriveConflictExplanation">Choose which version to keep for each conflicting record. Other changes are merged automatically. Both original copies will be saved as recovery backups first.</p>
           <div id="googleDriveConflictRecords"></div>
           <div class="actions"><button type="button" id="confirmGoogleDriveConflictButton">Save recovery backups and apply choices</button><button type="button" id="cancelGoogleDriveConflictButton">Keep sync paused</button></div>
         </section>
-        <p class="help">Create a dated backup to keep a separate copy.</p>
-        <div class="actions">
-          <button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button>
-          <span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Share my data</button></span>
-        </div>
         <p id="googleDriveStatus" class="drive-feedback" role="status" hidden></p>
-        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
+        <section aria-labelledby="googleDriveBackupsHeading">
+          <h3 id="googleDriveBackupsHeading" tabindex="-1">Your Drive backups</h3>
+          <label for="googleDriveBackupComment">Backup comment (optional, up to 80 characters)</label><input id="googleDriveBackupComment" type="text" maxlength="80" placeholder="For example, before changing ratings">
+          <div class="actions"><button type="button" id="createGoogleDriveBackupButton" disabled>Create dated backup</button><button type="button" id="restoreGoogleDriveBackupButton" disabled>Refresh backups</button></div>
+          <p id="googleDriveBackupListMessage">Connect Google to see your dated backups.</p>
+          <table id="googleDriveBackupsTable"><caption>Dated backups — newest first</caption><thead><tr><th scope="col">Backup name</th><th scope="col">Created</th><th scope="col">Comment</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveBackupsBody"></tbody></table>
+          <p id="googleDriveBackupsStatus" class="drive-feedback" role="status"></p>
+          <section id="googleDriveBackupTrashPanel" aria-labelledby="googleDriveBackupTrashHeading" hidden>
+            <h4 id="googleDriveBackupTrashHeading" tabindex="-1">Move backup to Trash?</h4>
+            <p id="googleDriveBackupTrashSummary"></p>
+            <button type="button" id="confirmGoogleDriveBackupTrashButton">Move this backup to Trash</button><button type="button" id="cancelGoogleDriveBackupTrashButton">Keep backup</button>
+          </section>
         <details id="googleDriveBackupSettings">
           <summary>Backup settings</summary>
           <div class="details-content">
             <label for="googleDriveBackupName">Backup file name</label><input id="googleDriveBackupName" type="text" maxlength="80" value="Emotion Wheel backup">
             <label for="googleDriveBackupLimit">Backups to keep</label><input id="googleDriveBackupLimit" type="number" min="1" max="100" step="1" value="5">
             <p class="help">Extra backups are listed oldest first. You choose whether to move them to Trash; your current file is always kept.</p>
-            <p class="help">Current file: Emotion Wheel / Emotion Wheel current.json<br>Backups: Emotion Wheel / Backups / your named, dated backups</p>
+            <p class="help">Current file: Emotion Wheel / Emotion Wheel current.json<br>Backups: Emotion Wheel / Backups / date/time - backup name - optional comment.json</p>
           </div>
         </details>
         <section id="googleDriveBackupCleanup" aria-labelledby="googleDriveCleanupHeading" hidden>
-          <h3 id="googleDriveCleanupHeading" tabindex="-1">Review older backups</h3>
+          <h4 id="googleDriveCleanupHeading" tabindex="-1">Review older backups</h4>
           <p id="googleDriveCleanupSummary"></p><ul id="googleDriveCleanupList"></ul>
           <button type="button" id="confirmGoogleDriveCleanupButton">Move these backups to Trash</button><button type="button" id="cancelGoogleDriveCleanupButton">Keep all backups</button>
         </section>
+        </section>
+        <section id="googleDriveRestorePanel" aria-labelledby="googleDriveRestoreHeading" hidden>
+          <h3 id="googleDriveRestoreHeading" tabindex="-1">Restore a Drive backup</h3>
+          <p>You selected a backup from your Emotion Wheel / Backups folder. Restoring replaces your local data and your current Drive file, including ratings and capture settings. People you share with will see the restored data. Automatic sync pauses until you start it again.</p>
+          <p id="googleDriveRestoreSummary" role="status"></p>
+          <p>Your device and current Drive data will be saved as recovery backups before anything is replaced. Other devices with unsynced changes must review them before syncing.</p>
+          <button type="button" id="confirmGoogleDriveRestoreButton" disabled>Restore this backup</button>
+          <button type="button" id="cancelGoogleDriveRestoreButton">Cancel</button>
+          <p id="googleDriveRestoreStatus" class="drive-feedback" role="status"></p>
+        </section>
+      </section>
+    </div>
+  </details>
+  </section>
+
+
+
+      <section id="googleDriveSharingSection" class="workspace-panel" aria-labelledby="shareMyDataHeading" tabindex="-1" hidden>
+        <h2 id="shareMyDataHeading" tabindex="-1">Share My Data</h2>
+        <p id="sharingGoogleAccountStatus" class="help">Google is disconnected.</p>
+        <p id="sharingGoogleConnectionStatus" class="drive-feedback" role="status" hidden></p>
+        <p>Give someone read-only access to your current Drive file, then send them the link. It stays up to date when you save or sync. Google checks their account before opening it.</p>
+        <div class="actions"><button type="button" id="sharingConnectGoogleButton">Connect Google</button><span id="googleDriveSavedPanel" hidden><button type="button" id="shareGoogleDriveCopyButton">Add person</button></span><button type="button" id="refreshGoogleDriveSharingButton" disabled>Refresh who has access</button></div>
+        <p id="googleDriveSharingStatus" class="drive-feedback" role="status" hidden></p>
+        <p id="googleDriveAccessMessage" role="status">Connect Google to see who has access.</p>
+        <table id="googleDriveAccessTable" hidden><caption>People with access to this file</caption><thead><tr><th scope="col">Person</th><th scope="col">Permission</th><th scope="col">Actions</th></tr></thead><tbody id="googleDriveAccessBody"></tbody></table>
+        <p class="help">The link is the same for everyone. Stopping access cannot remove copies already downloaded.</p>
+        <section id="googleDriveStopSharingPanel" hidden aria-labelledby="googleDriveStopSharingHeading"><h3 id="googleDriveStopSharingHeading" tabindex="-1">Stop sharing?</h3><p id="googleDriveStopSharingMessage"></p><div class="actions"><button type="button" id="confirmGoogleDriveStopSharingButton">Stop sharing</button><button type="button" id="cancelGoogleDriveStopSharingButton">Keep access</button></div></section>
       <section id="googleDriveSharingResult" aria-labelledby="googleDriveShareLinkHeading" hidden>
         <h3 id="googleDriveShareLinkHeading" tabindex="-1">Send this link</h3>
         <p id="googleDriveShareLinkMessage"></p>
         <label for="googleDriveShareLink">Emotion Wheel sharing link</label>
         <input id="googleDriveShareLink" type="url" readonly>
-        <div class="actions"><button type="button" id="shareGoogleDriveLinkButton">Share link</button><button type="button" id="copyGoogleDriveResultLinkButton">Copy link</button><button type="button" id="closeGoogleDriveSharingResultButton">Done</button></div>
+        <div class="actions"><button type="button" id="shareGoogleDriveLinkButton">Share link</button><button type="button" id="copyGoogleDriveResultLinkButton">Copy link</button><button type="button" id="closeGoogleDriveSharingResultButton" hidden>Done</button></div>
         <p id="googleDriveShareSheetStatus" role="status"></p>
       </section>
       <section id="googleDriveSharingForm" aria-labelledby="googleDriveSharingHeading" hidden>
@@ -1162,11 +1205,6 @@
         </details>
       </section>
       </section>
-    </div>
-  </details>
-  </section>
-
-
 
   <section id="sharedDataPanel" class="workspace-panel" aria-label="Data Shared with Me" tabindex="-1" hidden>
       <div>
@@ -1221,12 +1259,12 @@
 </main>
 
 <footer class="site-footer">
-  <p><strong>Your emotion records stay on this device</strong> unless you deliberately export, copy, or share them. Anonymous pageview statistics are collected as described in the Privacy notice.</p>
+  <p><strong>Your emotion records are saved on this device.</strong> You can also choose exports, sharing, or optional Google Drive saving and sync. Anonymous pageview statistics are collected as described in the Privacy notice.</p>
   <nav aria-label="App information">
     <span data-app-version></span><span class="sep" aria-hidden="true">·</span>
     <a href="https://github.com/timdixon82/Emotion-Wheel" target="_blank" rel="noopener noreferrer">Open source on GitHub</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/licence.html">MIT Licence</a><span class="sep" aria-hidden="true">·</span>
-    <a href="docs/help.html">Help</a><span class="sep" aria-hidden="true">·</span>
+    <a href="docs/help.html">Help</a><span class="sep" aria-hidden="true">·</span><a href="docs/help.html#home-screen">Add to phone or computer</a><span class="sep" aria-hidden="true">·</span>
     <a href="docs/privacy.html">Privacy</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/accessibility.html">Accessibility and design</a>
     <span class="sep" aria-hidden="true">·</span><a href="docs/about.html">About</a>
@@ -1433,6 +1471,8 @@ const entryTab = document.getElementById('entryTab');
 const sharedDataTab = document.getElementById('sharedDataTab');
 const sharedDataPanel = document.getElementById('sharedDataPanel');
 const maintenanceTab = document.getElementById('maintenanceTab');
+const shareMyDataTab = document.getElementById('shareMyDataMenuButton');
+const shareMyDataPanel = document.getElementById('googleDriveSharingSection');
 const entryPanel = document.getElementById('entryPanel');
 const reviewPanel = document.getElementById('reviewPanel');
 const maintenancePanel = document.getElementById('maintenancePanel');
@@ -1530,6 +1570,7 @@ function selectAppView(selectedButton, focusContent = false) {
     { name: 'logs', button: logsTab, panel: logsPanel },
     { name: 'charts', button: chartsTab, panel: chartsPanel },
     { name: 'shared', button: sharedDataTab, panel: sharedDataPanel },
+    { name: 'sharing', button: shareMyDataTab, panel: shareMyDataPanel },
     { name: 'maintenance', button: maintenanceTab, panel: maintenancePanel }
   ];
   const selectedView = views.find(view => view.button === selectedButton) || views[0];
@@ -1547,6 +1588,7 @@ function selectAppView(selectedButton, focusContent = false) {
   document.querySelector('.intro').hidden=currentAppView!=='entry';
   sharedDataPanel.hidden = currentAppView !== 'shared';
   maintenancePanel.hidden = currentAppView !== 'maintenance';
+  shareMyDataPanel.hidden = currentAppView !== 'sharing';
   if (currentAppView !== 'entry') {
     selectedView.panel.querySelectorAll('details:not(#advancedLogFilters):not(#chartAdvancedFilters):not(#googleDriveBackupSettings):not(#googleDriveShareOptions)').forEach(details => {
       details.open = true;
@@ -1640,7 +1682,7 @@ function checkLocalDataSchema() {
   download.addEventListener('click', () => {
     const originalDataset = parseLocalDataset(raw);
     const originalEntries = originalDataset.entries;
-    downloadText('emotion-wheel-before-update.json', JSON.stringify({ version: 3, schemaVersion: version, ratingScale: originalDataset.ratingScale, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
+    downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-before-update.json`, JSON.stringify({ version: 3, schemaVersion: version, ratingScale: originalDataset.ratingScale, exportedAt: new Date().toISOString(), entries: originalEntries, settings: captureSettings, tags: getAvailableTags() }, null, 2), 'application/json;charset=utf-8');
     proceed.disabled = false;
     status.textContent = 'Backup download requested. Check the file has saved before selecting “Backup saved — update”.';
   });
@@ -2205,7 +2247,7 @@ document.getElementById('downloadBeforeScaleChange').addEventListener('click', (
   try {
     if (localStorage.getItem(storageKey) !== pendingRatingScaleChange.raw) throw new Error('The log changed. Cancel and try again.');
     const original = parseLocalDataset(pendingRatingScaleChange.raw);
-    downloadText('emotion-wheel-before-scale-change.json', JSON.stringify({
+    downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-before-scale-change.json`, JSON.stringify({
       version: 3, schemaVersion: dataSchemaVersion, ratingScale: original.ratingScale,
       exportedAt: new Date().toISOString(), settings: captureSettings, tags: getAvailableTags(), entries: original.entries
     }, null, 2), 'application/json;charset=utf-8');
@@ -3690,7 +3732,7 @@ function applyDriveSyncSnapshot(snapshot, expectedLocal) {
 
 function saveBackupFile() {
   const backup = dataSchemaMatches()?getBackupSnapshot():getOriginalBackupSnapshot();
-  downloadText('emotion-wheel-backup.json', `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
+  downloadText(`${new Date().toISOString().replace(/:/g,'-')} - emotion-wheel-backup.json`, `${JSON.stringify(backup, null, 2)}\n`, 'application/json;charset=utf-8');
   liveStatus.textContent = 'Backup file saved.';
   loadBackupStatus.textContent = 'Backup file saved to this device.';
 }

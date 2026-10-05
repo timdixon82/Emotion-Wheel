@@ -10,20 +10,20 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 - Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, Phase 3 for context and bucket level, or use Custom to choose the fields that suit you.
 - Add an optional private note to each entry, such as what happened, a thought, or useful context.
 - See the active capture mode without opening settings, and use the compact mobile recording action without adding a duplicate screen-reader control.
-- Move directly between Entry, Review Logs, Review Charts, My Data, Data Shared with Me, and Help using responsive app navigation that collapses into a menu on smaller screens.
+- Move directly between Entry, Review Logs, Review Charts, My Data, Share My Data, Data Shared with Me, and Help using responsive app navigation that collapses into a menu on smaller screens.
 - Review logs, tallies, charts, and a line chart of records over time.
 - Move through chart periods by day, week, or month. Zero-entry periods can be included to show gaps in the pattern.
 - Compare inner-circle emotion trends and choose which colour-coded series to display.
 - Correct entries, use an existing entry as the start of a new one, or delete with an immediate undo option.
 - Share an image captured from the chart currently displayed on screen through the device's native share sheet when supported, with clipboard and download fallbacks.
 - Save, load, merge, replace, share, export, and clear your local data.
-- Optional Google Drive connection is being developed on a local feature branch. The preview can save a new Drive backup and open shared files read-only in Logs and Charts after Google configuration and authorisation. Two-way sync is in local testing.
+- Optional Google Drive connection is being developed on a local feature branch. The preview supports two-way sync, dated backups with comments, backup restore and shared files read-only in Logs and Charts after Google configuration and authorisation. Production Google setup and final live testing are still required.
 
 ## Privacy
 
-Your entries, optional notes, and settings are stored only in local storage in the browser on the device you are using. They are not sent to a server unless you deliberately export, copy, or share them. The site uses GoatCounter for anonymous pageview statistics; it does not receive your emotion records or track actions within an entry.
+Your entries, optional notes and settings are saved in this browser on this device. You can also choose exports, sharing or optional Google Drive saving and automatic sync. Emotion Wheel has no developer-operated service receiving your emotion records; GitHub hosts the app code. The site uses GoatCounter for anonymous pageview statistics; it does not receive your emotion records or track actions within an entry.
 
-Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, save or sync data to Google Drive, share a chart or table, or copy information. Browser data can be cleared by clearing the log in My Data, clearing the browser's site data, or using a different browser or device.
+Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, save or sync data to Google Drive, share a chart or table, or copy information. Clear local log removes the active log but retains recovery snapshots and sync comparison data. Clearing this site's browser data removes its local copies; it does not remove Drive files or copies on other devices. See the Privacy notice before deleting data.
 
 Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
 
@@ -68,9 +68,9 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 
 ## Data and backups
 
-The optional Google Drive preview does not require a Google account during normal use. Google sign-in is prepared when you open My Data, Data Shared with Me or a shared link. Connect Google Drive then opens account selection in one click and requests per-file access. Ordinary Entry, Logs and Charts use needs no Google connection. Access tokens stay in memory. A sharing link contains a Drive file ID, never a token or the records themselves. Google permissions govern access to the original file; they cannot recall a previously downloaded copy.
+The optional Google Drive preview does not require a Google account during normal use. Google sign-in is prepared when you open My Data, Share My Data, Data Shared with Me or a shared link. Connect Google Drive then opens account selection in one click and requests per-file access. Ordinary Entry, Logs and Charts use needs no Google connection. Access tokens stay in memory. A sharing link contains a Drive file ID, never a token or the records themselves. Google permissions govern access to the original file; they cannot recall a previously downloaded copy.
 
-In this development preview, Save to Drive checks and merges your current file; Create dated backup makes a separate named copy. Automatic sync is an explicit option for your current file, with a baseline stored locally, deletion markers, conflict choices and recovery copies. Sync runs every 15 seconds while connected and pauses on reload or disconnect. Share my data grants a named recipient Viewer access, with email notification optional, then provides a link and browser sharing controls. Data Shared with Me lists received files. The header or mobile menu selects local or shared data and has Google Connected/Disconnected and Sync On/Off buttons that open the relevant My Data section. Shared files are read only; their contents stay in memory. Only file IDs and local labels are remembered. A sync-error banner links to My Data on every page. [Help](docs/help.html) explains the complete workflow in plain language.
+In this development preview, Save to Drive checks and merges your current file; Create dated backup makes a separate named copy. Automatic sync is an explicit option for your current file, with a baseline stored locally, deletion markers, conflict choices and recovery copies. Sync runs every 15 seconds while connected and pauses on reload or disconnect. Share my data grants a named recipient Viewer access, with email notification optional, then provides a link and browser sharing controls. Data Shared with Me lists received files. The header or mobile menu selects local or shared data and has a Sync On/Off button that opens the My Data sync section; connected-account details appear in My Data. Shared files are read only; their contents stay in memory. Only file IDs and local labels are remembered. A sync-error banner links to My Data on every page. [Help](docs/help.html) explains the complete workflow in plain language.
 
 See [Google Drive development and setup](docs/google-drive-development.md). Run `node tests/google-drive.cjs` and `node tests/google-drive-ui.cjs` alongside the existing regression checks. Mocked checks do not replace real owner/Viewer permission testing.
 
@@ -127,4 +127,4 @@ Drive saves use `Emotion Wheel/Emotion Wheel current.json`, keeping the same sha
 
 Share my data defaults to your current Drive file. Within the sharing form you may choose another file you own; its filename is shown before you choose Give access and get link. Shared-file rows cannot copy links or grant access.
 
-Sync failures are flagged on the connected-account label; selecting it opens My Data at the error. The sync section shows the last successful date. Conflicting records show both versions for individual selection; other changes still merge. Before applying choices, the app keeps both original copies locally and in dated Drive recovery backups, and checks that neither copy changed during review. Filename and email fields use larger full-width controls.
+Sync failures are flagged by a banner on every app page and the Sync menu button; selecting either opens My Data at the error. The sync section shows the last successful date. Conflicting records show both versions for individual selection; other changes still merge. Before applying choices, the app keeps both original copies locally and in dated Drive recovery backups, and checks that neither copy changed during review. Filename and email fields use larger full-width controls.
