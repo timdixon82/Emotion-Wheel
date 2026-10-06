@@ -156,12 +156,55 @@
   function syncNeedsLocalReview() {
     return !dataSchemaMatches() || Boolean(typeof editingEntry!=='undefined' && editingEntry) || Boolean(typeof pendingRatingScaleChange!=='undefined' && pendingRatingScaleChange);
   }
+  let connectionCountdownTimer;
+  function updateConnectionCountdown() {
+    clearTimeout(connectionCountdownTimer);
+    const panel=byId('googleDriveConnectionTimer');
+    const remaining=Number.isFinite(client.tokenExpiresAt)?Math.max(0,client.tokenExpiresAt-Date.now()-5000):0;
+    panel.hidden=!previouslyConnected || !client.connected || !remaining;
+    byId('renewGoogleDriveConnectionButton').disabled=busy || preparingGoogle || !client.connected || !connectedEmail;
+    updateCompactConnectionStatus(remaining);
+    if(panel.hidden)return;
+    const seconds=Math.ceil(remaining/1000),minutes=Math.floor(seconds/60),remainder=seconds%60;
+    const disconnectTime=new Date(client.tokenExpiresAt-5000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+    byId('googleDriveConnectionCountdown').textContent=remaining>300000?`Google Connected — Auto logout at ${disconnectTime}.`:`Google Connected — Auto logout in ${minutes?`${minutes} min `:''}${remainder} sec.`;
+    panel.setAttribute('data-expiring-soon',remaining<=300000?'true':'false');
+    connectionCountdownTimer=setTimeout(()=>{if(!client.connected)update();else updateConnectionCountdown();},1000);
+    connectionCountdownTimer?.unref?.();
+  }
+  function updateCompactConnectionStatus(remaining) {
+    const connected=client.connected,prefix=connected?'googleConnected':'googleDisconnected';
+    const active=connected && syncRunning && !syncError;
+    const syncKind=!connected?'stopped':syncError?'issue':active?'active':syncTarget?'paused':'off';
+    const syncLabels={stopped:'Sync stopped',issue:'Sync issue',active:'Last synced',paused:'Sync paused',off:'Sync off'};
+    const icon=(id,name,tone)=>{byId(id).setAttribute('data-icon',name);byId(id).setAttribute('data-tone',tone);};
+    icon(`${prefix}ConnectionIcon`,connected?'cloud-check':'cloud-off',connected?'good':'problem');
+    icon(`${prefix}SyncIcon`,syncKind==='active'?'refresh-cw':syncKind==='paused'?'pause':syncKind==='issue'?'triangle-alert':'refresh-cw-off',syncKind==='active'?'good':syncKind==='paused'?'caution':['issue','stopped'].includes(syncKind)?'problem':'neutral');
+    const age=lastSyncedAt?Math.max(0,Math.floor((Date.now()-Date.parse(lastSyncedAt))/1000)):null;
+    const ageText=age===null?'—':age<60?`${age}s`:age<3600?`${Math.floor(age/60)}m`:age<86400?`${Math.floor(age/3600)}h`:`${Math.floor(age/86400)}d`;
+    const seconds=Math.ceil(remaining/1000);
+    const timeText=remaining>300000?new Date(client.tokenExpiresAt-5000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'}):`${Math.floor(seconds/60)}m ${String(seconds%60).padStart(2,'0')}s`;
+    byId('googleConnectedClock').setAttribute('data-tone',connected && remaining<=300000?'caution':'neutral');
+    byId(`${prefix}Time`).textContent=connected?timeText:'';
+    byId(`${prefix}SyncLabel`).textContent=syncLabels[syncKind];
+    byId(`${prefix}SyncTime`).textContent=active?ageText:'';
+    const details=byId(connected?'googleDriveSyncSummaryButton':'googleDriveDisconnectedSummaryButton');
+    byId('googleDriveSyncSummaryButton').setAttribute('data-sync-running',String(connected && syncRunning));
+    byId('googleDriveSyncSummaryButton').setAttribute('data-sync-active',String(active));
+    details.setAttribute('data-sync-active',String(active));
+    const expiry=connected?` Connection expires ${remaining>300000?'at':'in'} ${timeText}.`:'';
+    const success=lastSyncedAt?` Last successfully synced ${new Date(lastSyncedAt).toLocaleString()}.`:' No successful sync recorded yet.';
+    const description=`Google ${connected?'connected':'disconnected'}.${expiry} ${syncLabels[syncKind]}.${success} Open connection and sync details in My Data.`;
+    details.setAttribute('aria-label',description);
+    details.setAttribute('title',description);
+  }
   let syncTarget, syncTimer, syncRunning=false, syncWanted=false, syncSafetyVerified = true; // Live stale-ETag rejection verified on the synthetic file.
   const syncStorageKey = 'emotionWheelDriveSyncV1';
   // Existing installations may already have evidence of a verified connection.
   try { previouslyConnected ||= Boolean(sharedListStore.owner || JSON.parse(localStorage.getItem(syncStorageKey) || 'null')?.owner); } catch { /* Ignore unreadable history. */ }
-  try {const remembered=JSON.parse(localStorage.getItem(syncStorageKey)||'null');if(remembered?.syncError){syncError=remembered.syncError;syncFailedAt=remembered.syncFailedAt||'';lastSyncedAt=remembered.lastSyncedAt||'';}}catch{}
+  try {const remembered=JSON.parse(localStorage.getItem(syncStorageKey)||'null');if(remembered){syncError=remembered.syncError||'';syncFailedAt=remembered.syncFailedAt||'';lastSyncedAt=Number.isFinite(Date.parse(remembered.lastSyncedAt))?remembered.lastSyncedAt:'';}}catch{}
   function update() {
+    updateConnectionCountdown();
     byId('googleDriveReconnectBanner').hidden = !previouslyConnected || client.connected;
     byId('reconnectGoogleDriveButton').disabled = busy || preparingGoogle;
     byId('syncGoogleDriveSharedListButton').disabled=sharedListBusy || !client.connected || !connectedEmail;
@@ -224,10 +267,7 @@
     byId('chooseGoogleDriveSharingFileButton').disabled = busy || !connectedEmail || !client.connected;
     byId('giveGoogleDriveAccessButton').disabled = busy || !sharingFileId || !client.connected;
     byId('cancelGoogleDriveSharingButton').disabled = busy;
-    const syncTime = (syncError ? ` Sync failed${syncFailedAt ? ` at ${new Date(syncFailedAt).toLocaleTimeString()}` : ''} — click to review.` : '') + (lastSyncedAt ? ` Last synced: ${new Date(lastSyncedAt).toLocaleString()}.` : ' No sync time recorded yet.');
     const accountText = client.connected ? (connectedEmail ? `Google Drive connected as ${connectedEmail}.` : 'Google Drive connected; account email is unavailable.') : 'Google Drive is disconnected.';
-    byId('googleDriveSyncSummaryButton').textContent=syncRunning && client.connected?'Sync On':'Sync Off';
-    byId('googleDriveSyncSummaryButton').setAttribute('aria-label',`${syncRunning && client.connected?'Sync On':'Sync Off'}.${syncTime} Open sync settings in My Data.`);
     byId('googleMaintenanceAccountStatus').textContent = accountText;
     byId('sharedDataAccountStatus').textContent=accountText;
     byId('sharingGoogleAccountStatus').textContent=accountText;
@@ -479,6 +519,43 @@
   byId('reconnectGoogleDriveButton').addEventListener('click',()=>{
     if(busy || preparingGoogle)return;
     connectGoogle(true);
+  });
+  byId('renewGoogleDriveConnectionButton').addEventListener('click',()=>{
+    if(busy || preparingGoogle || !client.connected || !connectedEmail || !tokenClient)return;
+    const renewalEpoch=epoch,owner=connectedEmail,wasSyncRunning=syncRunning;
+    let settled=false;
+    busy=true;showReconnectFeedback('Renewing your Google connection…');update();
+    const failed=message=>{
+      if(epoch!==renewalEpoch || settled)return;
+      settled=true;busy=false;update();
+      showReconnectFeedback(`${message} ${client.connected?'Your current connection is still available until it expires.':'Reconnect Google to continue.'}`,true);
+    };
+    try {
+      const renewalClient=google.accounts.oauth2.initTokenClient({client_id:config.clientId,scope:googleScopes,
+        error_callback:()=>failed('Google renewal was cancelled or could not open.'),
+        callback:async response=>{
+          if(epoch!==renewalEpoch || settled)return;
+          if(response.error || !google.accounts.oauth2.hasGrantedAllScopes(response,'https://www.googleapis.com/auth/drive.file')){failed('Google renewal was not authorised.');return;}
+          settled=true;
+          const candidate=new EmotionWheelDrive.DriveClient();
+          try {
+            candidate.setAccessToken(response);
+            const email=await candidate.getConnectedEmail();
+            if(epoch!==renewalEpoch)return;
+            if(email!==owner)throw new Error('Google returned a different account. Use My Data to switch accounts.');
+            client.setAccessToken({...response,expires_in:(candidate.tokenExpiresAt-Date.now())/1000});
+            clearTimeout(accountExpiryTimer);
+            accountExpiryTimer=setTimeout(update,Math.max(0,client.tokenExpiresAt-Date.now()-5000));accountExpiryTimer?.unref?.();
+            busy=false;update();
+            if(wasSyncRunning && syncTarget && !syncError)await runSync();
+            if(epoch===renewalEpoch){showReconnectFeedback(!client.connected?'Google connection is unavailable. Reconnect Google to continue.':syncError?'Google connection renewed. Sync needs review.':syncRunning?'Google connection renewed. Automatic sync is running.':'Google connection renewed.',true);update();}
+          } catch(error) {
+            if(epoch===renewalEpoch){busy=false;update();showReconnectFeedback(`${error.message} ${client.connected?'Your existing connection is kept.':'Reconnect Google to continue.'}`,true);}
+          } finally { candidate.disconnect(); }
+        }
+      });
+      renewalClient.requestAccessToken({prompt:'',login_hint:owner});
+    } catch { failed('Google renewal could not open.'); }
   });
   byId('sharedDataConnectButton').addEventListener('click',()=>connect.click());
   connect.addEventListener('click',()=>connectGoogle());
@@ -1096,6 +1173,7 @@
     (conflictReview?byId('googleDriveConflictHeading'):syncError?byId('googleDriveSyncStatus'):byId('googleDriveLastSyncStatus')).focus();
   }
   byId('googleDriveSyncSummaryButton').addEventListener('click',reviewSyncIssue);
+  byId('googleDriveDisconnectedSummaryButton').addEventListener('click',reviewSyncIssue);
   byId('reviewGoogleDriveSyncIssueButton').addEventListener('click',reviewSyncIssue);
   function showSyncConflict(plan,error) {
     clearTimeout(syncTimer);syncRunning=false;conflictReview={...plan,epoch,automatic:syncWanted};conflictChoice={};
