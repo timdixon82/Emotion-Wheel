@@ -63,6 +63,10 @@
       return Boolean(this.#token) && this.#expiresAt > this.#now() + 5000;
     }
 
+    get tokenExpiresAt() {
+      return this.#expiresAt;
+    }
+
     getPickerToken() {
       if (!this.connected) throw new Error('Reconnect Google Drive to continue.');
       return this.#token;

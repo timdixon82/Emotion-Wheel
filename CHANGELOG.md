@@ -2,6 +2,16 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.7.0
+
+Released 6 October 2026.
+
+- The Log page calls your own records My emotion log, including when synced with Google; shared logs remain labelled read-only.
+- A separate compact connection section appears after this browser has connected once. Distinct coloured icons show connection and sync states, with right-aligned expiry and last-sync times, clear stopped/off/paused/issue labels, and Extend or Reconnect. Larger screens show additional text labels; full details remain accessible by keyboard, touch and screen reader.
+- Standard Lucide icons are bundled locally with their licence; no icon-provider requests or tracking are added.
+- The countdown updates locally using Google's actual token timeout. Extend requests fresh authorisation for the same verified account and resets the countdown on success; cancellation preserves the current connection and active sync until expiry.
+- Help explains the countdown, renewal, and Google's fixed user-token lifetime.
+
 ## 1.6.0
 
 Released 6 October 2026.

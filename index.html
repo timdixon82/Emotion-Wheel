@@ -11,11 +11,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.6.0" defer></script>
+  <script src="assets/version.js?v=1.7.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
-  <script src="assets/google-drive-ui.js?v=1.6.0" defer></script>
+  <script src="assets/google-drive-ui.js?v=1.7.0" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
     @font-face {
@@ -140,6 +140,38 @@
     .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
     .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
     .google-reconnect-banner { border-color: var(--focus); }
+    .google-connection-timer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: .5rem 0 1rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--panel); }
+    .google-connection-timer > button { height: 44px; min-height: 44px; padding-top: 0; padding-bottom: 0; }
+    .google-status-details { display: grid; grid-template-columns: 20px 7ch 20px; grid-template-rows: 22px 22px; gap: 0 .3rem; align-items: center; padding: 0 .15rem; border: 0; background: transparent; color: var(--text); text-align: left; }
+    .google-status-icon { display: block; width: 20px; height: 20px; background: currentColor; mask: var(--status-icon) center / contain no-repeat; }
+    .google-status-label { grid-column: 2 / -1; grid-row: 1; }
+    .google-status-time { grid-column: 2; grid-row: 1; text-align: right; font-variant-numeric: tabular-nums; line-height: 1; }
+    .google-status-clock { grid-column: 3; grid-row: 1; }
+    .google-status-sync-icon { grid-column: 1; grid-row: 2; }
+    .google-status-sync-label { grid-column: 2 / -1; grid-row: 2; white-space: nowrap; }
+    .google-status-sync-time { grid-column: 2; grid-row: 2; text-align: right; font-variant-numeric: tabular-nums; line-height: 1; }
+    #googleConnectedConnectionLabel, .google-status-details[data-sync-active="true"] .google-status-sync-label { display: none; }
+    #googleDisconnectedTime, #googleDisconnectedSyncTime { display: none; }
+    #googleDriveReconnectBanner .google-status-details { grid-template-columns: 20px max-content; }
+    .google-status-icon[data-tone="good"] { color: #166534; }
+    .google-status-icon[data-tone="caution"] { color: #854d0e; }
+    .google-status-icon[data-tone="problem"] { color: #991b1b; }
+    :root[data-theme="dark"] .google-status-icon[data-tone="good"], :root[data-theme="muted-dark"] .google-status-icon[data-tone="good"] { color: #86efac; }
+    :root[data-theme="dark"] .google-status-icon[data-tone="caution"], :root[data-theme="muted-dark"] .google-status-icon[data-tone="caution"] { color: #fcd34d; }
+    :root[data-theme="dark"] .google-status-icon[data-tone="problem"], :root[data-theme="muted-dark"] .google-status-icon[data-tone="problem"] { color: #fca5a5; }
+    @media (min-width: 600px) {
+      .google-status-details { grid-template-columns: 20px max-content 7ch 20px; }
+      #googleConnectedConnectionLabel, .google-status-details[data-sync-active="true"] .google-status-sync-label { display: block; grid-column: 2; }
+      .google-status-time, .google-status-sync-time { grid-column: 3; }
+      .google-status-clock { grid-column: 4; }
+    }
+    .google-status-icon[data-icon="cloud-check"] { --status-icon: url("assets/icons/cloud-check.svg"); }
+    .google-status-icon[data-icon="cloud-off"] { --status-icon: url("assets/icons/cloud-off.svg"); }
+    .google-status-icon[data-icon="refresh-cw"] { --status-icon: url("assets/icons/refresh-cw.svg"); }
+    .google-status-icon[data-icon="refresh-cw-off"] { --status-icon: url("assets/icons/refresh-cw-off.svg"); }
+    .google-status-icon[data-icon="pause"] { --status-icon: url("assets/icons/pause.svg"); }
+    .google-status-icon[data-icon="triangle-alert"] { --status-icon: url("assets/icons/triangle-alert.svg"); }
+    .google-status-icon[data-icon="clock"] { --status-icon: url("assets/icons/clock.svg"); }
     .drive-feedback { padding: .75rem; border-left: 4px solid var(--focus); overflow-wrap: anywhere; }
     .sync-copy-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 18rem; overflow-y: auto; }
 
@@ -468,7 +500,7 @@
     <select id="reviewDatasetSelect" aria-describedby="reviewDatasetHelp"><option value="local">My local data</option></select>
     <p id="reviewDatasetHelp" class="visually-hidden">Shared files are read-only. Manage files in Data Shared with Me.</p>
   </div>
-  <div class="nav-drive-controls"><button type="button" id="googleDriveSyncSummaryButton">Sync Off</button></div>
+
     </div>
     <div class="theme-control mobile-theme-control">
       <label for="mobileThemeMode">Theme</label>
@@ -484,10 +516,31 @@
 </header>
 <main id="main-content" tabindex="-1">
 
-  <section id="googleDriveReconnectBanner" class="sync-issue-banner google-reconnect-banner" aria-label="Reconnect Google" hidden>
-    <p role="status">Google is disconnected. This browser was previously connected. Reconnect to use Google Drive backups, sync and shared files.</p>
-    <button type="button" id="reconnectGoogleDriveButton">Reconnect Google</button>
+  <section id="googleDriveConnectionTimer" class="google-connection-timer" aria-label="Google connection and sync" hidden>
+    <button type="button" id="googleDriveSyncSummaryButton" class="google-status-details" aria-label="Google connection and sync details">
+      <span id="googleConnectedConnectionIcon" class="google-status-icon" aria-hidden="true"></span>
+      <span id="googleConnectedConnectionLabel" class="google-status-label" aria-hidden="true">Connected</span>
+      <span id="googleConnectedTime" class="google-status-time" aria-hidden="true"></span>
+      <span id="googleConnectedClock" class="google-status-icon google-status-clock" data-icon="clock" aria-hidden="true"></span>
+      <span id="googleConnectedSyncIcon" class="google-status-icon google-status-sync-icon" aria-hidden="true"></span>
+      <span id="googleConnectedSyncLabel" class="google-status-sync-label" aria-hidden="true"></span>
+      <span id="googleConnectedSyncTime" class="google-status-sync-time" aria-hidden="true"></span>
+    </button>
+    <button type="button" id="renewGoogleDriveConnectionButton" aria-label="Extend Google connection">Extend</button>
   </section>
+  <section id="googleDriveReconnectBanner" class="google-connection-timer" aria-label="Disconnected Google connection and sync" hidden>
+    <button type="button" id="googleDriveDisconnectedSummaryButton" class="google-status-details" aria-label="Google connection and sync details">
+      <span id="googleDisconnectedConnectionIcon" class="google-status-icon" aria-hidden="true"></span>
+      <span id="googleDisconnectedConnectionLabel" class="google-status-label" aria-hidden="true">Disconnected</span>
+      <span id="googleDisconnectedTime" class="google-status-time" aria-hidden="true"></span>
+      <span class="google-status-icon google-status-clock" data-icon="clock" aria-hidden="true" hidden></span>
+      <span id="googleDisconnectedSyncIcon" class="google-status-icon google-status-sync-icon" aria-hidden="true"></span>
+      <span id="googleDisconnectedSyncLabel" class="google-status-sync-label" aria-hidden="true"></span>
+      <span id="googleDisconnectedSyncTime" class="google-status-sync-time" aria-hidden="true"></span>
+    </button>
+    <button type="button" id="reconnectGoogleDriveButton" aria-label="Reconnect Google connection">Reconnect</button>
+  </section>
+  <span id="googleDriveConnectionCountdown" class="visually-hidden" role="timer" aria-live="off"></span>
   <p id="googleDriveReconnectStatus" class="drive-feedback" role="status" tabindex="-1" hidden></p>
   <section id="googleDriveSyncOffer" class="sync-issue-banner google-reconnect-banner" aria-labelledby="googleDriveSyncOfferHeading" hidden>
     <h2 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h2>
@@ -753,7 +806,7 @@
 
   <section id="logsPanel" aria-label="Review logs" tabindex="-1">
   <section id="local-log" class="log-panel" aria-labelledby="log-heading">
-    <h2 id="log-heading">Local emotion log</h2>
+    <h2 id="log-heading">My emotion log</h2>
     <p id="logSourceHelp" class="help">Records are stored in this browser. Optional Drive sync shares changes only when you enable it.</p>
     <p id="logSummary" aria-live="polite" tabindex="-1">No emotions recorded yet.</p>
     <button type="button" id="emptyLogEntryButton" class="empty-action">Record your first emotion</button>
@@ -3086,14 +3139,14 @@ function renderLog() {
   saveBackupButton.disabled = !logEntries.length;
   clearLogButton.disabled = !logEntries.length;
 
-  document.getElementById('log-heading').textContent = shared ? `${shared.label} — read-only log` : 'Local emotion log';
+  document.getElementById('log-heading').textContent = shared ? `${shared.label} — read-only log` : 'My emotion log';
   document.getElementById('logSourceHelp').textContent = shared
     ? 'Showing a shared Drive dataset. These records are separate from your local data and cannot be edited here.'
     : 'Records are stored in this browser. Optional Drive sync shares changes only when you enable it.';
   logSummary.textContent = shared?.state === 'loading' ? 'Loading the selected shared dataset…'
     : shared?.state === 'unavailable' ? 'This file is unavailable. Reconnect or refresh it in Data Shared with Me.'
     : shared ? `${entries.length} shared emotion record${entries.length === 1 ? '' : 's'}.`
-    : hasEntries ? `${entries.length} emotion record${entries.length === 1 ? '' : 's'} stored locally.` : 'No emotions recorded yet.';
+    : hasEntries ? `${entries.length} emotion record${entries.length === 1 ? '' : 's'}.` : 'No emotions recorded yet.';
   logFilterStatus.textContent = hasEntries
     ? `Showing ${filteredEntries.length} of ${entries.length} record${entries.length === 1 ? '' : 's'}.`
     : '';
@@ -4362,7 +4415,7 @@ clearLogButton.addEventListener('click', () => {
   logEntries = [];
   saveLog();
   renderAll();
-  liveStatus.textContent = 'Local emotion log cleared.';
+  liveStatus.textContent = 'My emotion log cleared.';
 });
 
 function resetChartFilters() {

@@ -30,8 +30,8 @@ async function main() {
   node('googleDriveBackupName').value = 'Emotion Wheel backup';
   class SyntheticClient {
     constructor() { clientInstance = this; this.connected = false; }
-    disconnect() { this.connected = false; revoked = true; }
-    setAccessToken() { this.connected = true; }
+    disconnect() { this.connected = false; this.tokenExpiresAt=0; revoked = true; }
+    setAccessToken(response) { this.connected = true; this.tokenExpiresAt=Date.now()+Number(response.expires_in)*1000; }
     getPickerToken() { return 'synthetic-picker-token'; }
     async readBackup(id) {
       remoteReads.push(id);
@@ -80,6 +80,7 @@ async function main() {
   vm.runInContext(source, scope);
   const connectionHistoryKey = 'emotionWheelGooglePreviouslyConnectedV1';
   assert.equal(node('googleDriveReconnectBanner').hidden, true, 'First-time local users get no reconnect reminder');
+  assert.equal(node('googleDriveConnectionTimer').hidden,true,'First-time local users see no Google countdown');
   for(const [key,value] of [
     [connectionHistoryKey,'true'],
     ['emotionWheelDriveSyncV1',JSON.stringify({owner:email})],
@@ -388,11 +389,14 @@ async function main() {
   const writesBeforeRetry=writes;
   await clicks('saveGoogleDriveButton');await flush();
   assert.equal(writes,writesBeforeRetry,'An outdated local snapshot must not be uploaded');
-  assert.equal(retryTimers.size,1);assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On');
+  assert.equal(retryTimers.size,1);assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true');
   assert.match(node('googleDriveSyncStatus').textContent,/retry in 15 seconds.*retry 1 of 3/);
   const retryNow=()=>{const [handle,callback]=retryTimers.entries().next().value;retryTimers.delete(handle);callback();};
   retryNow();await flush();await flush();
   assert(cloud.entries.some(entry=>entry.id==='zz-during-read'));
+  assert.equal(node('googleConnectedSyncIcon').getAttribute('data-icon'),'refresh-cw');
+  assert.equal(node('googleConnectedSyncLabel').textContent,'Last synced');
+  assert.match(node('googleConnectedSyncTime').textContent,/^\d+s$/);
   assert.equal(retryTimers.size,1,'Successful retry resumes the normal interval');assert.equal(node('googleDriveSyncIssueBanner').hidden,true);
   activeDataset={fileId:'foreign_view_file_123',owner:'someone-else@example.test',entries:[syncRecord('foreign-only','must stay read-only')],label:'Shared file'};
   retryNow();await flush();await flush();
@@ -408,7 +412,7 @@ async function main() {
     retryNow();await flush();await flush();
   }
   assert.equal(retryTimers.size,0,'Three failed retries must stop the loop');
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false');
   assert.equal(node('googleDriveSyncIssueBanner').hidden,false);
   clientInstance.readBackup=readForRetry;
   await clicks('saveGoogleDriveButton');await flush();
@@ -420,12 +424,12 @@ async function main() {
   assert.equal(writes,beforeConflict); assert.match(node('googleDriveSyncStatus').textContent,/paused/);
   assert.equal(node('googleDriveConflict').hidden,false);
   assert.equal(retryTimers.size,0,'Record conflicts require a choice, never an automatic retry');
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false');
   assert.equal(node('googleDriveSyncIssueBanner').hidden,false);
   await clicks('reviewGoogleDriveSyncIssueButton');
   assert.equal(scope.currentAppView,'maintenance');
   assert.equal(node('googleDriveConflictHeading').focused,true);
-  assert.match(node('googleDriveSyncSummaryButton').getAttribute('aria-label'),/Last synced:/);
+  assert.match(node('googleDriveSyncSummaryButton').getAttribute('aria-label'),/Last successfully synced/);
   await clicks('googleDriveSyncSummaryButton');assert.equal(scope.currentAppView,'maintenance');assert.equal(node('googleDriveConflictHeading').focused,true);
   await clicks('confirmGoogleDriveConflictButton');assert.equal(writes,beforeConflict);
   assert.match(node('googleDriveSyncStatus').textContent,/every conflict/);
@@ -850,7 +854,7 @@ async function main() {
   own.entries.push(syncRecord('resume-local','unsynced local addition'));
   await clicks('reconnectGoogleDriveButton');await flush();await flush();
   assert.equal(scope.currentAppView,'charts','Automatic resume preserves the current page');
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true');
   assert.equal(node('googleDriveSyncOffer').hidden,true,'Previously enabled sync needs no extra confirmation');
   assert(cloud.entries.some(entry=>entry.id==='resume-local'),'Resume uses guarded reconciliation to save unsynced local records');
   assert.equal(uploads.length,uploadsBeforeResume,'Resume updates the verified existing current file without creating one');
@@ -859,17 +863,17 @@ async function main() {
   await clicks('disconnectGoogleDriveButton');
   assert.equal(preferences()[resumeOwner].enabled,true,'Disconnect preserves the sync preference');
   loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On','Reload and reconnect resume saved sync');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true','Reload and reconnect resume saved sync');
   clientInstance.connected=false;accountExpiryCallback();await clicks('saveGoogleDriveButton');
   assert.equal(JSON.parse(storage.get('emotionWheelDriveSyncV1')).syncError,undefined,'Expiry is a connection interruption rather than an unresolved sync failure');
   await clicks('reconnectGoogleDriveButton');await flush();await flush();
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On','Token expiry and reconnect resume sync');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true','Token expiry and reconnect resume sync');
   await clicks('startGoogleDriveSyncButton');
   assert.equal(preferences()[resumeOwner].enabled,false,'Pause Sync clears the saved preference');
   await clicks('disconnectGoogleDriveButton');loadResumePage();
   const writesBeforePausedReconnect=writes;
   await clicks('reconnectGoogleDriveButton');await flush();await flush();
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false');
   assert.equal(writes,writesBeforePausedReconnect,'A paused preference never syncs automatically');
   assert.equal(node('googleDriveSyncOffer').hidden,false);
   assert.equal(node('googleDriveSyncOfferHeading').focused,true,'The visible global prompt receives focus');
@@ -892,7 +896,7 @@ async function main() {
     if(reason==='upgrade')scope.dataSchemaMatches=()=>false;
     if(reason==='shared-data')activeDataset={fileId:'synthetic_shared_resume_123'};
     loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
-    assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off',`${reason} must block automatic resume`);
+    assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false',`${reason} must block automatic resume`);
     assert.equal(writes,checksBeforeUnsafeResume);assert.equal(uploads.length,createsBeforeUnsafeResume,`${reason} must not create files`);
     assert.equal(scope.currentAppView,'charts');
     if(reason==='sync-error') {
@@ -912,17 +916,80 @@ async function main() {
   let finishResumeDiscovery;clientInstance.findExistingCurrent=()=>new Promise(resolve=>{finishResumeDiscovery=resolve;});
   await clicks('reconnectGoogleDriveButton');await flush();
   await clicks('disconnectGoogleDriveButton');finishResumeDiscovery(currentFile);await flush();await flush();
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off','Late discovery after disconnect cannot resume sync');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false','Late discovery after disconnect cannot resume sync');
   assert.equal(writes,checksBeforeUnsafeResume);
   seedResume();loadResumePage();
   clientInstance.getUpdateState=async()=>{clientInstance.connected=false;const error=new Error('Ambiguous network failure');error.code='drive-network';throw error;};
   await clicks('reconnectGoogleDriveButton');await flush();await flush();
   assert.equal(JSON.parse(storage.get('emotionWheelDriveSyncV1')).syncError,'Ambiguous network failure','An operation failure still needs review if the connection also expires');
   loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
-  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off','Reconnect cannot automatically retry an unresolved network failure');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'false','Reconnect cannot automatically retry an unresolved network failure');
   assert.equal(node('acceptGoogleDriveSyncOfferButton').textContent,'Review sync issue');
   assert.equal(writes,checksBeforeUnsafeResume);await clicks('disconnectGoogleDriveButton');
   console.log('PASS: same-page reconnect and focused global prompts; persistent account/file sync preference; guarded resume after reload/expiry; Pause Sync, changed accounts/files, missing baselines, conflicts, active reviews and late responses block unsafe resume.');
+
+  seedResume();loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  const connectedClient=clientInstance;
+  assert.equal(node('googleDriveConnectionTimer').hidden,false);
+  let countdownTick,displayedNow=Date.now();
+  const previousTimeout=scope.setTimeout;
+  scope.setTimeout=(callback,delay)=>{if(delay===1000){countdownTick=callback;return {unref(){}};}return previousTimeout(callback,delay);};
+  scope.Date=class extends Date {static now(){return displayedNow;}};
+  connectedClient.tokenExpiresAt=displayedNow+605000;documentHandlers.focus();
+  const announcedDisconnectTime=new Date(connectedClient.tokenExpiresAt-5000).toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+  assert.equal(node('googleDriveConnectionCountdown').textContent,`Google Connected — Auto logout at ${announcedDisconnectTime}.`);
+  displayedNow+=299000;countdownTick();
+  assert.equal(node('googleDriveConnectionCountdown').textContent,`Google Connected — Auto logout at ${announcedDisconnectTime}.`,'The clock time stays stable until five minutes remain');
+  displayedNow+=1000;countdownTick();
+  assert.equal(node('googleDriveConnectionCountdown').textContent,'Google Connected — Auto logout in 5 min 0 sec.','The display switches to a countdown at five minutes');
+  connectedClient.tokenExpiresAt=displayedNow+125000;documentHandlers.focus();
+  assert.equal(node('googleDriveConnectionCountdown').textContent,'Google Connected — Auto logout in 2 min 0 sec.');
+  const requestsBeforeCountdown=requests.length,uploadsBeforeExtend=uploads.length;
+  displayedNow+=1000;countdownTick();
+  assert.equal(node('googleDriveConnectionCountdown').textContent,'Google Connected — Auto logout in 1 min 59 sec.');
+  displayedNow+=118000;countdownTick();
+  assert.equal(node('googleDriveConnectionCountdown').textContent,'Google Connected — Auto logout in 1 sec.');
+  displayedNow+=1000;connectedClient.connected=false;countdownTick();
+  assert.equal(node('googleDriveConnectionTimer').hidden,true);
+  assert.equal(node('googleDriveReconnectBanner').hidden,false,'Expiry replaces the countdown with reconnect');
+  assert.equal(requests.length,requestsBeforeCountdown,'Clock ticks do not contact Google');
+  scope.Date=Date;connectedClient.connected=true;connectedClient.tokenExpiresAt=Date.now()+60000;documentHandlers.focus();
+  let renewalOptions,renewalRequest;
+  const previousGoogleClient=scope.google.accounts.oauth2.initTokenClient;
+  scope.google.accounts.oauth2.initTokenClient=options=>{renewalOptions=options;return {requestAccessToken(request){renewalRequest=request;}};};
+  const originalExpiry=connectedClient.tokenExpiresAt;
+  await clicks('renewGoogleDriveConnectionButton');
+  assert.equal(connectedClient.connected,true,'Opening Extend keeps the old authorisation usable');
+  assert.equal(node('renewGoogleDriveConnectionButton').disabled,true,'Only one renewal can run at a time');
+  assert.equal(renewalRequest.login_hint,resumeOwner);assert.equal(renewalRequest.prompt,'','Renewal uses the verified existing account');
+  renewalOptions.error_callback({type:'popup_closed'});await flush();
+  assert.equal(connectedClient.tokenExpiresAt,originalExpiry,'Cancelling renewal does not change expiry');
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true','Cancelling renewal keeps active sync');
+  assert.equal(node('renewGoogleDriveConnectionButton').disabled,false);
+  await clicks('renewGoogleDriveConnectionButton');
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>false;await renewalOptions.callback({access_token:'synthetic-denied',expires_in:1200});await flush();
+  assert.equal(connectedClient.tokenExpiresAt,originalExpiry,'Declining scope keeps the existing authorisation');
+  scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
+  await clicks('renewGoogleDriveConnectionButton');email='wrong-owner@example.test';
+  await renewalOptions.callback({access_token:'synthetic-other-account',expires_in:1200});await flush();clientInstance=connectedClient;email=resumeOwner;
+  assert.equal(connectedClient.tokenExpiresAt,originalExpiry,'A different verified account cannot replace the active token');
+  assert.match(node('googleDriveReconnectStatus').textContent,/different account/);
+  await clicks('renewGoogleDriveConnectionButton');
+  await renewalOptions.callback({access_token:'synthetic-renewed',expires_in:1200});await flush();await flush();clientInstance=connectedClient;
+  assert(connectedClient.tokenExpiresAt>originalExpiry+1100000,'Successful renewal resets to the actual new lifetime');
+  assert.match(node('googleDriveConnectionCountdown').textContent,/Google Connected — Auto logout at/);
+  assert.equal(node('googleDriveReconnectBanner').hidden,true);
+  assert.equal(node('googleDriveSyncSummaryButton').getAttribute('data-sync-running'),'true');
+  assert.equal(scope.currentAppView,'charts','Extend preserves the current page');
+  assert.equal(uploads.length,uploadsBeforeExtend,'Extend creates no Drive files');
+  assert.equal(node('googleDriveReconnectStatus').focused,true);
+  assert(!JSON.stringify([...storage]).includes('synthetic-renewed'),'Renewed tokens remain out of browser storage');
+  await clicks('renewGoogleDriveConnectionButton');const lateRenewal=renewalOptions;
+  await clicks('disconnectGoogleDriveButton');await lateRenewal.callback({access_token:'synthetic-late',expires_in:1200});await flush();
+  assert.equal(connectedClient.connected,false,'Disconnect rejects an in-flight renewal');
+  assert.equal(node('googleDriveConnectionTimer').hidden,true);
+  scope.google.accounts.oauth2.initTokenClient=previousGoogleClient;scope.setTimeout=previousTimeout;
+  console.log('PASS: actual-lifetime countdown, expiry transition, no requests on ticks, same-account Extend, cancellation and denied scope retain active sync, wrong/late accounts cannot replace credentials, and tokens stay in memory.');
 
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

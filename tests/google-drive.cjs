@@ -101,6 +101,7 @@ async function main() {
   assert.equal(calls.length, 0);
   assert.throws(() => client.setAccessToken({ access_token: 'synthetic' }), /valid authorisation/);
   client.setAccessToken({ access_token: 'synthetic-test-token', expires_in: 60 });
+  assert.equal(client.tokenExpiresAt,60000,'Expiry metadata uses the supplied lifetime and clock');
   replies = [json({ id: fileId, mimeType: 'application/json', capabilities: { canDownload: true, canEdit: false } }), json(backup)];
   const loaded = await client.readBackup(fileId);
   assert.deepEqual(loaded.backup, backup);
@@ -201,6 +202,7 @@ async function main() {
   replies = [new Response('', { status: 401 })];
   await assert.rejects(client.readBackup(fileId), /Reconnect/);
   assert.equal(client.connected, false);
+  assert.equal(client.tokenExpiresAt,0,'Rejected credentials clear expiry metadata');
   client.setAccessToken({ access_token: 'synthetic', expires_in: 60 });
   for (const status of [403, 404, 429, 500]) {
     replies = [new Response('', { status })];
