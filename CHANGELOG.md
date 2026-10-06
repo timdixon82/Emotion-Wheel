@@ -4,7 +4,7 @@ Published versions and changes. The app version appears in its footer. Record sc
 
 ## 1.6.0
 
-Released 5 October 2026.
+Released 6 October 2026.
 
 - Reconnect Google keeps you on the current page, with inline feedback and a visible, focused sync prompt when a choice is needed.
 - Start Sync now remembers your preference for that account and current file. After reconnecting, sync resumes automatically using the saved comparison copy and existing conflict protection. Pause Sync turns automatic resumption off.
