@@ -11,11 +11,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.5.0" defer></script>
+  <script src="assets/version.js?v=1.6.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
-  <script src="assets/google-drive-ui.js?v=1.5.0" defer></script>
+  <script src="assets/google-drive-ui.js?v=1.6.0" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
   <style>
     @font-face {
@@ -132,7 +132,7 @@
     .table-scroll { max-width: 100%; overflow-x: auto; }
     #sharedDriveFilesTable, #googleDriveBackupsTable { min-width: 42rem; }
     #sharedDriveFilesTable td[colspan="3"], #googleDriveBackupsTable td[colspan="3"] { width: auto; }
-    .drive-feedback:focus, #googleDriveConflictHeading:focus, #googleMaintenanceAccountStatus:focus, #googleDriveLastSyncStatus:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    .drive-feedback:focus, #googleDriveSyncOfferHeading:focus, #googleDriveConflictHeading:focus, #googleMaintenanceAccountStatus:focus, #googleDriveLastSyncStatus:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     #sharedDriveFilesTable button, #googleDriveBackupsTable button { margin: .25rem; }
     #sharedDriveFilesTable td:first-child, #googleDriveBackupsTable td:first-child { width: 45%; min-width: 20rem; }
     .drive-name-input, #googleDriveBackupComment, #googleDriveBackupName, #googleDriveRecipientEmail, #googleDriveShareLink { display: block; box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; min-height: 3.25rem; padding: .75rem; font-size: 1.1rem; }
@@ -487,6 +487,13 @@
   <section id="googleDriveReconnectBanner" class="sync-issue-banner google-reconnect-banner" aria-label="Reconnect Google" hidden>
     <p role="status">Google is disconnected. This browser was previously connected. Reconnect to use Google Drive backups, sync and shared files.</p>
     <button type="button" id="reconnectGoogleDriveButton">Reconnect Google</button>
+  </section>
+  <p id="googleDriveReconnectStatus" class="drive-feedback" role="status" tabindex="-1" hidden></p>
+  <section id="googleDriveSyncOffer" class="sync-issue-banner google-reconnect-banner" aria-labelledby="googleDriveSyncOfferHeading" hidden>
+    <h2 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h2>
+    <p id="googleDriveSyncOfferMessage"></p>
+    <p>Sync checks your local log and Drive file and merges changes. If both copies changed the same record, you choose which version to keep.</p>
+    <div class="actions"><button type="button" id="acceptGoogleDriveSyncOfferButton">Start syncing</button><button type="button" id="declineGoogleDriveSyncOfferButton">Not now</button></div>
   </section>
   <section id="googleDriveSyncIssueBanner" class="sync-issue-banner" aria-label="Google Drive sync issue" hidden>
     <p id="googleDriveSyncIssueMessage" role="alert"></p>
@@ -1124,12 +1131,6 @@
         <h2 id="myDriveDataHeading">Saving and automatic sync</h2>
         <p>Save to Drive checks both copies and merges changes. Automatic sync does this every 15 seconds while the page is open and connected. Conflicting versions need your choice. Your current file keeps the same sharing link.</p>
         <div id="googleDriveOwnDataPrompt" hidden><p>You are viewing another dataset. Switch to My local data before saving, starting sync or restoring your own data. Any automatic sync already running continues to sync only your own local data.</p><button type="button" id="useLocalDataForDriveButton">Use My local data</button></div>
-  <section id="googleDriveSyncOffer" class="drive-task" aria-labelledby="googleDriveSyncOfferHeading" hidden>
-    <h3 id="googleDriveSyncOfferHeading" tabindex="-1">Start syncing your data?</h3>
-    <p id="googleDriveSyncOfferMessage"></p>
-    <p>Sync checks your local log and Drive file and merges changes. If both copies changed the same record, you choose which version to keep.</p>
-    <div class="actions"><button type="button" id="acceptGoogleDriveSyncOfferButton">Start syncing</button><button type="button" id="declineGoogleDriveSyncOfferButton">Not now</button></div>
-  </section>
         <p id="googleDriveLastSyncStatus" tabindex="-1" class="drive-feedback" role="status"><span id="googleDriveSyncSummaryText">Sync off. Not synced yet.</span> <span id="googleDriveSyncStatus" tabindex="-1" hidden></span></p>
         <div class="actions">
           <button type="button" id="startGoogleDriveSyncButton" disabled>Start Sync</button>

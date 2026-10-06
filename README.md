@@ -129,7 +129,7 @@ Share my data defaults to your current Drive file. Within the sharing form you m
 
 Sync failures are flagged by a banner on every app page and the Sync menu button; selecting either opens My Data at the error. The sync section shows the last successful date. Conflicting records show both versions for individual selection; other changes still merge. Before applying choices, the app keeps both original copies locally and in dated Drive recovery backups, and checks that neither copy changed during review. Filename and email fields use larger full-width controls.
 
-Browsers that were previously connected to Google show a top reconnect banner when disconnected after reload or token expiry. Reconnect Google opens the connection flow; successful connection hides the banner. The reminder remembers only a local boolean flag, and recognises existing sync or shared-file account history. It does not automatically renew authorisation or start sync.
+Browsers that were previously connected to Google show a top reconnect banner when disconnected after reload or token expiry. Reconnect Google keeps the current page open, with inline connection feedback; successful connection hides the banner. A separate account/file preference remembers Start Sync and resumes it after reconnection to the same verified account and existing current file, using the saved baseline and existing reconciliation protections. Pause Sync clears that preference. Unresolved errors, missing baselines, active edits or rating reviews, data upgrades and shared-data contexts prevent automatic resume. When a choice is needed, the global sync prompt receives focus. The app does not automatically renew Google authorisation; Help explains regular reconnection and token expiry.
 
 ## Release history
 
