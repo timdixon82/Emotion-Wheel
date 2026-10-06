@@ -2,9 +2,11 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
-## 1.7.0
+## 1.7.0 (draft)
 
-Released 6 October 2026.
+Publication paused pending the Entry-page streak.
+
+- The Entry page shows consecutive local calendar days with one or more emotion records. Multiple records count once per day; a streak ending yesterday remains visible during today. Only your own log is counted, with no added storage or network requests.
 
 - The Log page calls your own records My emotion log, including when synced with Google; shared logs remain labelled read-only.
 - A separate compact connection section appears after this browser has connected once. Distinct coloured icons show connection and sync states, with right-aligned expiry and last-sync times, clear stopped/off/paused/issue labels, and Extend or Reconnect. Larger screens show additional text labels; full details remain accessible by keyboard, touch and screen reader.

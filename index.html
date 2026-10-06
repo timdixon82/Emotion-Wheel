@@ -140,6 +140,7 @@
     .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
     .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
     .google-reconnect-banner { border-color: var(--focus); }
+    .logging-streak { margin: 0 0 1rem; color: var(--text); }
     .google-connection-timer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: .5rem 0 1rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--panel); }
     .google-connection-timer > button { height: 44px; min-height: 44px; padding-top: 0; padding-bottom: 0; }
     .google-status-details { display: grid; grid-template-columns: 20px 7ch 20px; grid-template-rows: 22px 22px; gap: 0 .3rem; align-items: center; padding: 0 .15rem; border: 0; background: transparent; color: var(--text); text-align: left; }
@@ -574,6 +575,7 @@
   <p class="intro">Record your emotions and explore patterns over time.</p>
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
+    <p id="loggingStreak" class="logging-streak" role="status" aria-live="polite" hidden></p>
     <details id="capture-settings" class="settings-panel">
       <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
       <div class="details-content">
@@ -3406,7 +3408,46 @@ function renderContextAnalysis() {
 
 ['analysisTag', 'analysisDetail', 'bucketAnalysisTag'].forEach(id => document.getElementById(id).addEventListener('change', renderContextAnalysis));
 
+function getLoggingStreak(entries, now = new Date()) {
+  const localDay = date => Math.floor(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86400000);
+  const today = localDay(now);
+  const days = new Set();
+  for (const entry of entries) {
+    if (typeof entry.timestamp !== 'string') continue;
+    const date = new Date(entry.timestamp);
+    if (!Number.isFinite(date.getTime()) || date > now) continue;
+    days.add(localDay(date));
+  }
+  const loggedToday = days.has(today);
+  let day = loggedToday ? today : today - 1;
+  let count = 0;
+  while (days.has(day)) { count++; day--; }
+  return { count, loggedToday };
+}
+
+function renderLoggingStreak() {
+  const output = document.getElementById('loggingStreak');
+  const streak = getLoggingStreak(logEntries);
+  output.hidden = !streak.count;
+  const text = streak.count ? `You’ve logged emotions for ${streak.count} ${streak.count === 1 ? 'day' : 'days'} in a row.${streak.loggedToday ? '' : ' Last logged yesterday.'}` : '';
+  if (output.textContent !== text) output.textContent = text;
+}
+
+let loggingStreakTimer;
+function scheduleLoggingStreakRefresh() {
+  clearTimeout(loggingStreakTimer);
+  renderLoggingStreak();
+  const now = new Date();
+  const nextDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  loggingStreakTimer = setTimeout(scheduleLoggingStreakRefresh, nextDay.getTime() - now.getTime() + 50);
+}
+window.addEventListener('focus', scheduleLoggingStreakRefresh);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') scheduleLoggingStreakRefresh();
+});
+
 function renderAll() {
+  renderLoggingStreak();
   const selectedPath = logPathFilter.value;
   logPathFilter.replaceChildren(new Option('All paths', ''));
   [...new Set(getReviewEntries().map(getEntryPathLabel))].sort().forEach(path => logPathFilter.add(new Option(path, path)));
@@ -4457,6 +4498,7 @@ initializeChartFilters();
 applyTheme(getInitialTheme());
 expectedIntensity.value = actualIntensity.value = String(Math.ceil(ratingScale / 2));
 renderAll();
+scheduleLoggingStreakRefresh();
 checkLocalDataSchema();
 </script>
 </body>
