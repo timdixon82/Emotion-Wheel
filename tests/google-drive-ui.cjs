@@ -701,6 +701,7 @@ async function main() {
 
 
   scope.dataSchemaMatches=()=>true;scope.currentAppView='maintenance';activeDataset=null;
+  const cleanSyncState=JSON.parse(storage.get('emotionWheelDriveSyncV1')||'{}');delete cleanSyncState.syncError;delete cleanSyncState.syncFailedAt;storage.set('emotionWheelDriveSyncV1',JSON.stringify(cleanSyncState));
   clientInstance.findExistingCurrent=async()=>({id:'synthetic_current_offer',name:'Emotion Wheel current.json',owners:[{emailAddress:email}]});
   const offerWrites=writes,offerUploads=uploads.length;
   await clicks('connectGoogleDriveButton');await flush();await flush();
@@ -800,7 +801,7 @@ async function main() {
   assert.equal(requests.length,requestsBeforeReminderReload);assert.equal(scripts.length,scriptsBeforeReminderReload);
   scope.google.accounts.oauth2.hasGrantedAllScopes=()=>false;
   await clicks('reconnectGoogleDriveButton');await flush();
-  assert.equal(scope.currentAppView,'maintenance','Reconnect opens My Data with connection feedback');
+  assert.equal(scope.currentAppView,'entry','Reconnect stays on the current page with inline feedback');
   assert.equal(node('googleDriveReconnectBanner').hidden,false,'Cancelled or unauthorised reconnect keeps the reminder');
   assert.equal(node('reconnectGoogleDriveButton').disabled,false,'Reconnect can be retried');
   scope.google.accounts.oauth2.hasGrantedAllScopes=()=>true;
@@ -823,6 +824,105 @@ async function main() {
   assert.equal(node('googleDriveReconnectBanner').hidden,false,'The current page still remembers a connection without storage');
   scope.localStorage=normalStorage;
   console.log('PASS: reconnect reminders cover previous connections, reload, expiry, retry, legacy history and unavailable storage without automatic sign-in.');
+
+  // Resume only an explicitly enabled account/file using its saved common baseline.
+  const preferenceKey='emotionWheelDriveAutoSyncV1',resumeId='synthetic_resume_current_123',resumeOwner=email;
+  const preferences=()=>JSON.parse(storage.get(preferenceKey)).accounts;
+  own={version:3,schemaVersion:3,ratingScale:5,settings:{mode:'phase1'},tags:[],entries:[syncRecord('resume-first','baseline')]};
+  cloud=structuredClone(own);etag='"resume"';
+  currentFile={id:resumeId,name:'Emotion Wheel current.json',owners:[{emailAddress:resumeOwner}]};
+  scope.currentAppView='charts';scope.editingEntry=null;scope.pendingRatingScaleChange=null;scope.dataSchemaMatches=()=>true;activeDataset=null;
+  const seedResume=()=>{
+    storage.set('emotionWheelDriveSyncV1',JSON.stringify({id:resumeId,owner:resumeOwner,base:structuredClone(own)}));
+    storage.set(preferenceKey,JSON.stringify({version:1,accounts:{[resumeOwner]:{id:resumeId,enabled:true}}}));
+  };
+  const loadResumePage=()=>{
+    vm.runInContext(source,scope);
+    clientInstance.getUpdateState=async id=>({id,etag,editable:true,owners:[{emailAddress:resumeOwner}]});
+    clientInstance.readBackup=async()=>({metadata:{owners:[{emailAddress:resumeOwner}]},backup:structuredClone(cloud),text:JSON.stringify(cloud)});
+    clientInstance.updateBackup=async(id,snapshot,expected)=>{assert.equal(id,resumeId);assert.equal(expected,etag);cloud=structuredClone(snapshot);writes++;return {id,etag};};
+  };
+  seedResume();const readsBeforeResumeLoad=remoteReads.length,requestsBeforeResumeLoad=requests.length;
+  loadResumePage();
+  assert.equal(requests.length,requestsBeforeResumeLoad,'Saved sync does not sign in or contact Drive on load');
+  assert.equal(remoteReads.length,readsBeforeResumeLoad);
+  const uploadsBeforeResume=uploads.length;
+  own.entries.push(syncRecord('resume-local','unsynced local addition'));
+  await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(scope.currentAppView,'charts','Automatic resume preserves the current page');
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On');
+  assert.equal(node('googleDriveSyncOffer').hidden,true,'Previously enabled sync needs no extra confirmation');
+  assert(cloud.entries.some(entry=>entry.id==='resume-local'),'Resume uses guarded reconciliation to save unsynced local records');
+  assert.equal(uploads.length,uploadsBeforeResume,'Resume updates the verified existing current file without creating one');
+  assert.match(node('googleDriveReconnectStatus').textContent,/Automatic sync has resumed/);
+  assert.equal(node('googleDriveReconnectStatus').focused,true);
+  await clicks('disconnectGoogleDriveButton');
+  assert.equal(preferences()[resumeOwner].enabled,true,'Disconnect preserves the sync preference');
+  loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On','Reload and reconnect resume saved sync');
+  clientInstance.connected=false;accountExpiryCallback();await clicks('saveGoogleDriveButton');
+  assert.equal(JSON.parse(storage.get('emotionWheelDriveSyncV1')).syncError,undefined,'Expiry is a connection interruption rather than an unresolved sync failure');
+  await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync On','Token expiry and reconnect resume sync');
+  await clicks('startGoogleDriveSyncButton');
+  assert.equal(preferences()[resumeOwner].enabled,false,'Pause Sync clears the saved preference');
+  await clicks('disconnectGoogleDriveButton');loadResumePage();
+  const writesBeforePausedReconnect=writes;
+  await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off');
+  assert.equal(writes,writesBeforePausedReconnect,'A paused preference never syncs automatically');
+  assert.equal(node('googleDriveSyncOffer').hidden,false);
+  assert.equal(node('googleDriveSyncOfferHeading').focused,true,'The visible global prompt receives focus');
+  assert.equal(scope.currentAppView,'charts');
+  await clicks('acceptGoogleDriveSyncOfferButton');await flush();await flush();
+  assert.equal(scope.currentAppView,'charts','Accepting sync stays on the current page');
+  assert.equal(preferences()[resumeOwner].enabled,true,'Starting sync remembers the preference');
+  await clicks('disconnectGoogleDriveButton');
+  const checksBeforeUnsafeResume=writes,createsBeforeUnsafeResume=uploads.length;
+  for(const reason of ['different-account','different-file','missing-file','missing-baseline','sync-error','editing','rating-review','upgrade','shared-data']) {
+    email=resumeOwner;scope.editingEntry=null;scope.pendingRatingScaleChange=null;scope.dataSchemaMatches=()=>true;activeDataset=null;scope.currentAppView='charts';
+    currentFile={id:resumeId,owners:[{emailAddress:resumeOwner}]};seedResume();
+    if(reason==='different-account')email='different-owner@example.test';
+    if(reason==='different-file')currentFile={id:'different_current_123',owners:[{emailAddress:resumeOwner}]};
+    if(reason==='missing-file')currentFile=null;
+    if(reason==='missing-baseline')storage.set('emotionWheelDriveSyncV1',JSON.stringify({id:resumeId,owner:resumeOwner}));
+    if(reason==='sync-error')storage.set('emotionWheelDriveSyncV1',JSON.stringify({id:resumeId,owner:resumeOwner,base:own,syncError:'Unresolved conflict'}));
+    if(reason==='editing')scope.editingEntry={id:'editing'};
+    if(reason==='rating-review')scope.pendingRatingScaleChange={raw:'pending'};
+    if(reason==='upgrade')scope.dataSchemaMatches=()=>false;
+    if(reason==='shared-data')activeDataset={fileId:'synthetic_shared_resume_123'};
+    loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
+    assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off',`${reason} must block automatic resume`);
+    assert.equal(writes,checksBeforeUnsafeResume);assert.equal(uploads.length,createsBeforeUnsafeResume,`${reason} must not create files`);
+    assert.equal(scope.currentAppView,'charts');
+    if(reason==='sync-error') {
+      assert.equal(node('googleDriveSyncOffer').hidden,false);assert.equal(node('acceptGoogleDriveSyncOfferButton').textContent,'Review sync issue');
+      assert.equal(node('googleDriveSyncOfferHeading').focused,true);
+    }
+    if(reason==='editing' || reason==='rating-review') {
+      await clicks('acceptGoogleDriveSyncOfferButton');await flush();
+      assert.equal(node('googleDriveSyncOffer').hidden,false,'An unfinished review keeps the prompt available for retry');
+      assert.equal(writes,checksBeforeUnsafeResume);assert.equal(uploads.length,createsBeforeUnsafeResume);
+      assert.match(node('googleDriveReconnectStatus').textContent,/Finish the current edit/);
+    }
+    await clicks('disconnectGoogleDriveButton');
+  }
+  email=resumeOwner;scope.editingEntry=null;scope.pendingRatingScaleChange=null;scope.dataSchemaMatches=()=>true;activeDataset=null;
+  seedResume();currentFile={id:resumeId,owners:[{emailAddress:resumeOwner}]};loadResumePage();
+  let finishResumeDiscovery;clientInstance.findExistingCurrent=()=>new Promise(resolve=>{finishResumeDiscovery=resolve;});
+  await clicks('reconnectGoogleDriveButton');await flush();
+  await clicks('disconnectGoogleDriveButton');finishResumeDiscovery(currentFile);await flush();await flush();
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off','Late discovery after disconnect cannot resume sync');
+  assert.equal(writes,checksBeforeUnsafeResume);
+  seedResume();loadResumePage();
+  clientInstance.getUpdateState=async()=>{clientInstance.connected=false;const error=new Error('Ambiguous network failure');error.code='drive-network';throw error;};
+  await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(JSON.parse(storage.get('emotionWheelDriveSyncV1')).syncError,'Ambiguous network failure','An operation failure still needs review if the connection also expires');
+  loadResumePage();await clicks('reconnectGoogleDriveButton');await flush();await flush();
+  assert.equal(node('googleDriveSyncSummaryButton').textContent,'Sync Off','Reconnect cannot automatically retry an unresolved network failure');
+  assert.equal(node('acceptGoogleDriveSyncOfferButton').textContent,'Review sync issue');
+  assert.equal(writes,checksBeforeUnsafeResume);await clicks('disconnectGoogleDriveButton');
+  console.log('PASS: same-page reconnect and focused global prompts; persistent account/file sync preference; guarded resume after reload/expiry; Pause Sync, changed accounts/files, missing baselines, conflicts, active reviews and late responses block unsafe resume.');
 
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

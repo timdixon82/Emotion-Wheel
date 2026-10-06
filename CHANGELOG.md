@@ -2,6 +2,15 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.6.0
+
+Released 5 October 2026.
+
+- Reconnect Google keeps you on the current page, with inline feedback and a visible, focused sync prompt when a choice is needed.
+- Start Sync now remembers your preference for that account and current file. After reconnecting, sync resumes automatically using the saved comparison copy and existing conflict protection. Pause Sync turns automatic resumption off.
+- A different account or file, missing baseline, unresolved issue, active edit or rating review, data upgrade, or shared-data context prevents automatic resumption.
+- Help explains why Google connections expire and need renewing regularly. Privacy explains the local sync preference; Google access tokens remain in memory.
+
 ## 1.5.0
 
 Released 5 October 2026.
