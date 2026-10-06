@@ -136,3 +136,7 @@ After a browser has connected once, a separate status strip shows connection and
 ## Release history
 
 See [What’s new / changelog](CHANGELOG.md) for published versions and changes. The app and information-page footers link to the same history.
+
+### Logging streak
+
+The Entry page calculates consecutive local calendar days from the personal log, counting each day once. A streak through yesterday remains visible until today ends; gaps hide the indicator. It recalculates after record changes, at local midnight and on returning to the page. Shared datasets and future or invalid timestamps do not contribute. The streak adds no storage or network requests. Run `node tests/logging-streak.cjs` for calendar and daylight-saving regressions.

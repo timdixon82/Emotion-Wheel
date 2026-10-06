@@ -96,6 +96,9 @@ jobs:
       - name: Verify emotion data and backup compatibility
         run: node tests/context-analysis.cjs
 
+      - name: Verify calendar-day logging streaks
+        run: node tests/logging-streak.cjs
+
       - name: Verify optional Google Drive transport
         run: node tests/google-drive.cjs
 
