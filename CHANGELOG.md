@@ -2,6 +2,15 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.8.0
+
+Released 9 October 2026.
+
+- Custom capture settings now offers Expected emotion level, Actual emotion level and Emotion is appropriate independently. Existing combined settings enable both levels; saved records and historical alignment are preserved.
+- When both levels are selected, alignment appears during recording and in the save confirmation. Editing one level preserves the other saved rating and updates alignment only when ratings change.
+- The current streak is more prominent on Entry. The first new emotion saved each local calendar day confirms today’s log and the updated streak with congratulations and encouragement. A local date marker prevents repeats after reload, undo or deletion; edits, imports, sync and failed saves do not trigger it.
+- A failed emotion save retains the entry form and original in-memory records for retry.
+
 ## 1.7.0
 
 Released 6 October 2026.

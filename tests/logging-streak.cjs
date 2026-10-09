@@ -27,3 +27,50 @@ assert.equal(count(['invalid', undefined, null, '2026-10-07T12:00:00Z', '2026-10
 const entries = [record('2026-10-06T10:00:00+01:00'), record('2026-10-05T10:00:00+01:00')];
 const original = JSON.stringify(entries); context.getLoggingStreak(entries, new Date('2026-10-06T12:00:00+01:00')); assert.equal(JSON.stringify(entries), original);
 console.log('PASS: one day per calendar date, today/yesterday anchoring, gaps, local timezone, DST, leap/year boundaries, invalid/future timestamps and immutable records.');
+
+// Daily congratulations follow local dates, with persistent suppression across reloads.
+const output = { hidden: true, textContent: '' };
+const stored = new Map();
+context.document = { getElementById: () => output };
+context.localStorage = { getItem: key => stored.get(key), setItem: (key, value) => stored.set(key, value) };
+context.dailyLogCongratulationsKey = 'daily';
+context.lastCongratulatedDay = '';
+for (const name of ['getLocalLoggingDate', 'showDailyLogCongratulations']) {
+  vm.runInContext(html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}`))[0], context);
+}
+function celebrate(now, loggedTodayBeforeSave = false) {
+  const date = new Date(now);
+  context.logEntries = [record(date.toISOString())];
+  context.showDailyLogCongratulations(loggedTodayBeforeSave, date);
+}
+celebrate('2026-10-05T22:59:59Z');
+assert.equal(output.hidden, false); assert.match(output.textContent, /now 1 day/);
+celebrate('2026-10-05T23:00:00Z'); // Local midnight starts a new calendar day.
+assert.equal(output.hidden, false);
+assert.equal(stored.get('daily'), '2026-10-06');
+context.lastCongratulatedDay = ''; // Simulate reopening the app.
+celebrate('2026-10-06T20:00:00+01:00');
+assert.equal(output.hidden, true); assert.equal(output.textContent, '');
+celebrate('2026-10-07T12:00:00+01:00', true); // An existing/imported log already covers today.
+assert.equal(output.hidden, true);
+celebrate('2026-10-08T12:00:00+01:00'); // A gap starts a new 1-day streak.
+assert.equal(output.hidden, false); assert.match(output.textContent, /now 1 day/);
+celebrate('2026-10-25T00:30:00+01:00');
+assert.equal(output.hidden, false);
+celebrate('2026-10-25T01:30:00Z'); // Clock change does not start a second calendar day.
+assert.equal(output.hidden, true);
+celebrate('2026-10-26T00:00:00Z');
+assert.equal(output.hidden, false);
+for (const timezone of ['America/Los_Angeles', 'Pacific/Auckland']) {
+  process.env.TZ = timezone;
+  stored.clear(); context.lastCongratulatedDay = '';
+  const midnight = new Date(2026, 9, 9);
+  celebrate(new Date(midnight.getTime() - 1).toISOString());
+  assert.equal(output.hidden, false);
+  celebrate(midnight.toISOString());
+  assert.equal(output.hidden, false);
+  celebrate(new Date(midnight.getTime() + 1000).toISOString());
+  assert.equal(output.hidden, true);
+}
+process.env.TZ = 'Europe/London';
+console.log('PASS: daily message suppression, local midnight on both sides of UTC, DST repeated hour, reloads, existing logs and gap restarts.');
