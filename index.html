@@ -140,7 +140,8 @@
     .sync-issue-banner { margin: .5rem 0; padding: .75rem; border: 2px solid var(--danger); border-radius: .5rem; background: var(--panel); }
     .sync-issue-banner p { margin: 0 0 .5rem; font-weight: 700; }
     .google-reconnect-banner { border-color: var(--focus); }
-    .logging-streak { margin: 0 0 1rem; color: var(--text); }
+    .logging-streak { margin: 0 0 1rem; padding: 1rem; border: 2px solid var(--focus); border-radius: .5rem; background: var(--panel); color: var(--text); font-size: 1.25rem; font-weight: 700; }
+    .daily-log-congratulations { font-size: 1.1rem; font-weight: 700; }
     .google-connection-timer { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin: .5rem 0 1rem; padding: .75rem; border: 1px solid var(--border); border-radius: .5rem; background: var(--panel); }
     .google-connection-timer > button { height: 44px; min-height: 44px; padding-top: 0; padding-bottom: 0; }
     .google-status-details { display: grid; grid-template-columns: 20px 7ch 20px; grid-template-rows: 22px 22px; gap: 0 .3rem; align-items: center; padding: 0 .15rem; border: 0; background: transparent; color: var(--text); text-align: left; }
@@ -596,8 +597,9 @@
           <fieldset>
             <legend>Questions to include</legend>
             <div class="checkbox-grid">
-              <label><input type="checkbox" id="collectAppropriate"> Whether the emotion fits the situation</label>
-              <label><input type="checkbox" id="collectIntensity"> Expected and actual emotion strength</label>
+              <label><input type="checkbox" id="collectAppropriate"> Emotion is appropriate</label>
+              <label><input type="checkbox" id="collectExpectedIntensity"> Expected emotion level</label>
+              <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
               <label><input type="checkbox" id="collectSensations"> How your body feels</label>
               <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
               <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
@@ -695,7 +697,7 @@
 
     <div id="appropriatePanel" class="optional-panel" hidden>
       <fieldset>
-        <legend>Is this emotion appropriate?</legend>
+        <legend>Emotion is appropriate</legend>
         <div class="radio-row">
           <label><input type="radio" name="appropriate" value="Yes"> Yes</label>
           <label><input type="radio" name="appropriate" value="No"> No</label>
@@ -705,29 +707,29 @@
 
     <div id="intensityPanel" class="optional-panel" hidden>
       <fieldset>
-        <legend>Intensity</legend>
-        <p id="intensityScaleHelp">Use the decrease and increase buttons to choose an intensity from 1 to 5. Expected and actual intensity are aligned only when the ratings are equal.</p>
+        <legend>Emotion level</legend>
+        <p id="intensityScaleHelp">Use the decrease and increase buttons to choose an emotion level from 1 to 5. When both levels are selected, new ratings are aligned only when they are equal.</p>
         <div class="field-row">
-          <div class="stacked-label" role="group" aria-labelledby="expectedIntensityLabel" aria-describedby="intensityScaleHelp">
-            <span id="expectedIntensityLabel">Expected intensity</span>
+          <div id="expectedIntensityPanel" class="stacked-label" role="group" aria-labelledby="expectedIntensityLabel" aria-describedby="intensityScaleHelp">
+            <span id="expectedIntensityLabel">Expected emotion level</span>
             <div class="intensity-control">
-              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="-1" aria-label="Decrease expected intensity">−</button>
+              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="-1" aria-label="Decrease expected emotion level">−</button>
               <output id="expectedIntensityValue" class="intensity-value" for="expectedIntensity">3 out of 5</output>
-              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="1" aria-label="Increase expected intensity">+</button>
+              <button type="button" data-intensity-target="expectedIntensity" data-intensity-change="1" aria-label="Increase expected emotion level">+</button>
               <input type="hidden" id="expectedIntensity" value="3">
             </div>
           </div>
-          <div class="stacked-label" role="group" aria-labelledby="actualIntensityLabel" aria-describedby="intensityScaleHelp">
-            <span id="actualIntensityLabel">Actual intensity</span>
+          <div id="actualIntensityPanel" class="stacked-label" role="group" aria-labelledby="actualIntensityLabel" aria-describedby="intensityScaleHelp">
+            <span id="actualIntensityLabel">Actual emotion level</span>
             <div class="intensity-control">
-              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="-1" aria-label="Decrease actual intensity">−</button>
+              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="-1" aria-label="Decrease actual emotion level">−</button>
               <output id="actualIntensityValue" class="intensity-value" for="actualIntensity">3 out of 5</output>
-              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="1" aria-label="Increase actual intensity">+</button>
+              <button type="button" data-intensity-target="actualIntensity" data-intensity-change="1" aria-label="Increase actual emotion level">+</button>
               <input type="hidden" id="actualIntensity" value="3">
             </div>
           </div>
         </div>
-        <p id="intensityAlignment" class="alignment">Aligned</p>
+        <p id="intensityAlignment" class="alignment" role="status" aria-live="polite" aria-atomic="true">Aligned</p>
         <p id="intensityValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
       </fieldset>
     </div>
@@ -779,9 +781,11 @@
     </div>
   </section>
 
-  <section id="recordConfirmation" class="confirmation" aria-labelledby="recordConfirmationHeading" tabindex="-1" hidden>
+  <section id="recordConfirmation" class="confirmation" aria-labelledby="recordConfirmationHeading" aria-describedby="recordConfirmationText recordedAlignment dailyLogCongratulations" tabindex="-1" hidden>
     <h2 id="recordConfirmationHeading">Emotion recorded</h2>
     <p id="recordConfirmationText">Your emotion was saved on this device.</p>
+    <p id="recordedAlignment" class="alignment" hidden></p>
+    <p id="dailyLogCongratulations" class="daily-log-congratulations" hidden></p>
     <div class="actions">
       <button type="button" id="undoRecordButton">Undo</button>
       <button type="button" id="recordAgainButton">Record another like this</button>
@@ -1358,6 +1362,8 @@ const storageKey = 'emotionWheelLocalLogV1';
 const dataSchemaVersion = 3;
 const schemaVersionKey = `${storageKey}SchemaVersion`;
 const settingsKey = 'emotionWheelCaptureSettingsV1';
+const dailyLogCongratulationsKey = 'emotionWheelLastCongratulatedDayV1';
+let lastCongratulatedDay = '';
 const emotionColours = {
   Anger: '#7f1d1d',
   Disgust: '#14532d',
@@ -1398,6 +1404,8 @@ const defaultSettings = {
   captureMode: 'phase1',
   collectAppropriate: false,
   collectIntensity: false,
+  collectExpectedIntensity: false,
+  collectActualIntensity: false,
   collectSensations: false,
   collectTags: false,
   collectBucketLevel: false,
@@ -1430,11 +1438,14 @@ const bucketLevel = document.getElementById('bucketLevel');
 const customButton = document.getElementById('customButton');
 const customSettingsPanel = document.getElementById('customSettingsPanel');
 const collectAppropriate = document.getElementById('collectAppropriate');
-const collectIntensity = document.getElementById('collectIntensity');
+const collectExpectedIntensity = document.getElementById('collectExpectedIntensity');
+const collectActualIntensity = document.getElementById('collectActualIntensity');
 const collectSensations = document.getElementById('collectSensations');
 const includeAllSensations = document.getElementById('includeAllSensations');
 const appropriatePanel = document.getElementById('appropriatePanel');
 const intensityPanel = document.getElementById('intensityPanel');
+const expectedIntensityPanel = document.getElementById('expectedIntensityPanel');
+const actualIntensityPanel = document.getElementById('actualIntensityPanel');
 const sensationsPanel = document.getElementById('sensationsPanel');
 const sensationsHelp = document.getElementById('sensationsHelp');
 const sensationsButtons = document.getElementById('sensationsButtons');
@@ -1806,6 +1817,10 @@ function saveSettings() {
 
 function normalizeSettings(settings) {
   const normalized = { ...defaultSettings, ...settings };
+  // Old settings selected both ratings together; explicit new choices win.
+  normalized.collectExpectedIntensity = Boolean(settings.collectExpectedIntensity ?? settings.collectIntensity ?? false);
+  normalized.collectActualIntensity = Boolean(settings.collectActualIntensity ?? settings.collectIntensity ?? false);
+  normalized.collectIntensity = normalized.collectExpectedIntensity && normalized.collectActualIntensity;
   if (!settings.captureMode) {
     if (isPhaseOneSettings(normalized)) {
       normalized.captureMode = 'phase1';
@@ -1941,7 +1956,8 @@ function renderSettings() {
   captureModeSummary.textContent = `Capture settings — ${modeLabels[captureSettings.captureMode] || modeLabels.phase1}`;
   renderRatingScale();
   collectAppropriate.checked = captureSettings.collectAppropriate;
-  collectIntensity.checked = captureSettings.collectIntensity;
+  collectExpectedIntensity.checked = captureSettings.collectExpectedIntensity;
+  collectActualIntensity.checked = captureSettings.collectActualIntensity;
   collectSensations.checked = captureSettings.collectSensations;
   collectTags.checked = captureSettings.collectTags;
   collectBucketLevel.checked = captureSettings.collectBucketLevel;
@@ -1951,7 +1967,9 @@ function renderSettings() {
   renderTags();
   includeAllSensations.checked = captureSettings.includeAllSensations;
   appropriatePanel.hidden = !captureSettings.collectAppropriate;
-  intensityPanel.hidden = !captureSettings.collectIntensity;
+  expectedIntensityPanel.hidden = !captureSettings.collectExpectedIntensity;
+  actualIntensityPanel.hidden = !captureSettings.collectActualIntensity;
+  intensityPanel.hidden = expectedIntensityPanel.hidden && actualIntensityPanel.hidden;
   sensationsPanel.hidden = !captureSettings.collectSensations;
   customSettingsPanel.hidden = captureSettings.captureMode !== 'custom';
   phaseOneButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase1' ? 'true' : 'false');
@@ -1963,15 +1981,15 @@ function renderSettings() {
 }
 
 function isPhaseOneSettings(settings) {
-  return !settings.collectAppropriate && !settings.collectIntensity && !settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
+  return !settings.collectAppropriate && !settings.collectExpectedIntensity && !settings.collectActualIntensity && !settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
 }
 
 function isPhaseTwoSettings(settings) {
-  return settings.collectAppropriate && settings.collectIntensity && settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
+  return settings.collectAppropriate && settings.collectExpectedIntensity && settings.collectActualIntensity && settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
 }
 
 function setSettings(settings) {
-  captureSettings = { ...captureSettings, ...settings };
+  captureSettings = normalizeSettings({ ...captureSettings, ...settings });
   saveSettings();
   renderAll();
 }
@@ -1995,7 +2013,8 @@ function focusFirstVisibleControl(panel) {
 
 function focusNextRecordingControl(fallback = recordButton) {
   if (focusFirstVisibleControl(appropriatePanel)) return;
-  if (focusFirstVisibleControl(intensityPanel)) return;
+  if (focusFirstVisibleControl(expectedIntensityPanel)) return;
+  if (focusFirstVisibleControl(actualIntensityPanel)) return;
   if (focusFirstVisibleControl(sensationsPanel)) return;
   if (focusFirstVisibleControl(tagsPanel)) return;
   if (focusFirstVisibleControl(bucketPanel)) return;
@@ -2184,8 +2203,9 @@ function renderIntensityAlignment() {
     const nextValue = Number(input.value) + Number(button.dataset.intensityChange);
     button.setAttribute('aria-disabled', nextValue < 1 || nextValue > ratingScale ? 'true' : 'false');
   });
+  intensityAlignment.hidden = !(captureSettings.collectExpectedIntensity && captureSettings.collectActualIntensity);
   const comparison = getRecordingAlignment(Number(expectedIntensity.value), Number(actualIntensity.value));
-  intensityAlignment.textContent = comparison;
+  if (intensityAlignment.textContent !== comparison) intensityAlignment.textContent = comparison;
   intensityAlignment.className = `alignment ${comparison === 'Aligned' ? 'good' : 'warn'}`;
 }
 
@@ -2201,6 +2221,20 @@ function getRecordingAlignment(expected, actual, previous = editingEntry) {
     return previous.intensityAlignment;
   }
   return getIntensityComparison(expected, actual);
+}
+
+function applyRecordingRatings(entry, previous = null) {
+  if (captureSettings.collectExpectedIntensity) entry.expectedIntensity = Number(expectedIntensity.value);
+  if (captureSettings.collectActualIntensity) entry.actualIntensity = Number(actualIntensity.value);
+  if (!captureSettings.collectExpectedIntensity && !captureSettings.collectActualIntensity) return;
+  // Editing one rating keeps the other saved rating and compares the saved pair.
+  const expected = entry.expectedIntensity;
+  const actual = entry.actualIntensity;
+  if (expected != null && expected !== '' && actual != null && actual !== '') {
+    entry.intensityAlignment = getRecordingAlignment(Number(expected), Number(actual), previous);
+  } else {
+    delete entry.intensityAlignment;
+  }
 }
 
 function convertRatingEntries(entries, from, to) {
@@ -2235,7 +2269,7 @@ function getScaleConversionWarning(from, to) {
 function renderRatingScale() {
   document.getElementById('ratingScale').value = String(ratingScale);
   document.getElementById('advancedSettingsSummary').textContent = `Advanced settings — ratings out of ${ratingScale}`;
-  document.getElementById('intensityScaleHelp').textContent = `Use the decrease and increase buttons to choose an intensity from 1 to ${ratingScale}. New ratings are aligned only when expected and actual are equal.`;
+  document.getElementById('intensityScaleHelp').textContent = `Use the decrease and increase buttons to choose an emotion level from 1 to ${ratingScale}. When both levels are selected, new ratings are aligned only when they are equal.`;
   document.getElementById('bucketHelp').textContent = `How full does your emotional bucket feel? Choose 1–${ratingScale}, where 1 is the lowest level and ${ratingScale} is full. This is separate from emotion intensity. It starts at ${Math.ceil(ratingScale / 2)} when enabled for capture.`;
   renderReviewScale();
 }
@@ -3426,11 +3460,38 @@ function getLoggingStreak(entries, now = new Date()) {
 }
 
 function renderLoggingStreak() {
+  const congratulations = document.getElementById('dailyLogCongratulations');
+  if (!congratulations.hidden && lastCongratulatedDay !== getLocalLoggingDate(new Date())) {
+    congratulations.hidden = true;
+    congratulations.textContent = '';
+  }
   const output = document.getElementById('loggingStreak');
   const streak = getLoggingStreak(logEntries);
   output.hidden = !streak.count;
-  const text = streak.count ? `You’ve logged emotions for ${streak.count} ${streak.count === 1 ? 'day' : 'days'} in a row.${streak.loggedToday ? '' : ' Last logged yesterday.'}` : '';
+  const text = streak.count ? `Current streak: ${streak.count} ${streak.count === 1 ? 'day' : 'days'}. You’ve logged emotions each day.${streak.loggedToday ? ' Today’s log is complete.' : ' Last logged yesterday.'}` : '';
   if (output.textContent !== text) output.textContent = text;
+}
+
+function getLocalLoggingDate(now) {
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+}
+
+function showDailyLogCongratulations(loggedTodayBeforeSave, now) {
+  const output = document.getElementById('dailyLogCongratulations');
+  output.hidden = true;
+  output.textContent = '';
+  if (loggedTodayBeforeSave) return;
+  const today = getLocalLoggingDate(now);
+  let savedDay = '';
+  try { savedDay = localStorage.getItem(dailyLogCongratulationsKey); } catch (error) { /* In-memory suppression still works. */ }
+  if (savedDay === today || lastCongratulatedDay === today) return;
+  const streak = getLoggingStreak(logEntries, now);
+  if (!streak.loggedToday) return;
+  // Retain suppression through reloads, undo and deletion without changing records.
+  lastCongratulatedDay = today;
+  try { localStorage.setItem(dailyLogCongratulationsKey, today); } catch (error) { /* The emotion was already saved successfully. */ }
+  output.textContent = `Congratulations! You’ve logged an emotion today. Your streak is now ${streak.count} ${streak.count === 1 ? 'day' : 'days'}. Keep logging each day to maintain it!`;
+  output.hidden = false;
 }
 
 let loggingStreakTimer;
@@ -4228,6 +4289,8 @@ phaseOneButton.addEventListener('click', () => {
     captureMode: 'phase1',
     collectAppropriate: false,
     collectIntensity: false,
+    collectExpectedIntensity: false,
+    collectActualIntensity: false,
     collectSensations: false,
     collectTags: false,
     collectBucketLevel: false,
@@ -4241,6 +4304,8 @@ phaseTwoButton.addEventListener('click', () => {
     captureMode: 'phase2',
     collectAppropriate: true,
     collectIntensity: true,
+    collectExpectedIntensity: true,
+    collectActualIntensity: true,
     collectSensations: true,
     collectTags: false,
     collectBucketLevel: false,
@@ -4250,7 +4315,7 @@ phaseTwoButton.addEventListener('click', () => {
 });
 
 phaseThreeButton.addEventListener('click', () => {
-  setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectSensations: true, collectTags: true, collectBucketLevel: true, includeAllSensations: false });
+  setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectBucketLevel: true, includeAllSensations: false });
   liveStatus.textContent = 'Phase 3 selected. You can also add tags and rate how full your emotional bucket feels.';
 });
 
@@ -4259,12 +4324,13 @@ customButton.addEventListener('click', () => {
   liveStatus.textContent = 'Custom selected. Choose which questions to include.';
 });
 
-[collectAppropriate, collectIntensity, collectSensations, collectTags, collectBucketLevel].forEach(input => {
+[collectAppropriate, collectExpectedIntensity, collectActualIntensity, collectSensations, collectTags, collectBucketLevel].forEach(input => {
   input.addEventListener('change', () => {
     setSettings({
       captureMode: 'custom',
       collectAppropriate: collectAppropriate.checked,
-      collectIntensity: collectIntensity.checked,
+      collectExpectedIntensity: collectExpectedIntensity.checked,
+      collectActualIntensity: collectActualIntensity.checked,
       collectSensations: collectSensations.checked,
       collectTags: collectTags.checked,
       collectBucketLevel: collectBucketLevel.checked
@@ -4283,7 +4349,7 @@ document.querySelectorAll('[data-intensity-target]').forEach(button => {
     const change = Number(button.dataset.intensityChange);
     input.value = String(Math.min(ratingScale, Math.max(1, Number(input.value) + change)));
     renderIntensityAlignment();
-    const label = input === expectedIntensity ? 'Expected intensity' : 'Actual intensity';
+    const label = input === expectedIntensity ? 'Expected emotion level' : 'Actual emotion level';
     intensityValueStatus.textContent = `${label}, ${input.value} out of ${ratingScale}.`;
   });
 });
@@ -4298,15 +4364,15 @@ recordButton.addEventListener('click', () => {
   if (getReviewDataset()) return;
   if (!selectedInner) return;
 
-  const expected = Number(expectedIntensity.value);
-  const actual = Number(actualIntensity.value);
+  const now = new Date();
+  const loggedTodayBeforeSave = getLoggingStreak(logEntries, now).loggedToday;
   const previousEntry = editingEntry;
   const entry = {
     ...(previousEntry || {}),
     id: previousEntry?.id || crypto.randomUUID(),
-    createdAt: previousEntry?.createdAt || previousEntry?.timestamp || new Date().toISOString(),
-    modifiedAt: new Date().toISOString(),
-    timestamp: previousEntry?.timestamp || new Date().toISOString(),
+    createdAt: previousEntry?.createdAt || previousEntry?.timestamp || now.toISOString(),
+    modifiedAt: now.toISOString(),
+    timestamp: previousEntry?.timestamp || now.toISOString(),
     level: getSelectionLevel(),
     inner: selectedInner,
     middle: selectedMiddle,
@@ -4316,11 +4382,7 @@ recordButton.addEventListener('click', () => {
   if (captureSettings.collectAppropriate) {
     entry.appropriate = document.querySelector('input[name="appropriate"]:checked')?.value || '';
   }
-  if (captureSettings.collectIntensity) {
-    entry.expectedIntensity = expected;
-    entry.actualIntensity = actual;
-    entry.intensityAlignment = getRecordingAlignment(expected, actual, previousEntry);
-  }
+  applyRecordingRatings(entry, previousEntry);
   if (captureSettings.collectSensations) {
     entry.physicalSensations = getSelectedSensations();
     entry.sensationGuide = captureSettings.includeAllSensations ? 'All sensations' : getActiveSensationType();
@@ -4336,18 +4398,27 @@ recordButton.addEventListener('click', () => {
     delete entry.comment;
   }
 
-  if (previousEntry) {
-    const index = logEntries.indexOf(previousEntry);
-    if (index >= 0) logEntries[index] = entry;
-  } else {
-    logEntries.push(entry);
+  const originalEntries = logEntries;
+  logEntries = previousEntry ? logEntries.map(saved => saved === previousEntry ? entry : saved) : [...logEntries, entry];
+  try {
+    saveLog();
+  } catch (error) {
+    logEntries = originalEntries;
+    liveStatus.textContent = `Your emotion could not be saved. ${error.message} Your answers are still here; try again when saving is available.`;
+    return;
   }
   lastRecordedEntry = entry;
   const recordedPath = getEntryPathLabel(entry);
   editingEntry = null;
   clearEntryForm();
-  saveLog();
   renderAll();
+  const recordedAlignment = document.getElementById('recordedAlignment');
+  recordedAlignment.hidden = !(captureSettings.collectExpectedIntensity && captureSettings.collectActualIntensity);
+  recordedAlignment.textContent = recordedAlignment.hidden ? '' : `Emotion levels: ${entry.intensityAlignment}.`;
+  const congratulations = document.getElementById('dailyLogCongratulations');
+  congratulations.hidden = true;
+  congratulations.textContent = '';
+  if (!previousEntry) showDailyLogCongratulations(loggedTodayBeforeSave, now);
   recordConfirmationHeading.textContent = previousEntry ? 'Changes saved' : 'Emotion recorded';
   recordConfirmationText.textContent = `${recordedPath} was ${previousEntry ? 'updated' : 'saved'} on this device.`;
   undoRecordButton.hidden = Boolean(previousEntry);

@@ -137,6 +137,10 @@ After a browser has connected once, a separate status strip shows connection and
 
 See [What’s new / changelog](CHANGELOG.md) for published versions and changes. The app and information-page footers link to the same history.
 
+### Independent emotion levels
+
+Custom capture settings offers separate Expected emotion level, Actual emotion level and Emotion is appropriate switches. Either emotion level can be recorded alone. Selecting both shows and saves their alignment; Phase 2 and Phase 3 still include both levels and the separate appropriateness question. Existing combined intensity settings enable both new switches without changing records. Disabled fields retain their saved values when editing. A changed rating recalculates alignment against the other saved rating, if present; unchanged historical alignment remains authoritative. Run `node tests/capture-options.cjs` for compatibility and recording regressions.
+
 ### Logging streak
 
-The Entry page calculates consecutive local calendar days from the personal log, counting each day once. A streak through yesterday remains visible until today ends; gaps hide the indicator. It recalculates after record changes, at local midnight and on returning to the page. Shared datasets and future or invalid timestamps do not contribute. The streak adds no storage or network requests. Run `node tests/logging-streak.cjs` for calendar and daylight-saving regressions.
+The Entry page calculates consecutive local calendar days from the personal log, counting each day once. A streak through yesterday remains visible until today ends; gaps hide the indicator. It recalculates after record changes, at local midnight and on returning to the page. Shared datasets and future or invalid timestamps do not contribute. The first new emotion saved each local calendar day shows congratulations, confirms today’s log and the updated streak, and encourages daily logging. Further saves and edits that day do not repeat it. A local date marker suppresses repeat congratulations after reload, undo or deletion; imports and sync do not trigger it. Failed saves leave the form intact and do not trigger congratulations. The streak makes no network requests. Run `node tests/logging-streak.cjs` for calendar and daylight-saving regressions.
