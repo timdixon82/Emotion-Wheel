@@ -30,7 +30,7 @@ Read the fuller [privacy notes](docs/privacy.html) before using this for sensiti
 ## Getting started
 
 1. Open Entry from the app navigation.
-2. Choose Phase 1, Phase 2, Phase 3, or Custom in Capture settings if you want to change the recording fields.
+2. Choose Phase 1, Phase 2, Phase 3, Phase 4, or Custom in Capture settings if you want to change the recording fields.
 3. Select an emotion at any level and add an optional note if helpful.
 4. Select **Record this emotion**.
 5. After saving, undo the entry, prepare another like it, or start a clean entry.
@@ -97,6 +97,10 @@ Tags start with Work, Family, Relationship, Friends, Health, Sleep, Money, Home,
 
 Existing records and storage keys are retained. Backups include both new fields and the reusable tag list; older backups remain supported. Editing with a field disabled preserves its existing value. With the field enabled, deselecting all tags or choosing Not recorded clears that field on the edited entry.
 
+## Phase 4: personal values
+
+Phase 4 includes Phase 3 plus optional personal values. Choose up to five main values from the 62-value catalogue, grouped as Stability, Connection, Autonomy, Development and Impact. Those values, including their themes, are stored with each selected record so that filters, exports and reflection charts can distinguish what mattered from the context tags. Values are optional and separate from tags; a record can have more than one or none. The setup links to [Personalvalu.es](https://personalvalu.es/) for people who want to discover their own values; the app does not connect to or send data to that site.
+
 ### Analysing tags and bucket levels
 
 Charts now include ranked tag counts and percentages, emotions for a selected tag (inner categories or recorded paths), and an emotion-by-bucket-level heatmap with totals and missing values. All use the selected chart period. Select a bar or heatmap cell to open matching logs with the same period, tag, emotion and bucket filters. Logs also offer independent tag and bucket filters. No records are changed by analysis.
@@ -113,7 +117,7 @@ Charts offer the same filters as Logs. Choose Custom in View chart period to sho
 
 Run `node tests/context-analysis.cjs` for data, filtering, record identity and backup lifecycle regression checks.
 
-Local data has a separate schema version marker (currently 3). The existing browser storage key is retained; its dataset now contains the entries and their rating scale together so they can be saved atomically. Older local arrays remain readable and migrate without changing their ratings or saved alignment results. On opening an older local dataset, a top banner requires an original-data backup download and confirmation that it has saved before migration. The app retains an exact local recovery snapshot of records and settings before writing. Adding, editing, deleting and importing data, including capture settings, are blocked throughout the app until the upgrade completes. Review, filtering and exports remain available. Closing the page before confirmation leaves the dataset unchanged. Backups include the schema version; older backup files remain supported.
+Local data has a separate schema version marker (currently 4). The existing browser storage key is retained; its dataset now contains the entries and their rating scale together so they can be saved atomically. Older local arrays remain readable and migrate without changing their ratings or saved alignment results. On opening an older local dataset, a top banner requires an original-data backup download and confirmation that it has saved before migration. The app retains an exact local recovery snapshot of records and settings before writing. Adding, editing, deleting and importing data, including capture settings, are blocked throughout the app until the upgrade completes. Review, filtering and exports remain available. Closing the page before confirmation leaves the dataset unchanged. Backups include the schema version; older backup files remain supported.
 
 ### Rating scale
 

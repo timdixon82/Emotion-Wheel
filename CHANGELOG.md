@@ -2,6 +2,16 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.9.0
+
+Released 28 October 2026.
+
+- **Phase 4: Values and meaning** adds an optional personal-values field to Phase 3. Choose up to five main values from a 62-value catalogue grouped as Stability, Connection, Autonomy, Development and Impact, then select any that mattered in each record.
+- Values remain separate from context tags and store both their names and themes in records. Logs, search, filters, exports, backups, Drive sync and conflict review preserve them.
+- Charts now rank recorded personal values with their themes and can open matching logs. The Reflection summary export includes values.
+- A safe record-schema upgrade to version 4 saves an original-data backup and local recovery snapshot before it adds support for values. Existing entries remain unchanged and show Values as Not recorded.
+- Capture settings links to Personalvalu.es for people who want help discovering their values. The app does not connect to or share data with that site.
+
 ## 1.8.0
 
 Released 9 October 2026.

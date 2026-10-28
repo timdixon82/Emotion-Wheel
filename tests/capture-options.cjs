@@ -29,8 +29,9 @@ const context = vm.createContext({
   clearEntryForm() { context.selectedInner = null; context.entryComment.value = ''; },
   renderAll() { renderCount++; }
 });
+vm.runInContext(html.match(/const valueCatalog = \[[\s\S]*?;\n/)[0], context);
 vm.runInContext(html.match(/const defaultSettings = \{[\s\S]*?\n};/)[0], context);
-for (const name of ['normalizeTags', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
+for (const name of ['normalizeTags', 'normalizeValues', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
   vm.runInContext(html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}`))[0], context);
 }
 const normalize = settings => context.normalizeSettings(settings);
@@ -46,6 +47,10 @@ for (const enabled of [true, false]) {
 }
 assert.equal(normalize({}).captureMode, 'phase1');
 assert.equal(normalize({ collectIntensity: true, collectAppropriate: true, collectSensations: true }).captureMode, 'phase2');
+const chosenValues = normalize({ collectValues: true, personalValues: ['Freedom', { name: 'Honesty', theme: 'Wrong' }, 'Not a catalogue value', 'Health', 'Trust', 'Peace', 'Family'] });
+assert.deepEqual(JSON.parse(JSON.stringify(chosenValues.personalValues)), [
+  { name: 'Freedom', theme: 'Autonomy' }, { name: 'Honesty', theme: 'Connection' }, { name: 'Health', theme: 'Stability' }, { name: 'Trust', theme: 'Connection' }, { name: 'Peace', theme: 'Stability' }
+]);
 for (const expected of [false, true]) for (const actual of [false, true]) {
   const settings = normalize({ collectIntensity: true, collectExpectedIntensity: expected, collectActualIntensity: actual });
   assert.equal(settings.collectExpectedIntensity, expected);

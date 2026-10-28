@@ -5,8 +5,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const names = ['getReviewDataset', 'getReviewEntries', 'getReviewScale', 'ensureEntryIdentity', 'mergeBackupEntries', 'sortCountRows', 'countValues', 'getAppropriateCounts', 'getAlignmentCounts', 'getVisibleAppropriateRows', 'getVisibleAlignmentRows', 'getLevelCounts', 'normalizeTags', 'getContextCounts', 'getEntryPathLabel', 'getRecordedLevel', 'displayValue', 'formatDateTime', 'getLogRows', 'csvEscape', 'getEntryKey', 'getIntensityComparison', 'getRecordingAlignment', 'convertRatingEntries', 'getScaleConversionWarning', 'normalizeLoadedEntry', 'getBackupEntriesFromText'];
+const names = ['getReviewDataset', 'getReviewEntries', 'getReviewScale', 'ensureEntryIdentity', 'mergeBackupEntries', 'sortCountRows', 'countValues', 'getAppropriateCounts', 'getAlignmentCounts', 'getVisibleAppropriateRows', 'getVisibleAlignmentRows', 'getLevelCounts', 'normalizeTags', 'normalizeValues', 'getContextCounts', 'getEntryPathLabel', 'getRecordedLevel', 'displayValue', 'formatDateTime', 'getLogRows', 'csvEscape', 'getEntryKey', 'getIntensityComparison', 'getRecordingAlignment', 'convertRatingEntries', 'getScaleConversionWarning', 'normalizeLoadedEntry', 'getBackupEntriesFromText'];
 const context = vm.createContext({ Intl, crypto: require('node:crypto').webcrypto, reviewDataset: null, ratingScale: 10, dataSchemaVersion: 3 });
+vm.runInContext(html.match(/const valueCatalog = \[[\s\S]*?;\n/)[0], context);
 for (const name of names) {
   const source = html.match(new RegExp(`(?:async )?function ${name}\\([\\s\\S]*?\\n}`));
   assert(source, `Missing helper: ${name}`);
@@ -57,7 +58,7 @@ assert.equal(context.getBackupEntriesFromText(JSON.stringify({ ratingScale: 5, e
 console.log('PASS: every conversion boundary, both directions, recalculated equality, missing ratings, unknown field preservation and scale-aware backup validation.');
 
 const entries = [
-  { timestamp: '2026-10-02T10:00:00Z', inner: 'Fear', tags: ['Work', 'work', 'Family'], bucketLevel: 10, comment: 'Test, "quoted" note', physicalSensations: ['Previously recorded sensation'], extension: { keep: true } },
+  { timestamp: '2026-10-02T10:00:00Z', inner: 'Fear', tags: ['Work', 'work', 'Family'], values: [{ name: 'Honesty', theme: 'Wrong theme' }, 'Freedom'], bucketLevel: 10, comment: 'Test, "quoted" note', physicalSensations: ['Previously recorded sensation'], extension: { keep: true } },
   { timestamp: '2026-10-02T11:00:00Z', inner: 'Happy', tags: ['WORK'], bucketLevel: 1 },
   { timestamp: '2026-10-01T10:00:00Z', inner: 'Sad' }
 ];
@@ -65,14 +66,16 @@ context.logEntries = entries;
 const tags = context.getContextCounts(entries, 'tags');
 assert.equal(tags.find(row => row.label.toLowerCase() === 'work').count, 2);
 assert.equal(tags.find(row => row.label === 'Family').count, 1);
+const values = context.getContextCounts(entries, 'values');
+assert.equal(JSON.stringify(values.map(row => [row.label, row.theme, row.count])), JSON.stringify([['Freedom', 'Autonomy', 1], ['Honesty', 'Connection', 1]]));
 const buckets = context.getContextCounts(entries, 'bucketLevel');
 assert.equal(JSON.stringify(buckets.map(row => row.label)), '["1","10"]');
 assert.equal(buckets.reduce((sum, row) => sum + row.count, 0), 2);
 const rows = context.getLogRows(entries);
-assert(rows.every(row => row.length === 13));
-assert(rows[0].includes('Tags') && rows[0].includes('Emotion bucket level (1–10)'));
-assert.equal(rows[1][11], '10');
-assert.equal(rows[3][11], 'Not recorded');
+assert(rows.every(row => row.length === 14));
+assert(rows[0].includes('Tags') && rows[0].includes('Values involved') && rows[0].includes('Emotion bucket level (1–10)'));
+assert.equal(rows[1][12], '10');
+assert.equal(rows[3][12], 'Not recorded');
 assert.equal(context.csvEscape('Test, "quoted" note'), '"Test, ""quoted"" note"');
 const restored = context.getBackupEntriesFromText(JSON.stringify({ entries, tags: ['Work', 'Custom tag'] }));
 assert.equal(restored.validEntries.length, 3);
@@ -80,6 +83,7 @@ assert.equal(restored.skipped, 0);
 assert.equal(restored.validEntries[0].extension.keep, true);
 assert.equal(restored.validEntries[0].physicalSensations[0], 'Previously recorded sensation');
 assert.equal(restored.validEntries[0].bucketLevel, 10);
+assert.equal(JSON.stringify(restored.validEntries[0].values), JSON.stringify([{ name: 'Honesty', theme: 'Connection' }, { name: 'Freedom', theme: 'Autonomy' }]));
 assert(restored.tags.includes('Custom tag'));
 assert.equal(context.getEntryKey(restored.validEntries[0]), context.getEntryKey(entries[0]));
 assert.notEqual(context.getEntryKey(entries[0]), context.getEntryKey({ ...entries[0], bucketLevel: 9 }));
@@ -98,8 +102,8 @@ for (const name of ['getCheckedFilterValues', 'getDateKey', 'getFilteredLogEntri
 const selected = values => ({ querySelectorAll: () => values.map(value => ({ value })) });
 Object.assign(context, {
   logExpectedFilter: selected([]), logActualFilter: selected([]), logAlignmentFilter: selected([]),
-  logInnerFilter: selected(['Anger', 'Fear']), logTagFilter: selected(['tag:family']),
-  logBucketFilter: selected(['8', '9', '10']), logTagMatch: { value: 'any' },
+  logInnerFilter: selected(['Anger', 'Fear']), logTagFilter: selected(['tag:family']), logValueFilter: selected([]),
+  logBucketFilter: selected(['8', '9', '10']), logTagMatch: { value: 'any' }, logValueMatch: { value: 'any' },
   logSearch: { value: '' }, logLevelFilter: { value: '' }, logPathFilter: { value: '' },
   logDateFrom: { value: '2026-09-01' }, logDateTo: { value: '2026-09-30' },
   logEntries: [
@@ -117,6 +121,10 @@ context.logTagMatch.value = 'all';
 assert.equal(context.getFilteredLogEntries().length, 1);
 context.logInnerFilter = selected([]); context.logTagFilter = selected([]); context.logBucketFilter = selected([]);
 assert.equal(context.getFilteredLogEntries().length, 5);
+context.logEntries[0].values = [{ name: 'Honesty', theme: 'Connection' }]; context.logEntries[1].values = [{ name: 'Freedom', theme: 'Autonomy' }];
+context.logValueFilter = selected(['value:honesty']); assert.equal(context.getFilteredLogEntries().length, 1);
+context.logValueFilter = selected(['__missing']); assert.equal(context.getFilteredLogEntries().length, 3);
+context.logValueFilter = selected([]);
 console.log('PASS: Family + Anger/Fear + bucket 8/9/10 + inclusive date range, all-tag matching, empty selections.');
 
 context.logEntries[0].expectedIntensity = 8; context.logEntries[0].actualIntensity = 9; context.logEntries[0].intensityAlignment = 'Aligned';

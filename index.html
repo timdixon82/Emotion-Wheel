@@ -585,12 +585,14 @@
           <li><strong>Phase 1:</strong> Record just the emotion.</li>
           <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
           <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
+          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the personal values that mattered in the moment.</li>
           <li><strong>Custom:</strong> Choose which questions to include.</li>
         </ul>
         <div class="actions" role="group" aria-label="Choose how much detail to record">
           <button type="button" id="phaseOneButton">Phase 1</button>
           <button type="button" id="phaseTwoButton">Phase 2</button>
           <button type="button" id="phaseThreeButton">Phase 3</button>
+          <button type="button" id="phaseFourButton">Phase 4</button>
           <button type="button" id="customButton">Custom</button>
         </div>
         <div id="customSettingsPanel" class="optional-panel" hidden>
@@ -602,10 +604,19 @@
               <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
               <label><input type="checkbox" id="collectSensations"> How your body feels</label>
               <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
+              <label><input type="checkbox" id="collectValues"> Personal values</label>
               <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
             </div>
           </fieldset>
         </div>
+
+        <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
+          <h3 id="valuesSettingsHeading">Your main values</h3>
+          <p id="valuesSettingsHelp" class="help">Choose up to five values to show when you record an emotion. They are saved only in this browser and include their themes for later reflection.</p>
+          <p class="help">Not sure which values matter most? <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">Discover your values at Personalvalu.es</a>.</p>
+          <p id="valuesSelectionStatus" class="help" role="status" aria-live="polite"></p>
+          <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
+        </section>
 
         <details id="advanced-settings" class="settings-panel">
           <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
@@ -754,6 +765,13 @@
         <p id="tagStatus" role="status" aria-live="polite"></p>
       </fieldset>
     </div>
+    <div id="valuesPanel" class="optional-panel" hidden>
+      <fieldset>
+        <legend>Values involved</legend>
+        <p id="valuesHelp" class="help">Choose any of your main values that mattered in this entry. Values are optional and are separate from context tags.</p>
+        <div id="valuesButtons" class="checkbox-grid" aria-describedby="valuesHelp"></div>
+      </fieldset>
+    </div>
     <div id="bucketPanel" class="optional-panel" hidden>
       <input type="hidden" id="bucketLevel" value="">
       <fieldset aria-describedby="bucketHelp">
@@ -842,6 +860,7 @@
         </label>
         <label>Recorded emotion path <select id="logPathFilter"><option value="">All paths</option></select></label>
         <fieldset><legend>Tags</legend><p class="help">No selection means all values. Choose any number.</p><div id="logTagFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logTagFilter">Clear tags</button><label>Tag matching <select id="logTagMatch"><option value="any">Any selected tag</option><option value="all">All selected tags</option></select></label></div></fieldset>
+        <fieldset><legend>Personal values</legend><p class="help">No selection means all values. Choose any number.</p><div id="logValueFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logValueFilter">Clear values</button><label>Value matching <select id="logValueMatch"><option value="any">Any selected value</option><option value="all">All selected values</option></select></label></div></fieldset>
         <fieldset><legend>Bucket levels</legend><p class="help">No selection means all values. Choose any number.</p><div id="logBucketFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10 — Full</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logBucketFilter">Clear bucket levels</button></fieldset>
 <fieldset><legend>Expected intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logExpectedFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logExpectedFilter">Clear expected intensity</button></fieldset>
 <fieldset><legend>Actual intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logActualFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logActualFilter">Clear actual intensity</button></fieldset>
@@ -904,6 +923,7 @@
             <th scope="col">Alignment</th>
             <th scope="col">Physical sensations</th>
             <th scope="col">Tags</th>
+            <th scope="col">Values involved</th>
             <th scope="col" id="logBucketHeading">Emotion bucket level</th>
             <th scope="col">Note</th>
             <th scope="col">Actions</th>
@@ -971,6 +991,15 @@
       <p class="help">Counts and percentages use all entries in the selected period. Each tag counts once per entry; totals can exceed 100%. Select a bar to review matching logs.</p>
       <ul id="tagRankingChart" class="bar-list" aria-label="Tag ranking"></ul>
       <section class="scroll-table" tabindex="0" aria-label="Tag ranking data"><table><caption>Entries by tag</caption><thead><tr><th scope="col">Tag</th><th scope="col">Entries</th><th scope="col">Percentage of entries</th></tr></thead><tbody id="tagRankingBody"></tbody></table></section>
+      </div>
+    </details>
+    <details class="chart-card" open>
+      <summary>Personal values</summary><div class="details-content">
+      <h3>Personal values</h3>
+      <p id="valueRankingSummary" class="help" aria-live="polite"></p>
+      <p class="help">Each value counts once per entry. Values are grouped by theme in the table. Select a bar to review matching logs.</p>
+      <ul id="valueRankingChart" class="bar-list" aria-label="Personal value ranking"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Personal value ranking data"><table><caption>Entries by personal value</caption><thead><tr><th scope="col">Value</th><th scope="col">Theme</th><th scope="col">Entries</th><th scope="col">Percentage of entries</th></tr></thead><tbody id="valueRankingBody"></tbody></table></section>
       </div>
     </details>
     <details class="chart-card" open>
@@ -1359,7 +1388,7 @@
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
-const dataSchemaVersion = 3;
+const dataSchemaVersion = 4;
 const schemaVersionKey = `${storageKey}SchemaVersion`;
 const settingsKey = 'emotionWheelCaptureSettingsV1';
 const dailyLogCongratulationsKey = 'emotionWheelLastCongratulatedDayV1';
@@ -1399,6 +1428,13 @@ const sensationAliases = {
 };
 
 const defaultTags = ['Work', 'Family', 'Relationship', 'Friends', 'Health', 'Sleep', 'Money', 'Home', 'Exercise', 'Social', 'Study', 'Travel', 'Caring responsibilities'];
+const valueCatalog = [
+  ['Stability', ['Certainty', 'Commitment', 'Control', 'Discipline', 'Financial stability', 'Health', 'Inner harmony', 'Job security', 'Peace', 'Privacy', 'Security', 'Tradition', 'Religion']],
+  ['Connection', ['Acceptance', 'Appreciation', 'Compassion', 'Equality', 'Family', 'Forgiveness', 'Friendship', 'Helpfulness', 'Love', 'Loyalty', 'Teamwork', 'Tolerance', 'Trust', 'Honesty', 'Spirituality']],
+  ['Autonomy', ['Adventure', 'Authenticity', 'Beauty', 'Creativity', 'Excitement', 'Freedom', 'Independence', 'Passion', 'Pleasure', 'Uniqueness', 'Variety']],
+  ['Development', ['Challenge', 'Competence', 'Curiosity', 'Determination', 'Excellence', 'Growth', 'Intelligence', 'Meaningful work', 'Wisdom']],
+  ['Impact', ['Accountability', 'Ambition', 'Authority', 'Contribution', 'Courage', 'Ethics', 'Fame', 'Influence', 'Justice', 'Popularity', 'Reputation', 'Respect', 'Success', 'Wealth']]
+].flatMap(([theme, names]) => names.map(name => ({ name, theme })));
 
 const defaultSettings = {
   captureMode: 'phase1',
@@ -1408,8 +1444,10 @@ const defaultSettings = {
   collectActualIntensity: false,
   collectSensations: false,
   collectTags: false,
+  collectValues: false,
   collectBucketLevel: false,
-  includeAllSensations: false
+  includeAllSensations: false,
+  personalValues: []
 };
 
 const innerButtons = document.getElementById('innerButtons');
@@ -1427,10 +1465,17 @@ const captureModeSummary = document.getElementById('captureModeSummary');
 const phaseOneButton = document.getElementById('phaseOneButton');
 const phaseTwoButton = document.getElementById('phaseTwoButton');
 const phaseThreeButton = document.getElementById('phaseThreeButton');
+const phaseFourButton = document.getElementById('phaseFourButton');
 const collectTags = document.getElementById('collectTags');
+const collectValues = document.getElementById('collectValues');
 const collectBucketLevel = document.getElementById('collectBucketLevel');
 const tagsPanel = document.getElementById('tagsPanel');
+const valuesPanel = document.getElementById('valuesPanel');
 const tagsButtons = document.getElementById('tagsButtons');
+const valuesButtons = document.getElementById('valuesButtons');
+const valuesSettingsPanel = document.getElementById('valuesSettingsPanel');
+const valuesSettingsButtons = document.getElementById('valuesSettingsButtons');
+const valuesSelectionStatus = document.getElementById('valuesSelectionStatus');
 const newTag = document.getElementById('newTag');
 const tagStatus = document.getElementById('tagStatus');
 const bucketPanel = document.getElementById('bucketPanel');
@@ -1488,6 +1533,8 @@ const logActualFilter = document.getElementById('logActualFilter');
 const logAlignmentFilter = document.getElementById('logAlignmentFilter');
 const logTagMatch = document.getElementById('logTagMatch');
 const logTagFilter = document.getElementById('logTagFilter');
+const logValueMatch = document.getElementById('logValueMatch');
+const logValueFilter = document.getElementById('logValueFilter');
 const logBucketFilter = document.getElementById('logBucketFilter');
 const logSearch = document.getElementById('logSearch');
 const logInnerFilter = document.getElementById('logInnerFilter');
@@ -1595,6 +1642,12 @@ function getReviewTags() {
   return reviewDataset
     ? normalizeTags([...(reviewDataset.tags || []), ...reviewDataset.entries.flatMap(entry => normalizeTags(entry.tags))])
     : getAvailableTags();
+}
+
+function getReviewValues() {
+  const settings = reviewDataset?.settings || captureSettings;
+  const entries = getReviewEntries();
+  return normalizeValues([...(settings?.personalValues || []), ...entries.flatMap(entry => normalizeValues(entry.values))]);
 }
 
 function setReviewDataset(dataset) {
@@ -1831,6 +1884,8 @@ function normalizeSettings(settings) {
     }
   }
   normalized.tags = normalizeTags(normalized.tags);
+  normalized.collectValues = Boolean(normalized.collectValues);
+  normalized.personalValues = normalizeValues(normalized.personalValues).slice(0, 5);
   return normalized;
 }
 
@@ -1885,6 +1940,63 @@ function normalizeTags(tags) {
     if (name && !unique.has(name.toLocaleLowerCase())) unique.set(name.toLocaleLowerCase(), name);
   });
   return [...unique.values()];
+}
+
+function normalizeValues(values) {
+  const known = new Map(valueCatalog.map(value => [value.name.toLocaleLowerCase(), value]));
+  const unique = new Map();
+  (Array.isArray(values) ? values : []).forEach(value => {
+    const name = typeof value === 'string' ? value : value?.name;
+    if (typeof name !== 'string') return;
+    const canonical = known.get(name.trim().toLocaleLowerCase());
+    if (canonical && !unique.has(canonical.name.toLocaleLowerCase())) unique.set(canonical.name.toLocaleLowerCase(), { ...canonical });
+  });
+  return [...unique.values()];
+}
+
+function getSelectedValues() {
+  return normalizeValues([...valuesButtons.querySelectorAll('input:checked')].map(input => input.value));
+}
+
+function renderValues(selected = getSelectedValues()) {
+  const selectedNames = new Set(normalizeValues(selected).map(value => value.name.toLocaleLowerCase()));
+  valuesButtons.replaceChildren();
+  normalizeValues(captureSettings.personalValues).forEach(value => {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox'; input.value = value.name;
+    input.checked = selectedNames.has(value.name.toLocaleLowerCase());
+    label.append(input, document.createTextNode(` ${value.name} (${value.theme})`));
+    valuesButtons.append(label);
+  });
+}
+
+function renderValuesSettings() {
+  const selected = new Set(normalizeValues(captureSettings.personalValues).map(value => value.name.toLocaleLowerCase()));
+  valuesSettingsButtons.replaceChildren();
+  let currentTheme = '';
+  let group;
+  valueCatalog.forEach(value => {
+    if (value.theme !== currentTheme) {
+      currentTheme = value.theme;
+      group = document.createElement('fieldset');
+      const legend = document.createElement('legend'); legend.textContent = value.theme;
+      group.append(legend); valuesSettingsButtons.append(group);
+    }
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox'; input.value = value.name; input.checked = selected.has(value.name.toLocaleLowerCase());
+    input.addEventListener('change', () => {
+      const selectedNames = [...valuesSettingsButtons.querySelectorAll('input:checked')].map(node => node.value);
+      if (selectedNames.length > 5) { input.checked = false; valuesSelectionStatus.textContent = 'Choose up to five main values.'; return; }
+      captureSettings.personalValues = normalizeValues(selectedNames);
+      saveSettings(); renderValuesSettings(); renderValues();
+      valuesSelectionStatus.textContent = `${captureSettings.personalValues.length} of 5 main values selected.`;
+    });
+    label.append(input, document.createTextNode(` ${value.name}`));
+    group.append(label);
+  });
+  valuesSelectionStatus.textContent = `${selected.size} of 5 main values selected.`;
 }
 
 function getAvailableTags() {
@@ -1951,6 +2063,7 @@ function renderSettings() {
     phase1: 'Phase 1: Emotion only',
     phase2: 'Phase 2: More detail',
     phase3: 'Phase 3: Most detail',
+    phase4: 'Phase 4: Values and meaning',
     custom: 'Custom questions'
   };
   captureModeSummary.textContent = `Capture settings — ${modeLabels[captureSettings.captureMode] || modeLabels.phase1}`;
@@ -1960,11 +2073,16 @@ function renderSettings() {
   collectActualIntensity.checked = captureSettings.collectActualIntensity;
   collectSensations.checked = captureSettings.collectSensations;
   collectTags.checked = captureSettings.collectTags;
+  collectValues.checked = captureSettings.collectValues;
   collectBucketLevel.checked = captureSettings.collectBucketLevel;
   tagsPanel.hidden = !captureSettings.collectTags;
+  valuesPanel.hidden = !captureSettings.collectValues;
+  valuesSettingsPanel.hidden = !captureSettings.collectValues;
   bucketPanel.hidden = !captureSettings.collectBucketLevel;
   renderBucketLevel();
   renderTags();
+  renderValues();
+  renderValuesSettings();
   includeAllSensations.checked = captureSettings.includeAllSensations;
   appropriatePanel.hidden = !captureSettings.collectAppropriate;
   expectedIntensityPanel.hidden = !captureSettings.collectExpectedIntensity;
@@ -1975,17 +2093,18 @@ function renderSettings() {
   phaseOneButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase1' ? 'true' : 'false');
   phaseTwoButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase2' ? 'true' : 'false');
   phaseThreeButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase3' ? 'true' : 'false');
+  phaseFourButton.setAttribute('aria-pressed', captureSettings.captureMode === 'phase4' ? 'true' : 'false');
   customButton.setAttribute('aria-pressed', captureSettings.captureMode === 'custom' ? 'true' : 'false');
   renderIntensityAlignment();
   renderSensations();
 }
 
 function isPhaseOneSettings(settings) {
-  return !settings.collectAppropriate && !settings.collectExpectedIntensity && !settings.collectActualIntensity && !settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
+  return !settings.collectAppropriate && !settings.collectExpectedIntensity && !settings.collectActualIntensity && !settings.collectSensations && !settings.collectTags && !settings.collectValues && !settings.collectBucketLevel;
 }
 
 function isPhaseTwoSettings(settings) {
-  return settings.collectAppropriate && settings.collectExpectedIntensity && settings.collectActualIntensity && settings.collectSensations && !settings.collectTags && !settings.collectBucketLevel;
+  return settings.collectAppropriate && settings.collectExpectedIntensity && settings.collectActualIntensity && settings.collectSensations && !settings.collectTags && !settings.collectValues && !settings.collectBucketLevel;
 }
 
 function setSettings(settings) {
@@ -2131,6 +2250,7 @@ function prepareEntry(entry, announcement, edit = false) {
   bucketLevel.value = entry.bucketLevel || '';
   renderBucketLevel();
   renderTags(entry.tags || []);
+  renderValues(entry.values || []);
   renderSensations(entry.physicalSensations || []);
   const sensations = new Set(entry.physicalSensations || []);
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
@@ -2427,7 +2547,7 @@ function getTallyRows(entries = logEntries) {
   return rows;
 }
 
-function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo }) {
+function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logValueFilter, logValueMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo }) {
   const search = filters.logSearch.value.trim().toLowerCase();
   return entries.filter(entry => {
     const selectedEmotions = getCheckedFilterValues(filters.logInnerFilter);
@@ -2438,6 +2558,10 @@ function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSear
     const selectedTags = getCheckedFilterValues(filters.logTagFilter);
     const tagMatches = value => value === '__missing' ? !tags.length : tags.some(tag => `tag:${tag.toLocaleLowerCase()}` === value);
     if (selectedTags.length && !(filters.logTagMatch.value === 'all' ? selectedTags.every(tagMatches) : selectedTags.some(tagMatches))) return false;
+    const values = normalizeValues(entry.values);
+    const selectedValues = filters.logValueFilter ? getCheckedFilterValues(filters.logValueFilter) : [];
+    const valueMatches = value => value === '__missing' ? !values.length : values.some(item => `value:${item.name.toLocaleLowerCase()}` === value);
+    if (selectedValues.length && !((filters.logValueMatch?.value || 'any') === 'all' ? selectedValues.every(valueMatches) : selectedValues.some(valueMatches))) return false;
     const selectedBuckets = getCheckedFilterValues(filters.logBucketFilter);
     if (selectedBuckets.length && !selectedBuckets.includes(entry.bucketLevel == null ? '__missing' : String(entry.bucketLevel))) return false;
     for (const [container, value] of [[filters.logExpectedFilter, entry.expectedIntensity], [filters.logActualFilter, entry.actualIntensity], [filters.logAlignmentFilter, entry.intensityAlignment]]) {
@@ -2451,7 +2575,7 @@ function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSear
     const searchable = [
       getEntryPathLabel(entry), entry.appropriate, entry.expectedIntensity,
       entry.actualIntensity, entry.intensityAlignment, entry.comment,
-      ...(entry.tags || []), entry.bucketLevel,
+      ...(entry.tags || []), ...normalizeValues(entry.values).flatMap(value => [value.name, value.theme]), entry.bucketLevel,
       ...(entry.physicalSensations || [])
     ].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
     return searchable.includes(search);
@@ -3097,20 +3221,21 @@ function renderCharts() {
 function getContextCounts(entries, field) {
   const counts = new Map();
   entries.forEach(entry => {
-    const values = field === 'tags' ? normalizeTags(entry.tags) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= getReviewScale() ? [entry.bucketLevel] : []);
+    const values = field === 'tags' ? normalizeTags(entry.tags) : field === 'values' ? normalizeValues(entry.values) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= getReviewScale() ? [entry.bucketLevel] : []);
     values.forEach(value => {
-      const key = String(value).toLocaleLowerCase();
-      const row = counts.get(key) || { label: String(value), count: 0 };
+      const label = field === 'values' ? value.name : String(value);
+      const key = label.toLocaleLowerCase();
+      const row = counts.get(key) || { label, theme: field === 'values' ? value.theme : '', count: 0 };
       row.count += 1;
       counts.set(key, row);
     });
   });
-  return [...counts.values()].sort((a, b) => field === 'tags' ? b.count - a.count || a.label.localeCompare(b.label) : Number(a.label) - Number(b.label));
+  return [...counts.values()].sort((a, b) => field === 'tags' || field === 'values' ? b.count - a.count || a.label.localeCompare(b.label) : Number(a.label) - Number(b.label));
 }
 
 function getLogRows(entries = logEntries, scale = ratingScale) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', `Emotion bucket level (1–${scale})`, 'Note']
+    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', 'Values involved', `Emotion bucket level (1–${scale})`, 'Note']
   ];
   for (const entry of entries) {
     rows.push([
@@ -3125,6 +3250,7 @@ function getLogRows(entries = logEntries, scale = ratingScale) {
       displayValue(entry.intensityAlignment),
       entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
       entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
+      normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join('; ') || 'Not recorded',
       displayValue(entry.bucketLevel),
       displayValue(entry.comment)
     ]);
@@ -3206,7 +3332,7 @@ function renderLog() {
 
   clearNode(logBody);
   if (!hasFilteredEntries) {
-    logBody.innerHTML = `<tr><td colspan="14">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
+    logBody.innerHTML = `<tr><td colspan="15">${hasEntries ? 'No entries match the current filters.' : 'No emotions recorded yet.'}</td></tr>`;
   } else {
     const recent = [...filteredEntries].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 25);
     for (const entry of recent) {
@@ -3223,6 +3349,7 @@ function renderLog() {
         displayValue(entry.intensityAlignment),
         entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
         entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
+        normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join('; ') || 'Not recorded',
       displayValue(entry.bucketLevel),
       displayValue(entry.comment)
       ].forEach((value, index) => {
@@ -3331,6 +3458,17 @@ function renderLogTagFilters() {
   });
 }
 
+function renderLogValueFilters() {
+  const selected = getCheckedFilterValues(logValueFilter);
+  logValueFilter.replaceChildren();
+  [['__missing', 'Not recorded'], ...getReviewValues().map(value => [`value:${value.name.toLocaleLowerCase()}`, `${value.name} (${value.theme})`])].forEach(([value, text]) => {
+    const label = document.createElement('label');
+    const input = document.createElement('input'); input.type = 'checkbox'; input.value = value;
+    input.checked = selected.includes(value);
+    label.append(input, document.createTextNode(` ${text}`)); logValueFilter.append(label);
+  });
+}
+
 function updateTagOptions(select, includeMissing = true) {
   const selected = select.value;
   select.replaceChildren(new Option('All tags', ''));
@@ -3385,11 +3523,23 @@ function interactiveBars(container, summary, rows, onSelect, colour) {
 
 function renderContextAnalysis() {
   const entries = getChartEntries();
+  let valueRanking = getContextCounts(entries, 'values');
+  const valuesMissing = entries.filter(entry => !normalizeValues(entry.values).length).length;
+  if (valuesMissing) valueRanking.push({ label: 'Not recorded', theme: '—', count: valuesMissing, missing: true });
+  valueRanking = sortCountRows(valueRanking);
+  const percent = (count, total) => total ? `${(100 * count / total).toFixed(1)}%` : '0.0%';
+  const valueSummary = document.getElementById('valueRankingSummary');
+  valueSummary.textContent = `${entries.length} entries in ${getChartPeriodLabel()}; ${valuesMissing} without values.`;
+  interactiveBars(document.getElementById('valueRankingChart'), valueSummary, valueRanking, row => {
+    clearLogFilters.click();
+    setCheckedFilterValues(logValueFilter, row.missing ? ['__missing'] : [`value:${row.label.toLocaleLowerCase()}`]);
+    renderLog(); selectAppView(logsTab, true);
+  });
+  addTableRows(document.getElementById('valueRankingBody'), valueRanking, 'No entries in this period.', row => [row.label, row.theme, String(row.count), percent(row.count, entries.length)], 4);
   let ranking = getContextCounts(entries, 'tags');
   const missing = entries.filter(entry => !normalizeTags(entry.tags).length).length;
   if (missing) ranking.push({ label: 'Not recorded', count: missing, missing: true });
   ranking = sortCountRows(ranking);
-  const percent = (count, total) => total ? `${(100 * count / total).toFixed(1)}%` : '0.0%';
   const summary = document.getElementById('tagRankingSummary');
   summary.textContent = `${entries.length} entries in ${getChartPeriodLabel()}; ${missing} without tags.`;
   interactiveBars(document.getElementById('tagRankingChart'), summary, ranking, row => openAnalysisLogs(row.missing ? '__missing' : `tag:${row.label.toLocaleLowerCase()}`));
@@ -3515,6 +3665,7 @@ function renderAll() {
   logPathFilter.value = selectedPath;
   [document.getElementById('analysisTag'), document.getElementById('bucketAnalysisTag')].forEach(select => updateTagOptions(select));
   renderLogTagFilters();
+  renderLogValueFilters();
   const chartTags = document.getElementById('chartlogTagFilter');
   if (chartTags) {
     const selected = getCheckedFilterValues(chartTags);
@@ -3673,7 +3824,8 @@ function getChartShareData(type) {
       { title: 'Appropriate responses', rows: getVisibleAppropriateRows(chartEntries) },
       { title: 'Intensity alignment', rows: getVisibleAlignmentRows(chartEntries) },
       { title: 'Intensity averages', rows: metricRows, type: 'metrics' },
-      { title: 'Physical sensations', rows: getSensationCounts(chartEntries) }
+      { title: 'Physical sensations', rows: getSensationCounts(chartEntries) },
+      { title: 'Personal values', rows: getContextCounts(chartEntries, 'values') }
     ]
   };
 }
@@ -3923,6 +4075,7 @@ function describeBackupRecord(entry) {
     `Modified: ${displayValue(entry.modifiedAt)}`,
     `Emotion: ${getEntryPathLabel(entry)}`,
     `Tags: ${normalizeTags(entry.tags).join(', ') || 'Not recorded'}`,
+    `Values involved: ${normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join(', ') || 'Not recorded'}`,
     `Bucket level (1–${ratingScale}): ${displayValue(entry.bucketLevel)}`,
     `Expected intensity (1–${ratingScale}): ${displayValue(entry.expectedIntensity)}`,
     `Actual intensity (1–${ratingScale}): ${displayValue(entry.actualIntensity)}`,
@@ -3984,10 +4137,11 @@ function getEntryKey(entry) {
     intensityAlignment: entry.intensityAlignment || '',
     physicalSensations: entry.physicalSensations || [],
     tags: normalizeTags(entry.tags).sort(),
+    values: normalizeValues(entry.values).sort((left, right) => left.name.localeCompare(right.name)),
     bucketLevel: entry.bucketLevel ?? '',
     comment: entry.comment || '',
     sensationGuide: entry.sensationGuide || '',
-    extra: Object.fromEntries(Object.keys(entry).sort().filter(key => !['id', 'createdAt', 'modifiedAt', 'legacyIdentity', 'conflictOf', 'timestamp', 'level', 'inner', 'middle', 'outer', 'appropriate', 'expectedIntensity', 'actualIntensity', 'intensityAlignment', 'physicalSensations', 'tags', 'bucketLevel', 'comment', 'sensationGuide'].includes(key)).map(key => [key, entry[key]]))
+    extra: Object.fromEntries(Object.keys(entry).sort().filter(key => !['id', 'createdAt', 'modifiedAt', 'legacyIdentity', 'conflictOf', 'timestamp', 'level', 'inner', 'middle', 'outer', 'appropriate', 'expectedIntensity', 'actualIntensity', 'intensityAlignment', 'physicalSensations', 'tags', 'values', 'bucketLevel', 'comment', 'sensationGuide'].includes(key)).map(key => [key, entry[key]]))
   });
 }
 
@@ -4034,6 +4188,7 @@ function normalizeLoadedEntry(entry, scale = 10) {
     normalized.sensationGuide = entry.sensationGuide;
   }
   if (Array.isArray(entry.tags)) normalized.tags = normalizeTags(entry.tags);
+  if (Array.isArray(entry.values)) normalized.values = normalizeValues(entry.values);
   const bucket = Number(entry.bucketLevel);
   if (Number.isInteger(bucket) && bucket >= 1 && bucket <= scale) normalized.bucketLevel = bucket;
   if (typeof entry.comment === 'string') {
@@ -4184,7 +4339,7 @@ function copyHtmlWithSelection(html, text) {
 [entryTab, logsTab, chartsTab, sharedDataTab, maintenanceTab].forEach(button => {
   button.addEventListener('click', () => selectAppView(button, true));
 });
-[logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo].forEach(control => {
+[logSearch, logInnerFilter, logLevelFilter, logPathFilter, logTagFilter, logTagMatch, logValueFilter, logValueMatch, logBucketFilter, logExpectedFilter, logActualFilter, logAlignmentFilter, logDateFrom, logDateTo].forEach(control => {
   control.addEventListener(control === logSearch ? 'input' : 'change', renderLog);
 });
 document.querySelectorAll('[data-clear-filter]').forEach(button => button.addEventListener('click', () => {
@@ -4198,6 +4353,8 @@ function resetLogFilters() {
   logPathFilter.value = '';
   setCheckedFilterValues(logTagFilter, []);
   logTagMatch.value = 'any';
+  setCheckedFilterValues(logValueFilter, []);
+  logValueMatch.value = 'any';
   setCheckedFilterValues(logBucketFilter, []);
   [logExpectedFilter, logActualFilter, logAlignmentFilter].forEach(container => setCheckedFilterValues(container, []));
   logDateFrom.value = '';
@@ -4293,6 +4450,7 @@ phaseOneButton.addEventListener('click', () => {
     collectActualIntensity: false,
     collectSensations: false,
     collectTags: false,
+    collectValues: false,
     collectBucketLevel: false,
     includeAllSensations: false
   });
@@ -4308,6 +4466,7 @@ phaseTwoButton.addEventListener('click', () => {
     collectActualIntensity: true,
     collectSensations: true,
     collectTags: false,
+    collectValues: false,
     collectBucketLevel: false,
     includeAllSensations: false
   });
@@ -4315,8 +4474,13 @@ phaseTwoButton.addEventListener('click', () => {
 });
 
 phaseThreeButton.addEventListener('click', () => {
-  setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectBucketLevel: true, includeAllSensations: false });
+  setSettings({ captureMode: 'phase3', collectAppropriate: true, collectIntensity: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectValues: false, collectBucketLevel: true, includeAllSensations: false });
   liveStatus.textContent = 'Phase 3 selected. You can also add tags and rate how full your emotional bucket feels.';
+});
+
+phaseFourButton.addEventListener('click', () => {
+  setSettings({ captureMode: 'phase4', collectAppropriate: true, collectIntensity: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectValues: true, collectBucketLevel: true, includeAllSensations: false });
+  liveStatus.textContent = 'Phase 4 selected. You can also record the personal values involved.';
 });
 
 customButton.addEventListener('click', () => {
@@ -4324,7 +4488,7 @@ customButton.addEventListener('click', () => {
   liveStatus.textContent = 'Custom selected. Choose which questions to include.';
 });
 
-[collectAppropriate, collectExpectedIntensity, collectActualIntensity, collectSensations, collectTags, collectBucketLevel].forEach(input => {
+[collectAppropriate, collectExpectedIntensity, collectActualIntensity, collectSensations, collectTags, collectValues, collectBucketLevel].forEach(input => {
   input.addEventListener('change', () => {
     setSettings({
       captureMode: 'custom',
@@ -4333,6 +4497,7 @@ customButton.addEventListener('click', () => {
       collectActualIntensity: collectActualIntensity.checked,
       collectSensations: collectSensations.checked,
       collectTags: collectTags.checked,
+      collectValues: collectValues.checked,
       collectBucketLevel: collectBucketLevel.checked
     });
   });
@@ -4388,6 +4553,7 @@ recordButton.addEventListener('click', () => {
     entry.sensationGuide = captureSettings.includeAllSensations ? 'All sensations' : getActiveSensationType();
   }
   if (captureSettings.collectTags) entry.tags = getSelectedTags();
+  if (captureSettings.collectValues) entry.values = getSelectedValues();
   if (captureSettings.collectBucketLevel) {
     if (bucketLevel.value) entry.bucketLevel = Number(bucketLevel.value);
     else delete entry.bucketLevel;
