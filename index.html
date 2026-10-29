@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.7.0" defer></script>
+  <script src="assets/version.js?v=1.9.1" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
@@ -555,18 +555,17 @@
     <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
   </section>
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
-    <h2 id="dataUpgradeHeading">New features are here!</h2>
-    <p id="dataUpgradeDescription">Back up your records before updating.</p>
+    <h2 id="dataUpgradeHeading">Personal values are here!</h2>
+    <p id="dataUpgradeDescription">Back up your records before updating to add personal values.</p>
     <p>Save an original backup to this device or Google Drive, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
     <section aria-labelledby="dataUpgradeWhatsNewHeading">
       <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
       <ul>
-        <li>More ways to capture context: select multiple tags, create your own tags and record how full your emotion bucket feels. Choose ratings out of 5 or 10 in Advanced settings.</li>
-        <li>Improved charts to explore your most recorded tags and how emotions relate to tags and bucket levels.</li>
-        <li>Improved Logs and filters: combine dates, search, multiple emotions, tags, bucket levels, expected and actual intensity, and alignment.</li>
-        <li>Choose Custom on Charts to use the same filters for your analysis.</li>
+        <li>Phase 4 adds personal values: choose up to five main values to show while recording, then select the ones involved in each emotion record.</li>
+        <li>Values are saved separately from context tags, with their themes, so they can be explored in Logs, filters, charts, exports and future reports.</li>
+        <li>Choose your values from a catalogue grouped as Stability, Connection, Autonomy, Development and Impact. You can also <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">discover your values at Personalvalu.es</a>.</li>
       </ul>
-      <p>These extra capture fields are optional. Your existing records and older backups remain supported.</p>
+      <p>Personal values are optional. Your existing records and older backups remain supported; earlier records show values as not recorded.</p>
     </section>
     <button type="button" id="downloadBeforeUpgrade">Download original data backup</button>
     <button type="button" id="driveBeforeUpgrade">Connect Google and back up</button>

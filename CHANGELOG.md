@@ -2,6 +2,13 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.9.1
+
+Released 29 October 2026.
+
+- The data-update notice now explains the Phase 4 personal-values release, including the value themes, top-five selection, reporting uses and link to Personalvalu.es.
+- The version script is requested with the current release number throughout the app and information pages, preventing an older cached version display.
+
 ## 1.9.0
 
 Released 28 October 2026.
