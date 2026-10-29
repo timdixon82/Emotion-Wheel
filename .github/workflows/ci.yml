@@ -96,6 +96,9 @@ jobs:
       - name: Verify emotion data and backup compatibility
         run: node tests/context-analysis.cjs
 
+      - name: Verify release notice, Help and data-update readiness
+        run: node tests/release-readiness.cjs
+
       - name: Verify independent capture settings and record saves
         run: node tests/capture-options.cjs
 

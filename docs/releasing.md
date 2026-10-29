@@ -8,11 +8,11 @@ For every release:
 
 1. Update `APP_VERSION` in `assets/version.js`.
 2. Use a patch increase for fixes, a minor increase for backward-compatible features, or a major increase for breaking changes.
-3. Run the repository and accessibility checks.
+3. Run the repository and accessibility checks, including `node tests/release-readiness.cjs`. This verifies the update notice, Help page, version-script cache references, changelog entry and schema-update safeguards for the version being released. The release-tag workflow also runs the record and capture-settings backwards-compatibility tests.
 4. Commit the version change with the release changes.
 5. Create a Git tag using the same version prefixed with `v`, for example `v1.1.0`.
 
-The version workflow rejects a release tag when it does not match the version shown in the app.
+The version workflow rejects a release tag when it does not match the version shown in the app, the release-readiness checks fail, or the backwards-compatibility tests fail.
 
 ## Preparing the Google Drive release
 
