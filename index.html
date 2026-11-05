@@ -11,7 +11,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Emotion Wheel - Tracking your emotions</title>
   <script src="assets/theme.js"></script>
-  <script src="assets/version.js?v=1.9.1" defer></script>
+  <script src="assets/version.js?v=1.10.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
   <script src="assets/google-drive-sync.js" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
@@ -555,17 +555,17 @@
     <button type="button" id="reviewGoogleDriveSyncIssueButton">Review sync issue</button>
   </section>
   <section hidden id="dataUpgradeDialog" aria-labelledby="dataUpgradeHeading" aria-describedby="dataUpgradeDescription">
-    <h2 id="dataUpgradeHeading">Personal values are here!</h2>
-    <p id="dataUpgradeDescription">Back up your records before updating to add personal values.</p>
+    <h2 id="dataUpgradeHeading">Multiple values frameworks are here!</h2>
+    <p id="dataUpgradeDescription">Back up your records before updating to add framework-aware values and character strengths.</p>
     <p>Save an original backup to this device or Google Drive, then choose “Backup saved — update”. Your saved ratings will stay the same. You can still view and export records while you wait, but recording, editing and loading backups are paused.</p>
     <section aria-labelledby="dataUpgradeWhatsNewHeading">
       <h3 id="dataUpgradeWhatsNewHeading">What’s new</h3>
       <ul>
-        <li>Phase 4 adds personal values: choose up to five main values to show while recording, then select the ones involved in each emotion record.</li>
-        <li>Values are saved separately from context tags, with their themes, so they can be explored in Logs, filters, charts, exports and future reports.</li>
-        <li>Choose your values from a catalogue grouped as Stability, Connection, Autonomy, Development and Impact. You can also <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">discover your values at Personalvalu.es</a>.</li>
+        <li>Phase 4 now supports one or more frameworks: choose up to five main items from each selected framework, then select the ones involved in each emotion record.</li>
+        <li>Items are saved separately from context tags, with their framework and category, so they can be explored in Logs, filters, charts, exports and future reports without merging similar names from different frameworks.</li>
+        <li>Use PersonalValu.es values grouped as Stability, Connection, Autonomy, Development and Impact, or VIA character strengths grouped as Wisdom, Courage, Humanity, Justice, Temperance and Transcendence. Visit <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA</a> to explore them.</li>
       </ul>
-      <p>Personal values are optional. Your existing records and older backups remain supported; earlier records show values as not recorded.</p>
+      <p>Values and character strengths are optional. Your existing records and older backups remain supported; existing PersonalValu.es selections are kept and earlier records show values as not recorded.</p>
     </section>
     <button type="button" id="downloadBeforeUpgrade">Download original data backup</button>
     <button type="button" id="driveBeforeUpgrade">Connect Google and back up</button>
@@ -584,7 +584,7 @@
           <li><strong>Phase 1:</strong> Record just the emotion.</li>
           <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
           <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
-          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the personal values that mattered in the moment.</li>
+          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the values or character strengths that mattered in the moment.</li>
           <li><strong>Custom:</strong> Choose which questions to include.</li>
         </ul>
         <div class="actions" role="group" aria-label="Choose how much detail to record">
@@ -603,16 +603,17 @@
               <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
               <label><input type="checkbox" id="collectSensations"> How your body feels</label>
               <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
-              <label><input type="checkbox" id="collectValues"> Personal values</label>
+              <label><input type="checkbox" id="collectValues"> Values and character strengths</label>
               <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
             </div>
           </fieldset>
         </div>
 
         <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
-          <h3 id="valuesSettingsHeading">Your main values</h3>
-          <p id="valuesSettingsHelp" class="help">Choose up to five values to show when you record an emotion. They are saved only in this browser and include their themes for later reflection.</p>
-          <p class="help">Not sure which values matter most? <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">Discover your values at Personalvalu.es</a>.</p>
+          <h3 id="valuesSettingsHeading">Your main values and character strengths</h3>
+          <p id="valuesSettingsHelp" class="help">Choose one or more frameworks, then choose up to five items from each framework to show when you record an emotion. They are saved only in this browser with their framework and category for later reflection.</p>
+          <p class="help">Explore the frameworks before choosing: <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es personal values</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA character strengths</a>. Emotion Wheel does not connect to or share data with either site.</p>
+          <div id="valueFrameworkButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
           <p id="valuesSelectionStatus" class="help" role="status" aria-live="polite"></p>
           <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
         </section>
@@ -766,8 +767,8 @@
     </div>
     <div id="valuesPanel" class="optional-panel" hidden>
       <fieldset>
-        <legend>Values involved</legend>
-        <p id="valuesHelp" class="help">Choose any of your main values that mattered in this entry. Values are optional and are separate from context tags.</p>
+        <legend>Values and character strengths involved</legend>
+        <p id="valuesHelp" class="help">Choose any of your selected items that mattered in this entry. They are optional and separate from context tags.</p>
         <div id="valuesButtons" class="checkbox-grid" aria-describedby="valuesHelp"></div>
       </fieldset>
     </div>
@@ -859,7 +860,7 @@
         </label>
         <label>Recorded emotion path <select id="logPathFilter"><option value="">All paths</option></select></label>
         <fieldset><legend>Tags</legend><p class="help">No selection means all values. Choose any number.</p><div id="logTagFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logTagFilter">Clear tags</button><label>Tag matching <select id="logTagMatch"><option value="any">Any selected tag</option><option value="all">All selected tags</option></select></label></div></fieldset>
-        <fieldset><legend>Personal values</legend><p class="help">No selection means all values. Choose any number.</p><div id="logValueFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logValueFilter">Clear values</button><label>Value matching <select id="logValueMatch"><option value="any">Any selected value</option><option value="all">All selected values</option></select></label></div></fieldset>
+        <fieldset><legend>Values and character strengths</legend><p class="help">No selection means all items. Choose any number.</p><div id="logValueFilter" class="checkbox-grid"></div><div class="tag-match-row"><button type="button" data-clear-filter="logValueFilter">Clear items</button><label>Item matching <select id="logValueMatch"><option value="any">Any selected item</option><option value="all">All selected items</option></select></label></div></fieldset>
         <fieldset><legend>Bucket levels</legend><p class="help">No selection means all values. Choose any number.</p><div id="logBucketFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10 — Full</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logBucketFilter">Clear bucket levels</button></fieldset>
 <fieldset><legend>Expected intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logExpectedFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logExpectedFilter">Clear expected intensity</button></fieldset>
 <fieldset><legend>Actual intensity</legend><p class="help">No selection means all values. Choose any number.</p><div id="logActualFilter" class="checkbox-grid"><label><input type="checkbox" value="1"> 1</label><label><input type="checkbox" value="2"> 2</label><label><input type="checkbox" value="3"> 3</label><label><input type="checkbox" value="4"> 4</label><label><input type="checkbox" value="5"> 5</label><label><input type="checkbox" value="6"> 6</label><label><input type="checkbox" value="7"> 7</label><label><input type="checkbox" value="8"> 8</label><label><input type="checkbox" value="9"> 9</label><label><input type="checkbox" value="10"> 10</label><label><input type="checkbox" value="__missing"> Not recorded</label></div><button type="button" data-clear-filter="logActualFilter">Clear actual intensity</button></fieldset>
@@ -993,12 +994,12 @@
       </div>
     </details>
     <details class="chart-card" open>
-      <summary>Personal values</summary><div class="details-content">
-      <h3>Personal values</h3>
+      <summary>Values and character strengths</summary><div class="details-content">
+      <h3>Values and character strengths</h3>
       <p id="valueRankingSummary" class="help" aria-live="polite"></p>
-      <p class="help">Each value counts once per entry. Values are grouped by theme in the table. Select a bar to review matching logs.</p>
-      <ul id="valueRankingChart" class="bar-list" aria-label="Personal value ranking"></ul>
-      <section class="scroll-table" tabindex="0" aria-label="Personal value ranking data"><table><caption>Entries by personal value</caption><thead><tr><th scope="col">Value</th><th scope="col">Theme</th><th scope="col">Entries</th><th scope="col">Percentage of entries</th></tr></thead><tbody id="valueRankingBody"></tbody></table></section>
+      <p class="help">Each item counts once per entry. Items are grouped by framework and category in the table. Select a bar to review matching logs.</p>
+      <ul id="valueRankingChart" class="bar-list" aria-label="Values and character strengths ranking"></ul>
+      <section class="scroll-table" tabindex="0" aria-label="Values and character strengths ranking data"><table><caption>Entries by value or character strength</caption><thead><tr><th scope="col">Item</th><th scope="col">Framework</th><th scope="col">Category</th><th scope="col">Entries</th><th scope="col">Percentage of entries</th></tr></thead><tbody id="valueRankingBody"></tbody></table></section>
       </div>
     </details>
     <details class="chart-card" open>
@@ -1387,7 +1388,7 @@
 <script>
 const emotions = [["Anger","Hurt","Embarrassed"],["Anger","Hurt","Devastated"],["Anger","Threatened","Insecure"],["Anger","Threatened","Jealous"],["Anger","Hateful","Resentful"],["Anger","Hateful","Violated"],["Anger","Mad","Furious"],["Anger","Mad","Enraged"],["Anger","Aggressive","Provoked"],["Anger","Aggressive","Hostile"],["Anger","Frustrated","Infuriated"],["Anger","Frustrated","Irritated"],["Anger","Distant","Withdrawn"],["Anger","Distant","Suspicious"],["Anger","Critical","Skeptical"],["Anger","Critical","Sarcastic"],["Disgust","Disapproval","Judgmental"],["Disgust","Disapproval","Loathing"],["Disgust","Disappointed","Repugnant"],["Disgust","Disappointed","Revolted"],["Disgust","Awful","Revulsion"],["Disgust","Awful","Detestable"],["Disgust","Avoidance","Aversion"],["Disgust","Avoidance","Hesitant"],["Sad","Guilty","Remorseful"],["Sad","Guilty","Ashamed"],["Sad","Abandoned","Ignored"],["Sad","Abandoned","Victimized"],["Sad","Despair","Powerless"],["Sad","Despair","Vulnerable"],["Sad","Depressed","Inferior"],["Sad","Depressed","Empty"],["Sad","Lonely","Isolated"],["Sad","Lonely","Abandoned"],["Sad","Bored","Indifferent"],["Sad","Bored","Apathetic"],["Happy","Joyful","Liberated"],["Happy","Joyful","Ecstatic"],["Happy","Interested","Inquisitive"],["Happy","Interested","Amused"],["Happy","Proud","Important"],["Happy","Proud","Confident"],["Happy","Accepted","Respected"],["Happy","Accepted","Fulfilled"],["Happy","Powerful","Courageous"],["Happy","Powerful","Provocative"],["Happy","Peaceful","Loving"],["Happy","Peaceful","Hopeful"],["Happy","Intimate","Sensitive"],["Happy","Intimate","Playful"],["Happy","Optimistic","Open"],["Happy","Optimistic","Inspired"],["Surprise","Startled","Shocked"],["Surprise","Startled","Dismayed"],["Surprise","Confused","Disillusioned"],["Surprise","Confused","Perplexed"],["Surprise","Amazed","Astonished"],["Surprise","Amazed","Awe"],["Surprise","Excited","Eager"],["Surprise","Excited","Energetic"],["Fear","Scared","Frightened"],["Fear","Scared","Terrified"],["Fear","Anxious","Overwhelmed"],["Fear","Anxious","Worried"],["Fear","Insecure","Inadequate"],["Fear","Insecure","Inferior"],["Fear","Weak","Worthless"],["Fear","Weak","Insignificant"],["Fear","Rejected","Alienated"],["Fear","Rejected","Inadequate"],["Fear","Humiliated","Ridiculed"],["Fear","Humiliated","Disrespected"]];
 const storageKey = 'emotionWheelLocalLogV1';
-const dataSchemaVersion = 4;
+const dataSchemaVersion = 5;
 const schemaVersionKey = `${storageKey}SchemaVersion`;
 const settingsKey = 'emotionWheelCaptureSettingsV1';
 const dailyLogCongratulationsKey = 'emotionWheelLastCongratulatedDayV1';
@@ -1427,13 +1428,26 @@ const sensationAliases = {
 };
 
 const defaultTags = ['Work', 'Family', 'Relationship', 'Friends', 'Health', 'Sleep', 'Money', 'Home', 'Exercise', 'Social', 'Study', 'Travel', 'Caring responsibilities'];
-const valueCatalog = [
-  ['Stability', ['Certainty', 'Commitment', 'Control', 'Discipline', 'Financial stability', 'Health', 'Inner harmony', 'Job security', 'Peace', 'Privacy', 'Security', 'Tradition', 'Religion']],
-  ['Connection', ['Acceptance', 'Appreciation', 'Compassion', 'Equality', 'Family', 'Forgiveness', 'Friendship', 'Helpfulness', 'Love', 'Loyalty', 'Teamwork', 'Tolerance', 'Trust', 'Honesty', 'Spirituality']],
-  ['Autonomy', ['Adventure', 'Authenticity', 'Beauty', 'Creativity', 'Excitement', 'Freedom', 'Independence', 'Passion', 'Pleasure', 'Uniqueness', 'Variety']],
-  ['Development', ['Challenge', 'Competence', 'Curiosity', 'Determination', 'Excellence', 'Growth', 'Intelligence', 'Meaningful work', 'Wisdom']],
-  ['Impact', ['Accountability', 'Ambition', 'Authority', 'Contribution', 'Courage', 'Ethics', 'Fame', 'Influence', 'Justice', 'Popularity', 'Reputation', 'Respect', 'Success', 'Wealth']]
-].flatMap(([theme, names]) => names.map(name => ({ name, theme })));
+// Add another framework here: its id, public link and category/name pairs are
+// the only catalogue data the rest of the app needs.
+const valueFrameworks = [
+  { id: 'personalvalues', label: 'Personal values', linkLabel: 'PersonalValu.es', url: 'https://personalvalu.es/', categories: [
+    ['Stability', ['Certainty', 'Commitment', 'Control', 'Discipline', 'Financial stability', 'Health', 'Inner harmony', 'Job security', 'Peace', 'Privacy', 'Security', 'Tradition', 'Religion']],
+    ['Connection', ['Acceptance', 'Appreciation', 'Compassion', 'Equality', 'Family', 'Forgiveness', 'Friendship', 'Helpfulness', 'Love', 'Loyalty', 'Teamwork', 'Tolerance', 'Trust', 'Honesty', 'Spirituality']],
+    ['Autonomy', ['Adventure', 'Authenticity', 'Beauty', 'Creativity', 'Excitement', 'Freedom', 'Independence', 'Passion', 'Pleasure', 'Uniqueness', 'Variety']],
+    ['Development', ['Challenge', 'Competence', 'Curiosity', 'Determination', 'Excellence', 'Growth', 'Intelligence', 'Meaningful work', 'Wisdom']],
+    ['Impact', ['Accountability', 'Ambition', 'Authority', 'Contribution', 'Courage', 'Ethics', 'Fame', 'Influence', 'Justice', 'Popularity', 'Reputation', 'Respect', 'Success', 'Wealth']]
+  ] },
+  { id: 'via', label: 'VIA character strengths', linkLabel: 'VIA Institute on Character', url: 'https://www.viacharacter.org/character-strengths', categories: [
+    ['Wisdom', ['Creativity', 'Curiosity', 'Judgment', 'Love of Learning', 'Perspective']],
+    ['Courage', ['Bravery', 'Honesty', 'Perseverance', 'Zest']],
+    ['Humanity', ['Kindness', 'Love', 'Social Intelligence']],
+    ['Justice', ['Fairness', 'Leadership', 'Teamwork']],
+    ['Temperance', ['Forgiveness', 'Humility', 'Prudence', 'Self-Regulation']],
+    ['Transcendence', ['Appreciation of Beauty & Excellence', 'Gratitude', 'Hope', 'Humor', 'Spirituality']]
+  ] }
+];
+const valueCatalog = valueFrameworks.flatMap(framework => framework.categories.flatMap(([theme, names]) => names.map(name => ({ name, theme, framework: framework.id, frameworkLabel: framework.label }))));
 
 const defaultSettings = {
   captureMode: 'phase1',
@@ -1446,7 +1460,8 @@ const defaultSettings = {
   collectValues: false,
   collectBucketLevel: false,
   includeAllSensations: false,
-  personalValues: []
+  selectedValues: [],
+  selectedValueFrameworks: []
 };
 
 const innerButtons = document.getElementById('innerButtons');
@@ -1474,6 +1489,7 @@ const tagsButtons = document.getElementById('tagsButtons');
 const valuesButtons = document.getElementById('valuesButtons');
 const valuesSettingsPanel = document.getElementById('valuesSettingsPanel');
 const valuesSettingsButtons = document.getElementById('valuesSettingsButtons');
+const valueFrameworkButtons = document.getElementById('valueFrameworkButtons');
 const valuesSelectionStatus = document.getElementById('valuesSelectionStatus');
 const newTag = document.getElementById('newTag');
 const tagStatus = document.getElementById('tagStatus');
@@ -1646,7 +1662,7 @@ function getReviewTags() {
 function getReviewValues() {
   const settings = reviewDataset?.settings || captureSettings;
   const entries = getReviewEntries();
-  return normalizeValues([...(settings?.personalValues || []), ...entries.flatMap(entry => normalizeValues(entry.values))]);
+  return normalizeValues([...(settings?.selectedValues || settings?.personalValues || []), ...entries.flatMap(entry => normalizeValues(entry.values))]);
 }
 
 function setReviewDataset(dataset) {
@@ -1884,7 +1900,11 @@ function normalizeSettings(settings) {
   }
   normalized.tags = normalizeTags(normalized.tags);
   normalized.collectValues = Boolean(normalized.collectValues);
-  normalized.personalValues = normalizeValues(normalized.personalValues).slice(0, 5);
+  const legacyValues = settings.selectedValues ?? settings.personalValues;
+  normalized.selectedValues = normalizeValues(legacyValues);
+  const selectedFrameworks = Array.isArray(settings.selectedValueFrameworks) ? settings.selectedValueFrameworks : [];
+  normalized.selectedValueFrameworks = [...new Set([...selectedFrameworks, ...normalized.selectedValues.map(value => value.framework)])].filter(id => valueFrameworks.some(framework => framework.id === id));
+  delete normalized.personalValues;
   return normalized;
 }
 
@@ -1942,60 +1962,101 @@ function normalizeTags(tags) {
 }
 
 function normalizeValues(values) {
-  const known = new Map(valueCatalog.map(value => [value.name.toLocaleLowerCase(), value]));
+  const known = new Map(valueCatalog.map(value => [valueKey(value), value]));
   const unique = new Map();
   (Array.isArray(values) ? values : []).forEach(value => {
     const name = typeof value === 'string' ? value : value?.name;
     if (typeof name !== 'string') return;
-    const canonical = known.get(name.trim().toLocaleLowerCase());
-    if (canonical && !unique.has(canonical.name.toLocaleLowerCase())) unique.set(canonical.name.toLocaleLowerCase(), { ...canonical });
+    // Values saved before framework support belong to the original catalogue.
+    const framework = typeof value === 'object' && value?.framework ? value.framework : 'personalvalues';
+    const canonical = known.get(`${framework}:${name.trim().toLocaleLowerCase()}`);
+    if (canonical && !unique.has(valueKey(canonical))) unique.set(valueKey(canonical), { ...canonical });
   });
   return [...unique.values()];
 }
 
+function valueKey(value) {
+  return `${value.framework || 'personalvalues'}:${String(value.name || '').trim().toLocaleLowerCase()}`;
+}
+
+function formatValue(value) {
+  return `${value.name} (${value.frameworkLabel} — ${value.theme})`;
+}
+
 function getSelectedValues() {
-  return normalizeValues([...valuesButtons.querySelectorAll('input:checked')].map(input => input.value));
+  return normalizeValues([...valuesButtons.querySelectorAll('input:checked')].map(input => ({ framework: input.dataset.framework, name: input.dataset.name })));
 }
 
 function renderValues(selected = getSelectedValues()) {
-  const selectedNames = new Set(normalizeValues(selected).map(value => value.name.toLocaleLowerCase()));
+  const selectedKeys = new Set(normalizeValues(selected).map(valueKey));
   valuesButtons.replaceChildren();
-  normalizeValues(captureSettings.personalValues).forEach(value => {
+  normalizeValues(captureSettings.selectedValues).forEach(value => {
     const label = document.createElement('label');
     const input = document.createElement('input');
-    input.type = 'checkbox'; input.value = value.name;
-    input.checked = selectedNames.has(value.name.toLocaleLowerCase());
-    label.append(input, document.createTextNode(` ${value.name} (${value.theme})`));
+    input.type = 'checkbox'; input.value = valueKey(value); input.dataset.framework = value.framework; input.dataset.name = value.name;
+    input.checked = selectedKeys.has(valueKey(value));
+    label.append(input, document.createTextNode(` ${formatValue(value)}`));
     valuesButtons.append(label);
   });
 }
 
+function getSelectedFrameworks() {
+  return new Set(captureSettings.selectedValueFrameworks || []);
+}
+
+function renderValueFrameworkSettings() {
+  const selectedFrameworks = getSelectedFrameworks();
+  valueFrameworkButtons.replaceChildren();
+  const group = document.createElement('fieldset');
+  const legend = document.createElement('legend'); legend.textContent = 'Frameworks to use'; group.append(legend);
+  valueFrameworks.forEach(framework => {
+    const label = document.createElement('label');
+    const input = document.createElement('input'); input.type = 'checkbox'; input.value = framework.id; input.checked = selectedFrameworks.has(framework.id);
+    input.addEventListener('change', () => {
+      captureSettings.selectedValueFrameworks = input.checked
+        ? [...getSelectedFrameworks(), framework.id]
+        : [...getSelectedFrameworks()].filter(id => id !== framework.id);
+      if (!input.checked) captureSettings.selectedValues = normalizeValues(captureSettings.selectedValues).filter(value => value.framework !== framework.id);
+      saveSettings(); renderValuesSettings(); renderValues();
+    });
+    const link = document.createElement('a'); link.href = framework.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = framework.linkLabel;
+    label.append(input, document.createTextNode(` ${framework.label} — `), link);
+    group.append(label);
+  });
+  valueFrameworkButtons.append(group);
+}
+
 function renderValuesSettings() {
-  const selected = new Set(normalizeValues(captureSettings.personalValues).map(value => value.name.toLocaleLowerCase()));
+  const selected = new Set(normalizeValues(captureSettings.selectedValues).map(valueKey));
   valuesSettingsButtons.replaceChildren();
-  let currentTheme = '';
-  let group;
-  valueCatalog.forEach(value => {
-    if (value.theme !== currentTheme) {
-      currentTheme = value.theme;
-      group = document.createElement('fieldset');
-      const legend = document.createElement('legend'); legend.textContent = value.theme;
-      group.append(legend); valuesSettingsButtons.append(group);
-    }
+  const selectedFrameworks = getSelectedFrameworks();
+  valueFrameworks.filter(framework => selectedFrameworks.has(framework.id)).forEach(framework => {
+    const heading = document.createElement('h4'); heading.textContent = framework.label; valuesSettingsButtons.append(heading);
+    valueCatalog.filter(value => value.framework === framework.id).forEach(value => {
+      let group = [...valuesSettingsButtons.querySelectorAll('fieldset')].find(fieldset => fieldset.dataset.framework === framework.id && fieldset.dataset.theme === value.theme);
+      if (!group) {
+        group = document.createElement('fieldset'); group.dataset.framework = framework.id; group.dataset.theme = value.theme;
+        const legend = document.createElement('legend'); legend.textContent = value.theme;
+        group.append(legend); valuesSettingsButtons.append(group);
+      }
     const label = document.createElement('label');
     const input = document.createElement('input');
-    input.type = 'checkbox'; input.value = value.name; input.checked = selected.has(value.name.toLocaleLowerCase());
+    input.type = 'checkbox'; input.value = valueKey(value); input.dataset.framework = value.framework; input.dataset.name = value.name; input.checked = selected.has(valueKey(value));
     input.addEventListener('change', () => {
-      const selectedNames = [...valuesSettingsButtons.querySelectorAll('input:checked')].map(node => node.value);
-      if (selectedNames.length > 5) { input.checked = false; valuesSelectionStatus.textContent = 'Choose up to five main values.'; return; }
-      captureSettings.personalValues = normalizeValues(selectedNames);
+      const frameworkSelections = [...valuesSettingsButtons.querySelectorAll(`input[data-framework="${framework.id}"]:checked`)];
+      if (frameworkSelections.length > 5) { input.checked = false; valuesSelectionStatus.textContent = `Choose up to five ${framework.label.toLocaleLowerCase()} items.`; return; }
+      const retained = normalizeValues(captureSettings.selectedValues).filter(item => item.framework !== framework.id);
+      captureSettings.selectedValues = normalizeValues([...retained, ...frameworkSelections.map(node => ({ framework: node.dataset.framework, name: node.dataset.name }))]);
       saveSettings(); renderValuesSettings(); renderValues();
-      valuesSelectionStatus.textContent = `${captureSettings.personalValues.length} of 5 main values selected.`;
+      valuesSelectionStatus.textContent = `${frameworkSelections.length} of 5 ${framework.label.toLocaleLowerCase()} items selected.`;
     });
     label.append(input, document.createTextNode(` ${value.name}`));
     group.append(label);
+    });
   });
-  valuesSelectionStatus.textContent = `${selected.size} of 5 main values selected.`;
+  renderValueFrameworkSettings();
+  const counts = valueFrameworks.map(framework => `${normalizeValues(captureSettings.selectedValues).filter(value => value.framework === framework.id).length} of 5 ${framework.label.toLocaleLowerCase()}`);
+  valuesSelectionStatus.textContent = selected.size ? counts.join('; ') + ' items selected.' : 'Choose one or more frameworks, then up to five items from each.';
 }
 
 function getAvailableTags() {
@@ -2559,7 +2620,7 @@ function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSear
     if (selectedTags.length && !(filters.logTagMatch.value === 'all' ? selectedTags.every(tagMatches) : selectedTags.some(tagMatches))) return false;
     const values = normalizeValues(entry.values);
     const selectedValues = filters.logValueFilter ? getCheckedFilterValues(filters.logValueFilter) : [];
-    const valueMatches = value => value === '__missing' ? !values.length : values.some(item => `value:${item.name.toLocaleLowerCase()}` === value);
+    const valueMatches = value => value === '__missing' ? !values.length : values.some(item => `value:${valueKey(item)}` === value);
     if (selectedValues.length && !((filters.logValueMatch?.value || 'any') === 'all' ? selectedValues.every(valueMatches) : selectedValues.some(valueMatches))) return false;
     const selectedBuckets = getCheckedFilterValues(filters.logBucketFilter);
     if (selectedBuckets.length && !selectedBuckets.includes(entry.bucketLevel == null ? '__missing' : String(entry.bucketLevel))) return false;
@@ -2574,7 +2635,7 @@ function getFilteredLogEntries(entries = getReviewEntries(), filters = { logSear
     const searchable = [
       getEntryPathLabel(entry), entry.appropriate, entry.expectedIntensity,
       entry.actualIntensity, entry.intensityAlignment, entry.comment,
-      ...(entry.tags || []), ...normalizeValues(entry.values).flatMap(value => [value.name, value.theme]), entry.bucketLevel,
+      ...(entry.tags || []), ...normalizeValues(entry.values).flatMap(value => [value.name, value.frameworkLabel, value.theme]), entry.bucketLevel,
       ...(entry.physicalSensations || [])
     ].filter(value => value !== undefined && value !== null).join(' ').toLowerCase();
     return searchable.includes(search);
@@ -3222,9 +3283,9 @@ function getContextCounts(entries, field) {
   entries.forEach(entry => {
     const values = field === 'tags' ? normalizeTags(entry.tags) : field === 'values' ? normalizeValues(entry.values) : (Number.isInteger(entry.bucketLevel) && entry.bucketLevel >= 1 && entry.bucketLevel <= getReviewScale() ? [entry.bucketLevel] : []);
     values.forEach(value => {
-      const label = field === 'values' ? value.name : String(value);
-      const key = label.toLocaleLowerCase();
-      const row = counts.get(key) || { label, theme: field === 'values' ? value.theme : '', count: 0 };
+      const label = field === 'values' ? `${value.name} (${value.frameworkLabel})` : String(value);
+      const key = field === 'values' ? valueKey(value) : label.toLocaleLowerCase();
+      const row = counts.get(key) || { key, label, framework: field === 'values' ? value.frameworkLabel : '', theme: field === 'values' ? value.theme : '', count: 0 };
       row.count += 1;
       counts.set(key, row);
     });
@@ -3249,7 +3310,7 @@ function getLogRows(entries = logEntries, scale = ratingScale) {
       displayValue(entry.intensityAlignment),
       entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
       entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
-      normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join('; ') || 'Not recorded',
+      normalizeValues(entry.values).map(formatValue).join('; ') || 'Not recorded',
       displayValue(entry.bucketLevel),
       displayValue(entry.comment)
     ]);
@@ -3348,7 +3409,7 @@ function renderLog() {
         displayValue(entry.intensityAlignment),
         entry.physicalSensations?.length ? entry.physicalSensations.join('; ') : 'Not recorded',
         entry.tags?.length ? entry.tags.join('; ') : 'Not recorded',
-        normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join('; ') || 'Not recorded',
+        normalizeValues(entry.values).map(formatValue).join('; ') || 'Not recorded',
       displayValue(entry.bucketLevel),
       displayValue(entry.comment)
       ].forEach((value, index) => {
@@ -3460,7 +3521,7 @@ function renderLogTagFilters() {
 function renderLogValueFilters() {
   const selected = getCheckedFilterValues(logValueFilter);
   logValueFilter.replaceChildren();
-  [['__missing', 'Not recorded'], ...getReviewValues().map(value => [`value:${value.name.toLocaleLowerCase()}`, `${value.name} (${value.theme})`])].forEach(([value, text]) => {
+  [['__missing', 'Not recorded'], ...getReviewValues().map(value => [`value:${valueKey(value)}`, formatValue(value)])].forEach(([value, text]) => {
     const label = document.createElement('label');
     const input = document.createElement('input'); input.type = 'checkbox'; input.value = value;
     input.checked = selected.includes(value);
@@ -3524,17 +3585,17 @@ function renderContextAnalysis() {
   const entries = getChartEntries();
   let valueRanking = getContextCounts(entries, 'values');
   const valuesMissing = entries.filter(entry => !normalizeValues(entry.values).length).length;
-  if (valuesMissing) valueRanking.push({ label: 'Not recorded', theme: '—', count: valuesMissing, missing: true });
+  if (valuesMissing) valueRanking.push({ label: 'Not recorded', framework: '—', theme: '—', count: valuesMissing, missing: true });
   valueRanking = sortCountRows(valueRanking);
   const percent = (count, total) => total ? `${(100 * count / total).toFixed(1)}%` : '0.0%';
   const valueSummary = document.getElementById('valueRankingSummary');
   valueSummary.textContent = `${entries.length} entries in ${getChartPeriodLabel()}; ${valuesMissing} without values.`;
   interactiveBars(document.getElementById('valueRankingChart'), valueSummary, valueRanking, row => {
     clearLogFilters.click();
-    setCheckedFilterValues(logValueFilter, row.missing ? ['__missing'] : [`value:${row.label.toLocaleLowerCase()}`]);
+    setCheckedFilterValues(logValueFilter, row.missing ? ['__missing'] : [`value:${row.key}`]);
     renderLog(); selectAppView(logsTab, true);
   });
-  addTableRows(document.getElementById('valueRankingBody'), valueRanking, 'No entries in this period.', row => [row.label, row.theme, String(row.count), percent(row.count, entries.length)], 4);
+  addTableRows(document.getElementById('valueRankingBody'), valueRanking, 'No entries in this period.', row => [row.label, row.framework, row.theme, String(row.count), percent(row.count, entries.length)], 5);
   let ranking = getContextCounts(entries, 'tags');
   const missing = entries.filter(entry => !normalizeTags(entry.tags).length).length;
   if (missing) ranking.push({ label: 'Not recorded', count: missing, missing: true });
@@ -3824,7 +3885,7 @@ function getChartShareData(type) {
       { title: 'Intensity alignment', rows: getVisibleAlignmentRows(chartEntries) },
       { title: 'Intensity averages', rows: metricRows, type: 'metrics' },
       { title: 'Physical sensations', rows: getSensationCounts(chartEntries) },
-      { title: 'Personal values', rows: getContextCounts(chartEntries, 'values') }
+      { title: 'Values and character strengths', rows: getContextCounts(chartEntries, 'values') }
     ]
   };
 }
@@ -4074,7 +4135,7 @@ function describeBackupRecord(entry) {
     `Modified: ${displayValue(entry.modifiedAt)}`,
     `Emotion: ${getEntryPathLabel(entry)}`,
     `Tags: ${normalizeTags(entry.tags).join(', ') || 'Not recorded'}`,
-    `Values involved: ${normalizeValues(entry.values).map(value => `${value.name} (${value.theme})`).join(', ') || 'Not recorded'}`,
+    `Values involved: ${normalizeValues(entry.values).map(formatValue).join(', ') || 'Not recorded'}`,
     `Bucket level (1–${ratingScale}): ${displayValue(entry.bucketLevel)}`,
     `Expected intensity (1–${ratingScale}): ${displayValue(entry.expectedIntensity)}`,
     `Actual intensity (1–${ratingScale}): ${displayValue(entry.actualIntensity)}`,
@@ -4479,7 +4540,7 @@ phaseThreeButton.addEventListener('click', () => {
 
 phaseFourButton.addEventListener('click', () => {
   setSettings({ captureMode: 'phase4', collectAppropriate: true, collectIntensity: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectValues: true, collectBucketLevel: true, includeAllSensations: false });
-  liveStatus.textContent = 'Phase 4 selected. You can also record the personal values involved.';
+  liveStatus.textContent = 'Phase 4 selected. You can also record the values or character strengths involved.';
 });
 
 customButton.addEventListener('click', () => {

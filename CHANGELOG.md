@@ -2,6 +2,14 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.10.0
+
+Released 1 November 2026.
+
+- Phase 4 now supports multiple values frameworks at once. Choose up to five items in each selected framework, beginning with PersonalValu.es personal values and VIA character strengths.
+- Each saved item now retains its framework and category as well as its name, so records, filters, charts, exports, backups and sync do not merge identical names from different frameworks.
+- Existing PersonalValu.es settings and records are migrated safely and remain available. The data-update notice and Help link to both source frameworks.
+
 ## 1.9.1
 
 Released 29 October 2026.

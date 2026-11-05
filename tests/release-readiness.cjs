@@ -24,18 +24,22 @@ for (const file of ['index.html', 'docs/about.html', 'docs/accessibility.html', 
 }
 
 const updateNotice = app.match(/<section hidden id="dataUpgradeDialog"[\s\S]*?<\/section>\n  <p class="intro">/)?.[0] || '';
-assert.match(updateNotice, /Personal values are here!/i, 'The data-update notice must name the current values feature');
-assert.match(updateNotice, /up to five main values/i, 'The data-update notice must explain the top-five selector');
+assert.match(updateNotice, /Multiple values frameworks are here!/i, 'The data-update notice must name the current values-framework feature');
+assert.match(updateNotice, /up to five main items from each selected framework/i, 'The data-update notice must explain the per-framework top-five selector');
 assert.match(updateNotice, /Stability, Connection, Autonomy, Development and Impact/, 'The data-update notice must name every values theme');
-assert.match(updateNotice, /Personalvalu\.es/, 'The data-update notice must link to values discovery guidance');
+assert.match(updateNotice, /Wisdom, Courage, Humanity, Justice, Temperance and Transcendence/, 'The data-update notice must name every VIA category');
+assert.match(updateNotice, /Personalvalu\.es/i, 'The data-update notice must link to values discovery guidance');
+assert.match(updateNotice, /VIA/, 'The data-update notice must link to VIA discovery guidance');
 assert.match(updateNotice, /existing records and older backups remain supported/i, 'The data-update notice must explain backwards compatibility');
 
-assert.match(help, /Phase 4 also lets you record the personal values involved\./, 'Help must describe Phase 4 values');
-assert.match(help, /choose up to five main values/i, 'Help must explain the top-five selector');
+assert.match(help, /Phase 4 also lets you record the values or character strengths involved\./, 'Help must describe Phase 4 values and strengths');
+assert.match(help, /one or more frameworks, then up to five main items from each framework/i, 'Help must explain the per-framework top-five selector');
 assert.match(help, /Stability, Connection, Autonomy, Development and Impact/, 'Help must name every values theme');
-assert.match(help, /Personalvalu\.es/, 'Help must link to values discovery guidance');
+assert.match(help, /Wisdom, Courage, Humanity, Justice, Temperance and Transcendence/, 'Help must name every VIA category');
+assert.match(help, /Personalvalu\.es/i, 'Help must link to values discovery guidance');
+assert.match(help, /VIA character strengths/, 'Help must link to VIA discovery guidance');
 
-assert.match(app, /const dataSchemaVersion = 4;/, 'The values release must retain its schema version');
+assert.match(app, /const dataSchemaVersion = 5;/, 'The framework release must retain its schema version');
 assert.match(app, /if \(version > dataSchemaVersion\)/, 'Newer unsupported datasets must remain protected');
 assert.match(app, /save an original backup/i, 'Schema updates must retain the original-backup safeguard');
 

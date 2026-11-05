@@ -29,9 +29,9 @@ const context = vm.createContext({
   clearEntryForm() { context.selectedInner = null; context.entryComment.value = ''; },
   renderAll() { renderCount++; }
 });
-vm.runInContext(html.match(/const valueCatalog = \[[\s\S]*?;\n/)[0], context);
+vm.runInContext(html.match(/const valueFrameworks = \[[\s\S]*?const valueCatalog = [^\n]*;\n/)[0], context);
 vm.runInContext(html.match(/const defaultSettings = \{[\s\S]*?\n};/)[0], context);
-for (const name of ['normalizeTags', 'normalizeValues', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
+for (const name of ['normalizeTags', 'valueKey', 'normalizeValues', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
   vm.runInContext(html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}`))[0], context);
 }
 const normalize = settings => context.normalizeSettings(settings);
@@ -48,8 +48,8 @@ for (const enabled of [true, false]) {
 assert.equal(normalize({}).captureMode, 'phase1');
 assert.equal(normalize({ collectIntensity: true, collectAppropriate: true, collectSensations: true }).captureMode, 'phase2');
 const chosenValues = normalize({ collectValues: true, personalValues: ['Freedom', { name: 'Honesty', theme: 'Wrong' }, 'Not a catalogue value', 'Health', 'Trust', 'Peace', 'Family'] });
-assert.deepEqual(JSON.parse(JSON.stringify(chosenValues.personalValues)), [
-  { name: 'Freedom', theme: 'Autonomy' }, { name: 'Honesty', theme: 'Connection' }, { name: 'Health', theme: 'Stability' }, { name: 'Trust', theme: 'Connection' }, { name: 'Peace', theme: 'Stability' }
+assert.deepEqual(JSON.parse(JSON.stringify(chosenValues.selectedValues)), [
+  { name: 'Freedom', theme: 'Autonomy', framework: 'personalvalues', frameworkLabel: 'Personal values' }, { name: 'Honesty', theme: 'Connection', framework: 'personalvalues', frameworkLabel: 'Personal values' }, { name: 'Health', theme: 'Stability', framework: 'personalvalues', frameworkLabel: 'Personal values' }, { name: 'Trust', theme: 'Connection', framework: 'personalvalues', frameworkLabel: 'Personal values' }, { name: 'Peace', theme: 'Stability', framework: 'personalvalues', frameworkLabel: 'Personal values' }, { name: 'Family', theme: 'Connection', framework: 'personalvalues', frameworkLabel: 'Personal values' }
 ]);
 for (const expected of [false, true]) for (const actual of [false, true]) {
   const settings = normalize({ collectIntensity: true, collectExpectedIntensity: expected, collectActualIntensity: actual });

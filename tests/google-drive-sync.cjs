@@ -95,4 +95,29 @@ console.log('PASS: real local-apply code rejects active/stale edits, retains a r
   const ambiguous=structuredClone(updated);ambiguous.entries.push({...updated.entries[0],id:'second-id'});
   await assert.rejects(()=>prepareSchemas(null,old,ambiguous,3),/ambiguous identities/);
   console.log('PASS: older schema copies match stable IDs across devices, preserve ratings and extension fields, avoid duplicate legacy records and reject future or ambiguous data.');
+
+  // v1.10.0: Device B is still on schema 4 when Device A has already synced
+  // VIA selections on schema 5. Its unchanged local copy must adopt the newer
+  // Drive settings and records, not put its stale structure back on Drive.
+  const schemaFour = {
+    version:3,schemaVersion:4,ratingScale:5,
+    settings:{collectValues:true,personalValues:[{name:'Honesty',theme:'Connection'}]},tags:[],
+    entries:[record('personal-values', 'schema-four')]
+  };
+  schemaFour.entries[0].values=[{name:'Honesty',theme:'Connection'}];
+  const staleDevice = structuredClone(schemaFour);
+  const schemaFiveDrive = structuredClone(schemaFour);
+  schemaFiveDrive.schemaVersion=5;
+  schemaFiveDrive.settings={collectValues:true,selectedValueFrameworks:['personalvalues','via'],selectedValues:[
+    {name:'Honesty',theme:'Connection',framework:'personalvalues',frameworkLabel:'Personal values'},
+    {name:'Perspective',theme:'Wisdom',framework:'via',frameworkLabel:'VIA character strengths'}
+  ]};
+  schemaFiveDrive.entries.push({...record('via-strength', 'synced on device A'),values:[{name:'Perspective',theme:'Wisdom',framework:'via',frameworkLabel:'VIA character strengths'}]});
+  const deviceBUpgrade=await prepareSchemas(schemaFour,staleDevice,schemaFiveDrive,5,require('node:crypto').webcrypto);
+  const deviceBMerged=reconcile(deviceBUpgrade.base,deviceBUpgrade.local,deviceBUpgrade.remote);
+  assert.equal(deviceBMerged.schemaVersion,5);
+  assert.deepEqual(deviceBMerged.entries.map(entry=>entry.id).sort(),['personal-values','via-strength']);
+  assert.deepEqual(deviceBMerged.settings, schemaFiveDrive.settings);
+  assert.throws(()=>reconcile(null,deviceBUpgrade.local,deviceBUpgrade.remote),/settings/,'A missing baseline pauses for review instead of choosing a stale settings structure');
+  console.log('PASS: a stale schema-4 device adopts schema-5 VIA data; a missing baseline pauses rather than overwriting Drive.');
 })().catch(error=>{console.error(error);process.exitCode=1;});
