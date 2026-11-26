@@ -1,0 +1,9 @@
+# Workflows the team sync must not overwrite.
+# ci.yml: carries the project's ten node test steps (tests/*.cjs) and a Node 22 setup for a repository with no package.json. Merged by hand with the team version.
+ci.yml
+# release.yml: team version uses release-please with contents: write on every push to main. The project releases by manual tag and version.yml.
+release.yml
+# deploy.yml: Pages still publishes from the main branch; the team deploy workflow would fail until Tim switches Pages to GitHub Actions. Remove from this list in the switch pull request.
+deploy.yml
+# playwright.yml: the project has no Playwright suite; its tests are dependency-free node scripts run from ci.yml.
+playwright.yml

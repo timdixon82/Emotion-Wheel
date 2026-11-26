@@ -1,3 +1,7 @@
 # Development-only Google configuration and test evidence.
 assets/google-drive-config.local.json
 .local-test-output/
+
+# Local audit trail written by a team hook, not for the repository
+.claude/transcripts/
+.claude/settings.local.json

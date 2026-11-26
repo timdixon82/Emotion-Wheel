@@ -1,14 +1,17 @@
-# Security checks: Semgrep, Trivy, and dependency review.
+# Runner pin: jobs use ubuntu-24.04, not ubuntu-latest. ubuntu-latest now
+# resolves to Ubuntu 26.04, where the Playwright chromium install and the
+# Pa11y browser launch fail. Revisit once Playwright supports 26.04.
+
+# Security checks: Semgrep, Trivy, gitleaks secret detection, and dependency review.
 #
 # Action versions were verified against GitHub and pinned to commit SHAs
 # on 2026-05-21. The version tag is in the trailing comment.
 
 name: Security
 on:
+  pull_request:
   push:
     branches: [main]
-  pull_request:
-  workflow_dispatch:
   schedule:
     - cron: '0 6 * * 1'  # weekly, Monday morning
 
@@ -21,11 +24,12 @@ concurrency:
 
 jobs:
   semgrep:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    if: github.event_name != 'push'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Cache pip packages for Semgrep
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae  # v5.0.5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: ~/.cache/pip
           key: ${{ runner.os }}-semgrep-1.166.0
@@ -38,9 +42,10 @@ jobs:
           semgrep scan --config p/default --error
 
   trivy:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    if: github.event_name != 'push'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - name: Trivy filesystem scan
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25  # v0.36.0
         with:
@@ -48,16 +53,119 @@ jobs:
           severity: CRITICAL,HIGH
           exit-code: '1'
 
-  # ── PRIVATE REPOS: REMOVE THIS JOB ──────────────────────────────────────────
+  # ── gitleaks ────────────────────────────────────────────────────────────────
+  # Secret detection that needs no paid GitHub Advanced Security. Native secret
+  # scanning is GHAS-gated on private repositories, so this job is the free
+  # equivalent. It runs the open-source gitleaks binary (MIT licence), not the
+  # gitleaks-action wrapper: the wrapper needs a licence key for organisation
+  # accounts (GITLEAKS_LICENSE) and posts pull request comments, while the
+  # binary needs no key under any account type and sends nothing anywhere.
+  # Scope: pull requests scan only the commits the PR adds (merge commits
+  # included); pushes to main and the weekly run scan the full history. Any
+  # finding fails the job. --redact masks every secret value in the log, so a
+  # leak is never reprinted. The log shows only rule, file, line and a short
+  # commit hash, printed with jq from a redacted JSON report (no --verbose,
+  # which would print author names and emails).
+  # A pull request cannot switch off its own scan. On pull requests the
+  # .gitleaks.toml and .gitleaksignore are read from the base branch, never
+  # from the PR, and inline "gitleaks:allow" comments are ignored on every run.
+  # To allow a known false positive, add a .gitleaks.toml (start it with
+  # [extend] and useDefault = true) or a .gitleaksignore on main, not in the PR;
+  # see docs/patterns/private-repo-github-actions.md. The change takes effect
+  # once it is merged.
+  # The release archive is verified against a pinned SHA-256 before it runs.
+  # Update version and checksum together, from the release's checksums file.
+  # SYNC NOTE: sync-from-template.sh overwrites security.yml unless the project
+  # lists it in .claude/workflows-protect. A project that protects security.yml
+  # does not receive changes to this job and must re-copy it by hand.
+  # ─────────────────────────────────────────────────────────────────────────────
+  gitleaks:
+    runs-on: ubuntu-24.04
+    env:
+      GITLEAKS_VERSION: 8.30.1
+      GITLEAKS_SHA256: 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  # gitleaks_8.30.1_linux_x64.tar.gz
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0  # gitleaks reads git history, so a shallow clone would hide commits
+          persist-credentials: false
+      - name: Install gitleaks
+        run: |
+          archive="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl --fail --silent --show-error --location \
+            --output "${RUNNER_TEMP}/${archive}" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${archive}"
+          echo "${GITLEAKS_SHA256}  ${RUNNER_TEMP}/${archive}" | sha256sum --check --strict
+          mkdir "${RUNNER_TEMP}/gitleaks-bin"
+          tar --extract --gzip --file "${RUNNER_TEMP}/${archive}" --directory "${RUNNER_TEMP}/gitleaks-bin" gitleaks
+      - name: Scan for secrets
+        env:
+          # Event data goes through env, never straight into the script.
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # No --verbose: it prints each commit's author name and email. The JSON
+          # report is redacted, stays in RUNNER_TEMP, and is never uploaded.
+          # --ignore-gitleaks-allow stops inline "gitleaks:allow" comments from
+          # silencing a finding, on every run (pull request, push and schedule).
+          report="${RUNNER_TEMP}/gitleaks-report.json"
+          args=(git --redact --no-banner --no-color --ignore-gitleaks-allow --report-format json --report-path "${report}")
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            # gitleaks exits 0 when git itself fails, so prove both commits exist
+            # first. Otherwise a missing commit would look like a clean scan.
+            for sha in "${PR_BASE_SHA}" "${PR_HEAD_SHA}"; do
+              git cat-file -e "${sha}^{commit}" || { echo "::error::Commit ${sha:0:12} is missing from the checkout; cannot scan"; exit 1; }
+            done
+            # Read the allowlist config and ignore file from the base branch, never
+            # from the pull request, so a PR cannot switch off its own scan.
+            # An explicit --config wins over a .gitleaks.toml in the checkout.
+            config="${RUNNER_TEMP}/gitleaks-base.toml"
+            ignorefile="${RUNNER_TEMP}/gitleaks-base.ignore"
+            if git cat-file -e "${PR_BASE_SHA}:.gitleaks.toml" 2>/dev/null; then
+              git show "${PR_BASE_SHA}:.gitleaks.toml" > "${config}"
+            else
+              printf '[extend]\nuseDefault = true\n' > "${config}"
+            fi
+            if git cat-file -e "${PR_BASE_SHA}:.gitleaksignore" 2>/dev/null; then
+              git show "${PR_BASE_SHA}:.gitleaksignore" > "${ignorefile}"
+            else
+              : > "${ignorefile}"
+            fi
+            # gitleaks 8.30.1 also reads .gitleaksignore from the scanned folder,
+            # even when --gitleaks-ignore-path points elsewhere. Replace the
+            # checkout's copy with the base commit's copy (or none). This hides
+            # nothing: the scan reads git history, not the working tree.
+            rm -f .gitleaksignore
+            if [ -s "${ignorefile}" ]; then
+              cp "${ignorefile}" .gitleaksignore
+            fi
+            # git log -p shows nothing for merge commits by default, so a secret
+            # added in a merge (conflict resolution) would go unscanned.
+            # --diff-merges=first-parent shows each merge's diff against its first
+            # parent. gitleaks splits --log-opts on spaces, so the option and the
+            # range stay in one argument.
+            args+=(--config "${config}" --gitleaks-ignore-path "${ignorefile}" --log-opts="--diff-merges=first-parent ${PR_BASE_SHA}..${PR_HEAD_SHA}")
+          fi
+          rc=0
+          "${RUNNER_TEMP}/gitleaks-bin/gitleaks" "${args[@]}" . || rc=$?
+          if [ -s "${report}" ]; then
+            jq -r '.[] | "\(.RuleID) \(.File):\(.StartLine) commit \(.Commit[0:12])"' "${report}"
+          fi
+          exit "${rc}"
+
+  # ── dependency-review ───────────────────────────────────────────────────────
   # dependency-review requires GitHub Advanced Security. On a private repository
-  # without Advanced Security, this job will fail with a 403 error.
-  # Remove it from any private project repository.
+  # without it, the action fails with a 403 error. The job is kept for the
+  # signal it gives on public repos and where Advanced Security is enabled, but
+  # is marked continue-on-error so it never blocks a merge on a private repo
+  # that lacks the feature. Trivy and Semgrep remain the blocking security gates.
   # ─────────────────────────────────────────────────────────────────────────────
   dependency-review:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    continue-on-error: true
     if: github.event_name == 'pull_request'
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294  # v5.0.0
         # There is nothing to diff without a manifest and lockfile; skip
         # rather than fail or no-op unpredictably on a static-content

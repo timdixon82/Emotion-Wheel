@@ -1,8 +1,14 @@
-# ── PRIVATE REPOS: REMOVE THIS WORKFLOW ────────────────────────────────────────
+# Runner pin: jobs use ubuntu-24.04, not ubuntu-latest. ubuntu-latest now
+# resolves to Ubuntu 26.04, where the Playwright chromium install and the
+# Pa11y browser launch fail. Revisit once Playwright supports 26.04.
+
+# ── PRIVATE REPOS: THIS WORKFLOW SKIPS ITSELF ──────────────────────────────────
 # CodeQL requires GitHub Advanced Security. On a private repository without
-# Advanced Security enabled, this workflow will fail with a 403 error.
-# Delete this file from any private project repository.
-# Keep it only for public repos or private repos with Advanced Security enabled.
+# Advanced Security enabled, code scanning is not available and the analysis
+# fails. The job below therefore runs only when the repository is public.
+# On a private repository the job is reported as skipped, not failed.
+# If a private repository later gets Advanced Security, remove the "if" line
+# on the analyze job to turn the scan on.
 # ───────────────────────────────────────────────────────────────────────────────
 
 # CodeQL static analysis.
@@ -14,6 +20,15 @@
 # available for a private repository. This workflow covers JavaScript for
 # a public static project. For a private PHP or WordPress project, remove
 # this workflow and rely on the Semgrep job in security.yml instead.
+#
+# Language selection is archetype-aware: a project whose .github/ci-archetype
+# declares python-tool has no JavaScript at all, so CodeQL's "Initialise"
+# step analyses Python instead. Every other archetype keeps the existing
+# JavaScript default. A hardcoded "languages: javascript" would silently
+# analyse nothing in a Python-only repository — a false-green signal, not
+# real coverage, which is the defect this gate closes. See
+# jacob-ci-archetypes.md and docs/decisions/001-python-tool-ci-archetype.md
+# in Lire RSS Hermes.
 
 name: CodeQL
 on:
@@ -33,12 +48,26 @@ concurrency:
 
 jobs:
   analyze:
-    runs-on: ubuntu-latest
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - name: Check the CI archetype
+        id: archetype
+        run: |
+          if [ -f .github/ci-archetype ]; then
+            value=$(tr -d '[:space:]' < .github/ci-archetype)
+          else
+            value=""
+          fi
+          if [ "$value" = "python-tool" ]; then
+            echo "codeql_language=python" >> "$GITHUB_OUTPUT"
+          else
+            echo "codeql_language=javascript" >> "$GITHUB_OUTPUT"
+          fi
       - name: Initialise CodeQL
-        uses: github/codeql-action/init@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4.36.0
+        uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370  # v4.39.1
         with:
-          languages: javascript
+          languages: ${{ steps.archetype.outputs.codeql_language }}
       - name: Analyse
-        uses: github/codeql-action/analyze@7211b7c8077ea37d8641b6271f6a365a22a5fbfa  # v4.36.0
+        uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370  # v4.39.1
