@@ -81,7 +81,7 @@ All entries, including optional notes, are included in JSON backups and full-log
 This is a static HTML, CSS, and JavaScript app. There is no build step.
 
 - Open `index.html` in a browser for a quick local check.
-- Use the HTML validator and JavaScript syntax check configured in `.github/lint-tools` when available.
+- Use the HTML validator and JavaScript syntax check configured in `ci-tools/lint-tools` when available.
 - The GitHub Actions workflows provide additional continuous integration checks.
 - Follow [the release guide](docs/releasing.md) and bump the application version for every release.
 

@@ -1,9 +1,13 @@
+# Runner pin: jobs use ubuntu-24.04, not ubuntu-latest. ubuntu-latest now
+# resolves to Ubuntu 26.04, where the Playwright chromium install and the
+# Pa11y browser launch fail. Revisit once Playwright supports 26.04.
+
 # Accessibility checks at WCAG 2.2 AAA using Pa11y and axe-core.
 #
 # Two complementary patterns keep the checks green across projects:
 #
 #   Tool pinning (template pattern). Pa11y, @axe-core/cli, and wait-on are
-#   pinned in .github/accessibility-tools/package.json so Dependabot can
+#   pinned in ci-tools/accessibility-tools/package.json so Dependabot can
 #   track and propose version bumps automatically. They are installed via
 #   npm ci against that manifest, never with npm install -g.
 #
@@ -28,14 +32,72 @@
 # Pa11y and axe-core run against the served HTML; full rendered-interface
 # testing is Carol's responsibility in her manual test pass.
 #
-# Adapt the "Serve the site" step and URLs to this project's stack.
+# axe-core render settle delay. The axe-core CLI step below passes
+# --load-delay 1000, so axe waits one second after page load before
+# auditing. Without it, axe's default 0ms delay races render on
+# CDN-loaded/React/Babel apps and webfont swap, producing non-deterministic
+# color-contrast-enhanced false failures on elements that genuinely meet
+# 7:1. --load-delay is confirmed to exist on the pinned @axe-core/cli
+# version via `axe --help`; it only adds a settle wait and does not change
+# which rules run or weaken --exit.
+#
+# Serving is archetype-aware, gated on manifest presence (mirrors the
+# hashFiles('package.json') pattern in ci.yml and security.yml; hashFiles is
+# step-level only, not valid at job level):
+#   - package.json present (static-app, browser-extension): the project is
+#     installed and built (npm ci, then npm run build --if-present).
+#     If the build produced a dist/ directory (hashFiles('dist/**') != ''),
+#     that build output is served, since a bundler's index.html loads bare
+#     ES module imports that only resolve after a build. If no dist/ was
+#     produced — a bundler-free project with a package.json for tooling
+#     only, but no "build" script, e.g. Braille Reference — npm run build
+#     --if-present no-ops and there is no dist/ to serve, so the repository
+#     root is served instead, same as a static-content project.
+#   - package.json absent (static-content): the repository root is served
+#     unchanged, as before.
+# dist/ is the template default build output directory (Vite's default). A
+# project whose bundler writes elsewhere overrides this step locally.
+# If a project's entry point is not index.html, adapt the Pa11y and axe URLs
+# below to match.
+#
+# Archetype-aware skip for browser extensions. A project whose
+# .github/ci-archetype declares browser-extension has no index.html; its
+# user-facing pages (popup/popup.html, app/app.html) depend on
+# chrome.runtime and chrome.storage, which do not exist outside a loaded
+# extension context, so a statically served Pa11y/axe-cli scan cannot
+# render them at all. For that archetype every scan step in this job is
+# skipped (not failed), and a log-only step explains why. The archetype's
+# accessibility gate is instead its Playwright suite (playwright.yml),
+# which runs axe-core against the extension's popup and options pages
+# while the extension is genuinely loaded in a browser; that job must be a
+# required status check in branch protection for any such project. See
+# jacob-ci-archetypes.md section 2c and the accompanying decision record.
+#
+# Archetype-aware skip for python-tool. A project whose .github/ci-archetype
+# declares python-tool has no HTML pages at all — it operates entirely
+# through a Python command-line script, with no web-facing surface to serve
+# or scan. Every scan step in this job is skipped for it too, with its own
+# log-only explanation distinct from browser-extension's: unlike
+# browser-extension, there is no alternate accessibility gate (no
+# Playwright suite) to point to, because there is nothing rendered to
+# check. This is a genuine "not applicable," not a deferred check. First
+# introduced as a project-local fix in Lire RSS Hermes
+# (docs/decisions/001-python-tool-ci-archetype.md in that project).
+#
+# Archetype-aware skip for wordpress-theme. A project whose
+# .github/ci-archetype declares wordpress-theme is a classic WordPress
+# theme: its pages are PHP templates rendered by a live WordPress
+# instance, not static HTML this job can serve directly. There is no
+# lightweight way to stand up a full WordPress + database install in
+# this job, so every scan step is skipped, with its own log-only
+# explanation. Like python-tool, this is a genuine "not applicable" for
+# now, not a deferred check; a future wp-env-based job would be the
+# real fix. First introduced as a project-local fix in Tim Dixon
+# WordPress Theme and LLBS-Website.
 
 name: Accessibility
 on:
-  push:
-    branches: [main]
   pull_request:
-  workflow_dispatch:
 
 permissions:
   contents: read
@@ -47,42 +109,95 @@ concurrency:
 jobs:
   accessibility:
     name: Pa11y and axe at WCAG 2.2 AAA
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
 
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      - name: Check the CI archetype
+        # Reads .github/ci-archetype, trimmed of surrounding whitespace and
+        # newlines, mirroring the equivalent step in ci.yml. A
+        # browser-extension project's user-facing pages depend on
+        # chrome.runtime and chrome.storage, which do not exist outside a
+        # loaded extension, so a statically served Pa11y/axe-cli scan
+        # cannot render them. This archetype's accessibility gate is its
+        # Playwright suite instead (see playwright.yml and the decision
+        # record cross-referenced at the top of this file).
+        id: archetype
+        run: |
+          if [ -f .github/ci-archetype ]; then
+            value=$(tr -d '[:space:]' < .github/ci-archetype)
+          else
+            value=""
+          fi
+          if [ "$value" = "browser-extension" ]; then
+            echo "is_browser_extension=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_browser_extension=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$value" = "python-tool" ]; then
+            echo "is_python_tool=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_python_tool=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$value" = "wordpress-theme" ]; then
+            echo "is_wordpress_theme=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_wordpress_theme=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
         with:
           node-version: lts/*
           cache: npm
-          cache-dependency-path: .github/accessibility-tools/package-lock.json
+          cache-dependency-path: ci-tools/accessibility-tools/package-lock.json
 
       - name: Install accessibility tools
-        # Tools are managed in .github/accessibility-tools/package.json so
+        # Tools are managed in ci-tools/accessibility-tools/package.json so
         # Dependabot can track and propose version bumps automatically.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
         run: npm ci
-        working-directory: .github/accessibility-tools
+        working-directory: ci-tools/accessibility-tools
 
       - name: Add accessibility tools to PATH
-        run: echo "$GITHUB_WORKSPACE/.github/accessibility-tools/node_modules/.bin" >> "$GITHUB_PATH"
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        run: echo "$GITHUB_WORKSPACE/ci-tools/accessibility-tools/node_modules/.bin" >> "$GITHUB_PATH"
 
       - name: Set up Chrome and ChromeDriver
         id: chrome
-        uses: browser-actions/setup-chrome@2e1d749697dd1612b833dba4a722266286fbefcd  # v2.1.2
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        uses: browser-actions/setup-chrome@48ad923757ca74d66703209fe939badbdf80f2f4  # v2.2.0
         with:
           install-chromedriver: true
 
-      - name: Serve the site in the background
-        # Adapt this step to the project's stack.
-        # For a static site: python3 -m http.server 8080 &
-        # For a Node project: npm start & or npm run dev &
+      - name: Install project dependencies (npm)
+        # Only for static-app / browser-extension projects (package.json at
+        # the repository root). A build is required before serving because
+        # a bundler's index.html loads ES module imports that only resolve
+        # once built.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true' && hashFiles('package.json') != ''
+        run: npm ci
+
+      - name: Build the project (npm)
+        # --if-present no-ops when the project has no "build" script.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true' && hashFiles('package.json') != ''
+        run: npm run build --if-present
+
+      - name: Serve the built site in the background (static-app / browser-extension, build present)
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true' && hashFiles('package.json') != '' && hashFiles('dist/**') != ''
+        run: python3 -m http.server 8080 --directory dist &
+
+      - name: Serve the repository root in the background (static-content, or a bundler-free package.json project with no dist/ output)
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true' && hashFiles('dist/**') == ''
         run: python3 -m http.server 8080 &
 
       - name: Wait for the server to be ready
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
         run: wait-on http://localhost:8080 --timeout 15000
 
       - name: Pa11y at WCAG 2.2 AAA
         # Adapt the URL to match the project's entry point.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
         env:
           PUPPETEER_EXECUTABLE_PATH: ${{ steps.chrome.outputs.chrome-path }}
         run: pa11y --standard WCAG2AAA http://localhost:8080/index.html
@@ -92,10 +207,58 @@ jobs:
         # --chrome-path overrides ChromeDriver's hardcoded binary lookup with the
         # action-installed Chrome, ensuring version parity with --chromedriver-path.
         # env: pattern used so no ${{ }} expression appears in a run: command.
-        # --exit makes the axe CLI itself exit 1 when any violation is found.
-        # Without it axe always exits 0, so this step would report violations
-        # in the log but still pass the job -- a false-green gate.
+        # --exit (pinned @axe-core/cli 4.11.3 supports -q/--exit) makes the CLI
+        # itself exit 1 when any violation is found. Without it axe always exits
+        # 0, so this step would report violations in the log but still pass the
+        # job — a false-green gate.
+        # --load-delay 1000 (pinned @axe-core/cli 4.11.3, confirmed via `axe
+        # --help`) waits one second after page load before auditing. The
+        # default is 0ms, which races render on CDN-loaded/React/Babel apps
+        # and webfont swap, and was observed to produce non-deterministic
+        # color-contrast-enhanced false failures on elements that actually
+        # meet 7:1 (identical-commit rerun on SWOT Builder went from 9
+        # violations to 0). --load-delay is a settle delay only; it does not
+        # change which rules run or weaken --exit.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_python_tool != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
         env:
           CHROMEDRIVER_PATH: ${{ steps.chrome.outputs.chromedriver-path }}
           CHROME_PATH: ${{ steps.chrome.outputs.chrome-path }}
-        run: axe http://localhost:8080/index.html --tags wcag2a,wcag2aa,wcag2aaa,wcag22aa,wcag22aaa --chrome-options="no-sandbox" --chromedriver-path "$CHROMEDRIVER_PATH" --chrome-path "$CHROME_PATH" --exit
+        run: axe http://localhost:8080/index.html --tags wcag2a,wcag2aa,wcag2aaa,wcag22aa,wcag22aaa --chrome-options="no-sandbox" --chromedriver-path "$CHROMEDRIVER_PATH" --chrome-path "$CHROME_PATH" --load-delay 1000 --exit
+
+      - name: Note that Playwright carries the accessibility gate for browser-extension
+        if: steps.archetype.outputs.is_browser_extension == 'true'
+        run: |
+          echo "This project's .github/ci-archetype declares browser-extension."
+          echo "A statically served Pa11y/axe-cli scan cannot render pages that"
+          echo "depend on chrome.runtime and chrome.storage, so this job is a"
+          echo "deliberate no-op for this archetype, not a weakened check."
+          echo "WCAG 2.2 AAA coverage is provided instead by this project's"
+          echo "Playwright suite (see playwright.yml), which runs axe-core"
+          echo "against the extension's popup and options pages while the"
+          echo "extension is actually loaded in a browser. The Playwright"
+          echo "tests check must be a required status check in branch"
+          echo "protection for this repository as a result."
+
+      - name: Note that this project has no rendered surface to scan (python-tool)
+        if: steps.archetype.outputs.is_python_tool == 'true'
+        run: |
+          echo "This project's .github/ci-archetype declares python-tool."
+          echo "It has no HTML pages at all: it operates entirely through a"
+          echo "Python command-line script, so this job is a deliberate"
+          echo "no-op for this archetype, not a weakened check. Unlike"
+          echo "browser-extension, there is no alternate accessibility gate"
+          echo "to point to here; this is a genuine \"not applicable\", not"
+          echo "a deferred check."
+
+      - name: Note that this project has no lightweight rendered surface to scan (wordpress-theme)
+        if: steps.archetype.outputs.is_wordpress_theme == 'true'
+        run: |
+          echo "This project's .github/ci-archetype declares wordpress-theme."
+          echo "Its pages are PHP templates rendered by a live WordPress"
+          echo "instance, not static HTML this job can serve directly, so"
+          echo "this job is a deliberate no-op for this archetype, not a"
+          echo "weakened check. There is no alternate automated accessibility"
+          echo "gate here yet; this is a genuine \"not applicable\" for now,"
+          echo "not a deferred check. AAA conformance for this project is"
+          echo "verified by Carol's manual test pass against the live or"
+          echo "staged site."
