@@ -55,7 +55,7 @@ Read [GoatCounter's privacy information](https://www.goatcounter.com/help/privac
 
 ## Help and contact
 
-Read [Help](help.html) for instructions on saving, restoring, sync and sharing. For questions about this app, use [Contact / feedback](https://www.timdixon.net/contact/).
+Read [Help](../pages/help.html) for instructions on saving, restoring, sync and sharing. For questions about this app, use [Contact / feedback](https://www.timdixon.net/contact/).
 
 ## Important limitation
 

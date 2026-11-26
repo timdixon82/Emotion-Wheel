@@ -25,7 +25,7 @@ Your entries, optional notes and settings are saved in this browser on this devi
 
 Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, save or sync data to Google Drive, share a chart or table, or copy information. Clear local log removes the active log but retains recovery snapshots and sync comparison data. Clearing this site's browser data removes its local copies; it does not remove Drive files or copies on other devices. See the Privacy notice before deleting data.
 
-Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
+Read the fuller [privacy notes](pages/privacy.html) before using this for sensitive information.
 
 ## Getting started
 
@@ -49,7 +49,7 @@ The interface follows Tim Dixon's design system: Roboto type, navy card hierarch
 
 Choose a theme from the top-right control on wider screens or from the Menu on smaller screens. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
 
-The rendered design and accessibility notes are in [docs/accessibility.html](docs/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
+The rendered design and accessibility notes are in [pages/accessibility.html](pages/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
 
 ## Accessibility
 

@@ -1,0 +1,21 @@
+# Publish list for GitHub Pages, written by hand for this project.
+#
+# Used by deploy.yml once Pages is switched to GitHub Actions. Until then
+# Pages publishes the repository from main and this file has no effect.
+# Rules are described in the team template of the same name.
+#
+# The five site pages live in /pages/ (moved from /docs/, which cannot be
+# published). /docs/ holds notes and the project wiki and never publishes.
+# The local Google configuration is gitignored and must never publish.
+/index.html
+/CNAME
+/assets/
+/pages/
+!/assets/google-drive-config.local.json
+require /index.html
+require /CNAME
+require /pages/help.html
+require /pages/about.html
+require /pages/privacy.html
+require /pages/accessibility.html
+require /pages/licence.html
