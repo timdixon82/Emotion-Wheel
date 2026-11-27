@@ -1,0 +1,248 @@
+# Runner pin: jobs use ubuntu-24.04, not ubuntu-latest. ubuntu-latest now
+# resolves to Ubuntu 26.04, where the Playwright chromium install and the
+# Pa11y browser launch fail. Revisit once Playwright supports 26.04.
+
+# Deploy to GitHub Pages.
+# Runs on every push to main and on manual dispatch.
+#
+# THIS IS THE TEAM STANDARD for deploying a static site to GitHub Pages.
+# See docs/patterns/github-pages-deploy.md for the full standard.
+#
+# Activation (one-time, per repo): GitHub > Settings > Pages > Build and
+# deployment > Source > "GitHub Actions" (NOT "Deploy from a branch").
+# Equivalently, set the Pages build_type to "workflow" via the API.
+#
+# Action SHAs are pinned to FULL 40-character commit SHAs. Never use a
+# shortened SHA: GitHub no longer resolves them and the deploy will fail
+# (this caused a silent stale-deploy on the Image Colour Contrast Checker).
+# The version tag is in the trailing comment; update SHAs via Dependabot.
+#
+# ── WHAT GETS PUBLISHED ──────────────────────────────────────────────────────
+#
+# One workflow serves every project. What becomes public is decided by the
+# project's own publish list, .github/deploy-publish.txt, which the team
+# template sync creates if it is missing and never overwrites. This file is
+# identical in every project and is synced from the team template; do not
+# edit it per project.
+#
+# The logic lives in .github/scripts/deploy-publish.sh (also synced), so it
+# can be tested on its own. It checks, and stops BEFORE upload (the previous
+# live site stays up) if any check fails:
+#   - the publish list exists and every line is valid;
+#   - every listed path exists in the repository;
+#   - the assembled site holds every listed path and every "require" file;
+#   - index.html only refers to files that are in the site;
+#   - nothing internal (CLAUDE.md, .claude, .github, node_modules, ci-tools,
+#     package files, .env files, key files, shell scripts, test files and
+#     folders) is in the site, and there are no symbolic links in it.
+# After the deploy, a final step fetches the site root and every "require"
+# file from the live site.
+#
+# Projects with a build step that writes a dist/ folder publish dist/ as it
+# is. The list's include lines are not used on that path, but its "require"
+# lines and the forbidden-file scan still run against dist/. A project with a
+# package.json for tooling only and no "build" script is not a build project:
+# npm run build --if-present no-ops, no dist/ appears, and the list is used.
+#
+# See docs/patterns/github-pages-deploy.md for the list format, the checks,
+# the migration of an existing project, and post-merge live-site verification.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege: the workflow default is read-only. Each job then asks for
+# exactly what it needs. The build job runs third-party code (npm ci and the
+# project's build), so it holds no write permission and no OIDC token; only
+# the deploy job can publish.
+permissions:
+  contents: read
+
+# Only one deploy at a time. In-progress deploy is cancelled if a new push arrives.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+
+  # ── BUILD JOB ───────────────────────────────────────────────────────────────
+  # Builds (if the project has a build script) and assembles the artifact.
+  build:
+    # GitHub Pages is not available for a private repository on a free
+    # account, so on a private repository there is nothing to deploy to and
+    # this job (and the deploy job that needs it) is reported as skipped,
+    # not failed. If a private repository is on a plan that includes Pages,
+    # remove this "if" line to turn the deploy on.
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-24.04
+    # pages: read is for actions/configure-pages, which reads the Pages
+    # settings of the repository in this job. It never writes.
+    permissions:
+      contents: read
+      pages: read
+    outputs:
+      is_browser_extension: ${{ steps.archetype.outputs.is_browser_extension }}
+      is_wordpress_theme: ${{ steps.archetype.outputs.is_wordpress_theme }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          # The build job never pushes, and git status below needs no token,
+          # so no token is left in .git while npm ci and the build run.
+          persist-credentials: false
+
+      - name: Check the CI archetype
+        # Reads .github/ci-archetype, trimmed of surrounding whitespace and
+        # newlines, mirroring the equivalent step in ci.yml and
+        # accessibility.yml. A browser-extension project has no public
+        # website at all — nothing for GitHub Pages to serve — so this
+        # entire workflow is a deliberate no-op for that archetype, not a
+        # weakened deploy. See jacob-ci-archetypes.md section 2c.
+        #
+        # A wordpress-theme project is the same kind of no-op for a
+        # different reason: it has no root package.json for this job's
+        # Node setup/npm ci steps, and it is never published via GitHub
+        # Pages at all. It deploys to a real WordPress server through a
+        # separate, manual, cookie-authenticated admin upload process, so
+        # this workflow has nothing to build or publish for this archetype.
+        id: archetype
+        run: |
+          if [ -f .github/ci-archetype ]; then
+            value=$(tr -d '[:space:]' < .github/ci-archetype)
+          else
+            value=""
+          fi
+          if [ "$value" = "browser-extension" ]; then
+            echo "is_browser_extension=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_browser_extension=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$value" = "wordpress-theme" ]; then
+            echo "is_wordpress_theme=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_wordpress_theme=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Note that browser-extension projects have nothing to deploy
+        if: steps.archetype.outputs.is_browser_extension == 'true'
+        run: |
+          echo "This project's .github/ci-archetype declares browser-extension."
+          echo "A browser extension has no public website for GitHub Pages to"
+          echo "serve, so this workflow is a deliberate no-op for this archetype."
+
+      - name: Note that wordpress-theme projects have nothing to deploy
+        if: steps.archetype.outputs.is_wordpress_theme == 'true'
+        run: |
+          echo "This project's .github/ci-archetype declares wordpress-theme."
+          echo "A WordPress theme deploys to a WordPress server via a separate"
+          echo "manual admin upload process, not GitHub Pages, so this workflow"
+          echo "is a deliberate no-op for this archetype."
+
+      - name: Set up Node.js
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+        with:
+          node-version: lts/*
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        run: npm ci
+
+      - name: Build
+        # --if-present no-ops when the project has no "build" script (a
+        # bundler-free static-app project with a package.json for tooling
+        # only, e.g. Braille Reference). Without --if-present, npm exits
+        # non-zero with "Missing script: build" and the deploy fails.
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        run: npm run build --if-present
+
+      - name: Check the build did not change the workflow or the script
+        # The build runs third-party code (npm ci and the project's build
+        # script). It must not be able to rewrite the check script, the
+        # publish list or a workflow before they run. Any change under
+        # .github, including a new file, stops the job.
+        run: |
+          changes="$(git status --porcelain -- .github)"
+          if [ -n "$changes" ]; then
+            echo "::error::The build changed files under .github. The deploy is stopped so a changed check script or publish list cannot run."
+            printf '%s\n' "$changes"
+            exit 1
+          fi
+
+      - name: Assemble the deploy artifact
+        # dist/ is the template default build output folder. It exists only
+        # if the build step above produced it. In that case dist/ is
+        # published as it is, after the list's "require" lines and the
+        # forbidden-file scan are checked against it.
+        #
+        # Otherwise the site is assembled from the repository root into
+        # _site/ using the project's publish list, .github/deploy-publish.txt,
+        # as a fail-safe ALLOW-list: only the listed paths are copied, so a
+        # file nobody thought about is not published. The script anchors every
+        # path to the repository root (so scripts/ cannot match
+        # node_modules/x/scripts/), always leaves out test files and
+        # node_modules, and exits non-zero on any problem, which stops the
+        # job before the upload step.
+        id: artifact
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        run: |
+          if [ -d dist ]; then
+            bash .github/scripts/deploy-publish.sh verify dist
+            echo "path=dist" >> "$GITHUB_OUTPUT"
+          else
+            bash .github/scripts/deploy-publish.sh assemble _site
+            echo "path=_site" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure Pages
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d  # v6.0.0
+
+      - name: Upload Pages artifact
+        if: steps.archetype.outputs.is_browser_extension != 'true' && steps.archetype.outputs.is_wordpress_theme != 'true'
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
+        with:
+          path: ${{ steps.artifact.outputs.path }}
+
+  deploy:
+    needs: build
+    if: needs.build.outputs.is_browser_extension != 'true' && needs.build.outputs.is_wordpress_theme != 'true'
+    runs-on: ubuntu-24.04
+    # Only this job can publish: pages: write and id-token: write are what
+    # actions/deploy-pages needs. contents: read is for the sparse checkout.
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346  # v5.0.1
+
+      - name: Check out the publish list and the check script
+        # A sparse checkout with no stored credentials: this job needs only
+        # the project's publish list (for its "require" lines) and the script,
+        # both under .github. The default sparse mode (cone mode) also puts
+        # the files in the repository root on the runner, which is harmless
+        # here: the runner is thrown away and nothing from it is published.
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          sparse-checkout: .github
+          persist-credentials: false
+
+      - name: Check the live site
+        # The site root and every "require" file must return 200 (three
+        # tries, ten seconds apart, to allow for propagation). A 200 on
+        # /CLAUDE.md or /docs/log.md is a warning only: it is expected while
+        # a project's Pages setting is still "Deploy from a branch".
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: bash .github/scripts/deploy-publish.sh live "$PAGE_URL"
