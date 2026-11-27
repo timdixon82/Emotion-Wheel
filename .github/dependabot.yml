@@ -1,5 +1,5 @@
 # Dependabot configuration.
-# Weekly, grouped dependency updates. No root manifest, so only the CI tools and the workflows are watched.
+# Weekly, grouped dependency updates. The root package.json has no dependencies, so only the CI tools and the workflows are watched.
 version: 2
 updates:
   - package-ecosystem: github-actions
