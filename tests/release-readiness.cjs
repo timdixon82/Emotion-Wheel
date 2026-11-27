@@ -11,14 +11,14 @@ const root = path.join(__dirname, '..');
 const read = relativePath => fs.readFileSync(path.join(root, relativePath), 'utf8');
 const versionSource = read('assets/version.js');
 const app = read('index.html');
-const help = read('docs/help.html');
+const help = read('pages/help.html');
 const changelog = read('CHANGELOG.md');
 const version = versionSource.match(/APP_VERSION = '([^']+)'/)?.[1];
 
 assert.match(version || '', /^\d+\.\d+\.\d+$/, 'APP_VERSION must use major.minor.patch');
 assert.match(changelog, new RegExp(`^## ${version.replaceAll('.', '\\.')}\\n`, 'm'), 'The current version needs a changelog entry');
 
-for (const file of ['index.html', 'docs/about.html', 'docs/accessibility.html', 'docs/help.html', 'docs/licence.html', 'docs/privacy.html']) {
+for (const file of ['index.html', 'pages/about.html', 'pages/accessibility.html', 'pages/help.html', 'pages/licence.html', 'pages/privacy.html']) {
   const source = read(file);
   assert.match(source, new RegExp(`assets/version\\.js\\?v=${version.replaceAll('.', '\\.')}`), `${file} must request the current version script`);
 }

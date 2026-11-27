@@ -25,7 +25,7 @@ Your entries, optional notes and settings are saved in this browser on this devi
 
 Your saved emotion content only leaves the browser when you deliberately export a CSV or JSON backup, save or sync data to Google Drive, share a chart or table, or copy information. Clear local log removes the active log but retains recovery snapshots and sync comparison data. Clearing this site's browser data removes its local copies; it does not remove Drive files or copies on other devices. See the Privacy notice before deleting data.
 
-Read the fuller [privacy notes](docs/privacy.html) before using this for sensitive information.
+Read the fuller [privacy notes](pages/privacy.html) before using this for sensitive information.
 
 ## Getting started
 
@@ -49,7 +49,7 @@ The interface follows Tim Dixon's design system: Roboto type, navy card hierarch
 
 Choose a theme from the top-right control on wider screens or from the Menu on smaller screens. The preference is saved locally in the browser. The two muted themes are intended for people who prefer a calmer, lower-saturation experience.
 
-The rendered design and accessibility notes are in [docs/accessibility.html](docs/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
+The rendered design and accessibility notes are in [pages/accessibility.html](pages/accessibility.html), with the source notes in [docs/design-system.md](docs/design-system.md).
 
 ## Accessibility
 
@@ -70,7 +70,7 @@ The rendered design and accessibility notes are in [docs/accessibility.html](doc
 
 The optional Google Drive preview does not require a Google account during normal use. Google sign-in is prepared when you open My Data, Share My Data, Data Shared with Me or a shared link. Connect Google Drive then opens account selection in one click and requests per-file access. Ordinary Entry, Logs and Charts use needs no Google connection. Access tokens stay in memory. A sharing link contains a Drive file ID, never a token or the records themselves. Google permissions govern access to the original file; they cannot recall a previously downloaded copy.
 
- Save to Drive checks and merges your current file; Create dated backup makes a separate named copy. Automatic sync is an explicit option for your current file, with a baseline stored locally, deletion markers, conflict choices and recovery copies. Sync runs every 15 seconds while connected and pauses on reload or disconnect. Share my data grants a named recipient Viewer access, with email notification optional, then provides a link and browser sharing controls. Data Shared with Me lists received files. The header or mobile menu selects local or shared data and has a Sync On/Off button that opens the My Data sync section; connected-account details appear in My Data. Shared files are read only; their contents stay in memory. File IDs and labels are remembered locally and, when connected, merged through a separate Emotion Wheel shared files.json in the user’s own Drive. Removal markers prevent older devices from restoring removed references. Shared records are never included in that list; different accounts keep separate lists. A sync-error banner links to My Data on every page. [Help](docs/help.html) explains the complete workflow in plain language.
+ Save to Drive checks and merges your current file; Create dated backup makes a separate named copy. Automatic sync is an explicit option for your current file, with a baseline stored locally, deletion markers, conflict choices and recovery copies. Sync runs every 15 seconds while connected and pauses on reload or disconnect. Share my data grants a named recipient Viewer access, with email notification optional, then provides a link and browser sharing controls. Data Shared with Me lists received files. The header or mobile menu selects local or shared data and has a Sync On/Off button that opens the My Data sync section; connected-account details appear in My Data. Shared files are read only; their contents stay in memory. File IDs and labels are remembered locally and, when connected, merged through a separate Emotion Wheel shared files.json in the user’s own Drive. Removal markers prevent older devices from restoring removed references. Shared records are never included in that list; different accounts keep separate lists. A sync-error banner links to My Data on every page. [Help](pages/help.html) explains the complete workflow in plain language.
 
 See [Google Drive development and setup](docs/google-drive-development.md). Run `node tests/google-drive.cjs` and `node tests/google-drive-ui.cjs` alongside the existing regression checks. Mocked checks do not replace real owner/Viewer permission testing.
 
@@ -81,7 +81,7 @@ All entries, including optional notes, are included in JSON backups and full-log
 This is a static HTML, CSS, and JavaScript app. There is no build step.
 
 - Open `index.html` in a browser for a quick local check.
-- Use the HTML validator and JavaScript syntax check configured in `.github/lint-tools` when available.
+- Use the HTML validator and JavaScript syntax check configured in `ci-tools/lint-tools` when available.
 - The GitHub Actions workflows provide additional continuous integration checks.
 - Follow [the release guide](docs/releasing.md) and bump the application version for every release.
 

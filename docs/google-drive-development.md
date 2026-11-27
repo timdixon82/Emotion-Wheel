@@ -7,9 +7,9 @@ backups must keep working without a Google account or Google scripts.
 
 Test Google project: **Emotion Wheel Test**, `emotion-wheel-510615`, project number `391356585675`.
 Drive and Picker APIs have been enabled. OAuth branding is created with
-`tjdixon@gmail.com` for support and developer contact. Tim approved Google's
+`[owner account, redacted]` for support and developer contact. Tim approved Google's
 User Data Policy; the OAuth configuration is created in External / Testing mode,
-with `tjdixon@gmail.com` and `tim@dixon-net.com` added as test users. The approved Web client
+with `[owner account, redacted]` and `[second test account, redacted]` added as test users. The approved Web client
 authorises `http://localhost:8765` and the approved private Tailscale HTTPS origin described below. The approved Picker key
 is created with website restrictions `http://localhost:8765/*` and
 `https://docs.google.com/*`, and API restrictions for Drive and Picker only.
@@ -18,7 +18,7 @@ The consent configuration declares `drive.file`, `openid` and `userinfo.email`. 
 The browser credentials are configured in ignored
 `assets/google-drive-config.local.json`; no OAuth client secret is stored. Local
 configuration checks passed and the real Google sign-in library loaded. Tim
-selected `tjdixon@gmail.com` and completed Google's prompt; the app received the
+selected `[owner account, redacted]` and completed Google's prompt; the app received the
 Drive connection and enabled its controls. The owner upload/download round-trip
 passed with one synthetic Happy record. The second account opened and refreshed
 the shared backup, and a revocation test blocked further reading. The in-app browser did not expose Google's
@@ -163,7 +163,7 @@ release unchanged throughout.
 ## Local test results — 4 October 2026
 
 The initial three Node suites above, JavaScript syntax checks, HTML validation for
-`index.html` and `docs/privacy.html`, and `git diff --check` passed.
+`index.html` and `pages/privacy.html`, and `git diff --check` passed.
 
 At `http://localhost:8765`, a synthetic Happy entry with a note was recorded,
 retained after reload, found through log search, and counted correctly in charts.
@@ -193,7 +193,7 @@ still reject them, and cookies are omitted on every request. The
 Authorization header on a cross-origin redirect. Regression checks cover this
 distinction and passed after the fix.
 
-The synthetic file was then shared with `tim@dixon-net.com` as Viewer with
+The synthetic file was then shared with `[second test account, redacted]` as Viewer with
 Notify people unchecked. Drive confirmed access updated, the recipient's Viewer
 role and Restricted general access. After recipient sign-in, opening the link
 correctly requested per-file selection in Picker. Picker listed the shared
@@ -206,7 +206,7 @@ succeeded. The original cause of the earlier fetch failure was not established.
 
 Removing the recipient's Viewer grant made Refresh fail while checking access
 and cleared the shared preview. A direct Drive visit explicitly signed in as
-`tim@dixon-net.com` showed `Access denied` / `You need access`, independently
+`[second test account, redacted]` showed `Access denied` / `You need access`, independently
 confirming permission removal. Disconnecting retained exactly the one original
 synthetic local record. The app's denied refresh surfaced a network error rather
 than the tailored 403/404 message; do not claim that error classification is
@@ -279,8 +279,8 @@ files, aliases, cancellation races, owner/account labels, and confirmed Viewer
 permission requests. The live browser also verified Google email identity for both controlled accounts,
 shared Logs and Charts, and switching back to the unchanged local log. In-app
 sharing confirmed the existing synthetic file’s Viewer access for
-`tim@dixon-net.com`, with notification off. The recipient then loaded that same
-file: connected account `tim@dixon-net.com`, share owner `tjdixon@gmail.com`,
+`[second test account, redacted]`, with notification off. The recipient then loaded that same
+file: connected account `[second test account, redacted]`, share owner `[owner account, redacted]`,
 Entry disabled, and the owner-only sharing control disabled. No additional
 Drive file was uploaded. Twenty-file switching and cross-scale charts were
 verified with synthetic regression fixtures, rather than twenty real Drive files.
@@ -409,6 +409,6 @@ When the connected device needs a local data upgrade, connecting checks the exis
 
 Tim reports the phone/computer testing is complete. The separate **Emotion Wheel Production** project was created with Google-assigned ID `poetic-diorama-510718-i4`. The original project was renamed **Emotion Wheel Test**; its ID and credentials are unchanged.
 
-Production OAuth app registration exists as Emotion Wheel with `tjdixon@gmail.com` as support/developer contact and External audience initially in Testing. Tim approved its Google API Services User Data Policy. Branding links were saved for `https://emotionwheel.timdixon.net/` and `https://emotionwheel.timdixon.net/docs/privacy.html`, with authorised domain `timdixon.net`. Production APIs and restricted credentials have since been configured, as recorded below. Domain/branding verification and public audience setup remain to be checked.
+Production OAuth app registration exists as Emotion Wheel with `[owner account, redacted]` as support/developer contact and External audience initially in Testing. Tim approved its Google API Services User Data Policy. Branding links were saved for `https://emotionwheel.timdixon.net/` and `https://emotionwheel.timdixon.net/pages/privacy.html`, with authorised domain `timdixon.net`. The privacy link must also be changed to this new path in the Google Cloud console. Production APIs and restricted credentials have since been configured, as recorded below. Domain/branding verification and public audience setup remain to be checked.
 
-Production Drive and Picker APIs are enabled. A production web client and browser key were created after Tim’s approval. The web client allows only `https://emotionwheel.timdixon.net`; the key is restricted to Drive/Picker and the public site plus `https://docs.google.com/*`. Restricted public browser configuration is now in `assets/google-drive-config.json`; no client secret was retained. The declared scopes are `drive.file`, `openid` and `userinfo.email`, all listed by Google as non-sensitive. On 5 October 2026 the audience was moved to In production. Google verified and published the branding; the Verification Center confirmed no data-access verification is required for the configured non-sensitive scopes. Production sign-in was verified as tjdixon@gmail.com, without uploading records. Files authorised to the test project may need to be selected again for the production app.
+Production Drive and Picker APIs are enabled. A production web client and browser key were created after Tim’s approval. The web client allows only `https://emotionwheel.timdixon.net`; the key is restricted to Drive/Picker and the public site plus `https://docs.google.com/*`. Restricted public browser configuration is now in `assets/google-drive-config.json`; no client secret was retained. The declared scopes are `drive.file`, `openid` and `userinfo.email`, all listed by Google as non-sensitive. On 5 October 2026 the audience was moved to In production. Google verified and published the branding; the Verification Center confirmed no data-access verification is required for the configured non-sensitive scopes. Production sign-in was verified as [owner account, redacted], without uploading records. Files authorised to the test project may need to be selected again for the production app.

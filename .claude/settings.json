@@ -1,0 +1,168 @@
+{
+  "outputStyle": "tim-screenreader",
+  "permissions": {
+    "allow": [
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot",
+      "Bash(ls)",
+      "Bash(ls -*)",
+      "Bash(ls /*)",
+      "Bash(pwd)",
+      "Bash(whoami)",
+      "Bash(file *)",
+      "Bash(stat *)",
+      "Bash(wc *)",
+      "Bash(git status)",
+      "Bash(git -C * status)",
+      "Bash(git log *)",
+      "Bash(git -C * log *)",
+      "Bash(git diff *)",
+      "Bash(git -C * diff *)",
+      "Bash(git show *)",
+      "Bash(git -C * show *)",
+      "Bash(git remote -v)",
+      "Bash(git -C * remote -v)",
+      "Bash(git branch --list *)",
+      "Bash(git -C * branch --list *)",
+      "Bash(git config --list)",
+      "Bash(git -C * config --list)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr list *)",
+      "Bash(gh pr diff *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)",
+      "Bash(gh repo view *)",
+      "Bash(mkdir)",
+      "Bash(mkdir *)",
+      "Bash(bash scripts/*.sh)",
+      "Bash(bash scripts/*.sh *)",
+      "Bash(bash /Users/timdixon/Code/AgentTeam/scripts/*.sh)",
+      "Bash(bash /Users/timdixon/Code/AgentTeam/scripts/*.sh *)",
+      "Bash(grep *)",
+      "Bash(find /Users/timdixon/Code/AgentTeam/* *)",
+      "Bash(cat /Users/timdixon/Code/*)",
+      "Bash(head /Users/timdixon/Code/*)",
+      "Bash(tail /Users/timdixon/Code/*)",
+      "Bash(diff /Users/timdixon/Code/*)",
+      "Bash(cmp /Users/timdixon/Code/*)",
+      "Bash(find /Users/timdixon/Code/* *)",
+      "Bash(realpath *)",
+      "Bash(sha256sum *)",
+      "Bash(shasum *)",
+      "Bash(awk *)",
+      "Bash(sed *)",
+      "Bash(sort *)",
+      "Bash(uniq *)",
+      "Bash(cut *)",
+      "Bash(tr *)",
+      "Bash(comm *)",
+      "Bash(basename *)",
+      "Bash(dirname *)",
+      "Bash(shellcheck *)",
+      "Bash(semgrep scan *)",
+      "Bash(npm --prefix * run lint)",
+      "Bash(npm --prefix * run lint *)",
+      "Bash(chmod +x *)",
+      "Bash(cp *)",
+      "Bash(cp -R *)"
+    ],
+    "deny": [
+      "Bash(find * -exec *)",
+      "Bash(find * -delete *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f*)",
+      "Bash(git push --force-with-lease*)",
+      "Bash(git push * --force-with-lease*)",
+      "Bash(git push --delete*)",
+      "Bash(git push * --delete*)",
+      "Bash(git branch -D*)",
+      "Bash(git branch -d*)",
+      "Bash(git branch --delete*)",
+      "Bash(git filter-branch*)",
+      "Bash(git filter-repo*)",
+      "Bash(gh repo delete*)",
+      "mcp__github__delete_repository",
+      "mcp__github__delete_branch",
+      "Read(./Inputs/archive/**)",
+      "Read(./outputs/archive/**)",
+      "Read(./.understand-anything/**)",
+      "Read(./.playwright-mcp/**)",
+      "Read(./test-results/**)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|mcp__github.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-tool-use.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Write|Edit|mcp__github.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/post-tool-use.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/subagent-stop.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/user-prompt-submit.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.sh\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
