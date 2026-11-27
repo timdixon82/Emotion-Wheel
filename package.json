@@ -1,0 +1,9 @@
+{
+  "name": "emotion-wheel",
+  "version": "1.10.0",
+  "private": true,
+  "description": "Tooling manifest only. The app is static and has no build step. CI tools live in ci-tools/.",
+  "scripts": {
+    "lint": "bash ci-tools/lint.sh"
+  }
+}
