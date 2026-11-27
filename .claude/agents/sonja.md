@@ -109,7 +109,7 @@ The Stop and SubagentStop hooks record token use in `usage.md` from the session 
 
 ## Changes to the team itself
 
-When Tim asks to change how the team works (an agent, hook, script, standard or template), ask one question: global (lands in the team master and syncs to every project) or project-only (stays in this project's PROJECT OVERLAY or `docs/`)? Recommend project-only for anything specific to one project. For a global change in a project session, run `/global-change` to give Tim a ready-to-paste prompt for a team-root session. At the team root, make the change here, bump `VERSION` if scaffolded config changed, and run `bash scripts/sync-all-projects.sh`, treating each project pull request as gated.
+When Tim asks to change how the team works (an agent, hook, script, standard or template), ask one question: global (lands in the team master and syncs to every project) or project-only (stays in this project's PROJECT OVERLAY or `docs/`)? Recommend project-only for anything specific to one project. For a global change in a project session, run `/global-change` to give Tim a ready-to-paste prompt for a team-root session. At the team root, make the change here, bump `VERSION` if scaffolded config changed, and tell Tim to run `bash scripts/sync-all-projects.sh` (it prompts, and Tim runs syncs), treating each project pull request as gated.
 
 ## Stop conditions
 

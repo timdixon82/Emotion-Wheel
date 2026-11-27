@@ -131,36 +131,62 @@ fi
 # Dictionary: keys are lower-cased brief phrases; values are regexes tested
 # against $action (the original command, not scan_text).
 #
-# key[0] .. key[5] and pat[0] .. pat[5] are parallel arrays.
+# key[0] .. key[5] are the brief phrases. Bash commands are judged by
+# _lib/command_gate.py (work folder 062): it refuses any compound command
+# (operators, expansions, redirects, newlines), then tests each anchored,
+# whole-command pattern, and parses push arguments. A Bash command is never
+# tested against an MCP tool name. MCP tool calls are tested by tool name only,
+# against mcp_pat[], anchored. Refusing here means silence, so the normal
+# permission prompt runs; it is not a hard deny.
 
 key[0]="create a branch"
-pat[0]='(^| )git (branch [^- ][^ ]*|checkout -b|switch -c)( |$)|mcp__github__create_branch'
+mcp_pat[0]='^mcp__github__create_branch$'
 
 key[1]="commit to a branch"
-pat[1]='(^| )git( -C "[^"]*")? commit( |$)|mcp__github__create_or_update_file|mcp__github__push_files'
+mcp_pat[1]='^mcp__github__(create_or_update_file|push_files)$'
 
 key[2]="push a branch other than the main branch"
-pat[2]='(^| )git( -C "[^"]*")? push( |$)'
+mcp_pat[2]='^$'  # no MCP tool pushes a branch under this phrase
 
 key[3]="open a pull request"
-pat[3]='(^| )gh pr create( |$)|mcp__github__create_pull_request'
+mcp_pat[3]='^mcp__github__create_pull_request$'
 
 key[4]="comment on a pull request or an issue"
-pat[4]='(^| )gh (pr|issue) comment( |$)|mcp__github__add_issue_comment'
+mcp_pat[4]='^mcp__github__add_issue_comment$'
 
 key[5]="create an issue"
-pat[5]='(^| )gh issue create( |$)|mcp__github__create_issue'
+mcp_pat[5]='^mcp__github__create_issue$'
 
-# Exclusion: a git push targeting main or master must not be pre-approved.
-# Patterns cover:
-#   push <remote> main|master           (plain branch name)
-#   push <remote> <src>:<main|master>   (refspec with explicit target, e.g. HEAD:main)
-#   push <remote>:<main|master>         (colon-joined remote:branch shorthand)
-#   push <remote>:?HEAD:<main|master>   (colon-joined HEAD shorthand)
-_pushes_main() {
-  local cmd="$1"
-  printf '%s' "$cmd" | grep -qiE \
-    'push [^ ]* ["\x27]?(main|master)["\x27]?( |$)|push [^ ]* [^ ]*:["\x27]?(main|master)["\x27]?( |$)|push [^ ]*:["\x27]?(main|master)["\x27]?( |$)|push [^ ]*:?HEAD:["\x27]?(main|master)["\x27]?( |$)'
+# For Bash: the keys the gate allows for this exact command, e.g. " 1 2 ".
+# Fail closed: any python3 failure leaves it empty, so nothing is allowed.
+gate_ok=""
+if [ "$tool_name" = "Bash" ]; then
+  hook_cwd=$(printf '%s' "$input" | jq -r '.cwd // ""' 2>/dev/null)
+  gate_out=$(_HOOK_ACTION="$action" _HOOK_PROJECT="$CLAUDE_PROJECT_DIR" _HOOK_CWD="$hook_cwd" \
+    python3 "$(dirname "${BASH_SOURCE[0]}")/_lib/command_gate.py" 2>/dev/null)
+  case "$gate_out" in
+    "ok "*) gate_ok=" ${gate_out#ok } " ;;
+  esac
+fi
+
+# The two GitHub file-writing tools commit to a named branch. Allow them only
+# when .tool_input.branch is a string that is not main or master (any
+# refs/heads/ or heads/ form, any case). Missing or odd means prompt.
+mcp_branch_ok() {
+  local b
+  b=$(printf '%s' "$input" | jq -r 'if (.tool_input.branch | type) == "string" then .tool_input.branch else "" end' 2>/dev/null)
+  b=$(printf '%s' "$b" | tr '[:upper:]' '[:lower:]' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')
+  while :; do
+    case "$b" in
+      refs/heads/*) b="${b#refs/heads/}" ;;
+      heads/*) b="${b#heads/}" ;;
+      *) break ;;
+    esac
+  done
+  case "$b" in
+    ""|main|master|head|refs/*) return 1 ;;
+  esac
+  return 0
 }
 
 work_dir="$CLAUDE_PROJECT_DIR/.claude/work"
@@ -231,17 +257,22 @@ if [ -n "$current_id" ] && [ -f "$brief" ]; then
       matched_pat=""
       for i in 0 1 2 3 4 5; do
         if [ "$phrase" = "${key[$i]}" ]; then
-          matched_pat="${pat[$i]}"
+          matched_pat="${mcp_pat[$i]}"
           break
         fi
       done
       [ -z "$matched_pat" ] && continue
-      # Test the dictionary regex against the original action.
-      if printf '%s' "$action" | grep -qiE "$matched_pat"; then
-        # For "push a branch other than the main branch", apply the exclusion.
-        if [ "$i" -eq 2 ] && _pushes_main "$action"; then
-          continue
-        fi
+      matched=0
+      if [ "$tool_name" = "Bash" ]; then
+        case "$gate_ok" in *" $i "*) matched=1 ;; esac
+      elif printf '%s' "$tool_name" | grep -qE "$matched_pat"; then
+        matched=1
+        case "$tool_name" in
+          mcp__github__create_or_update_file|mcp__github__push_files)
+            mcp_branch_ok || matched=0 ;;
+        esac
+      fi
+      if [ "$matched" -eq 1 ]; then
         decision allow "Pre-approved in the brief for work folder $current_id."
       fi
     done <<< "$approved"

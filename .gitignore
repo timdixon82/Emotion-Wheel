@@ -10,3 +10,9 @@ assets/google-drive-config.local.json
 /lint.md
 /usage.md
 .claude/work/*/events.jsonl
+
+# Local audit trail written by a team hook, not for the repository
+.claude/work/*/github-actions-log.md
+
+# Local audit trail written by a team hook, not for the repository
+.claude/.status-rebuild.lock

@@ -231,8 +231,9 @@ run_parity_test() {
       fail=1
     fi
     local banned
-    banned="$(grep -E '"Bash\(git \*\)"|"Bash\(gh \*\)"|"Bash\(cd \*\)"|"Write\(/|"Edit\(/' \
-               "$settings" 2>/dev/null || true)"
+    # Only the allow list is checked: the ask list now holds root-anchored Edit(/...) rules.
+    banned="$(jq -r '.permissions.allow[]?' "$settings" 2>/dev/null \
+               | grep -E '^Bash\(git \*\)$|^Bash\(gh \*\)$|^Bash\(cd \*\)$|^Write\(/|^Edit\(/' || true)"
     if [ -n "$banned" ]; then
       echo "  FAIL [$label] settings.json allow-list contains banned entry: $banned"
       fail=1
@@ -467,6 +468,10 @@ done
 # .gitignore is created with just these lines.
 GITIGNORE_REQUIRED=(
   ".claude/transcripts/"
+  ".claude/work/*/events.jsonl"
+  ".claude/work/*/github-actions-log.md"
+  "/lint.md"
+  ".claude/.status-rebuild.lock"
 )
 
 _gi="$project_root/.gitignore"
