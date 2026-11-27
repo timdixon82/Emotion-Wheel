@@ -2284,6 +2284,7 @@ function clearEntryForm() {
   bucketLevel.value = '';
   renderBucketLevel();
   tagsButtons.querySelectorAll('input').forEach(input => { input.checked = false; });
+  valuesButtons.querySelectorAll('input').forEach(input => { input.checked = false; });
   newTag.value = '';
   tagStatus.textContent = '';
   sensationsButtons.querySelectorAll('input[type="checkbox"]').forEach(input => {
