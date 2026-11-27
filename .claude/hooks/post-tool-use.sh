@@ -116,6 +116,18 @@ esac
 
 [ -d "${WORK_BASE}/$current_id" ] || exit 0
 
+# Redact secrets once, before any log write (work folder 062, Fix 4). The
+# full text is redacted first and truncated afterwards, so a secret cannot be
+# cut in half. The redactor fails closed: it never returns raw text.
+action_raw="$action"
+if [ -f "${REPO_ROOT}/.claude/hooks/_lib/redact.sh" ]; then
+  # shellcheck source=/dev/null
+  source "${REPO_ROOT}/.claude/hooks/_lib/redact.sh"
+  action=$(printf '%s' "$action_raw" | redact_text)
+else
+  action='[REDACTED: redactor unavailable]'
+fi
+
 # Job 1: GitHub audit log (git and gh commands only).
 case "$tool_name" in
   mcp__github*)
@@ -124,7 +136,7 @@ case "$tool_name" in
     printf -- '- [%s] %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$tool_name" "$action" >> "$log"
     ;;
   Bash)
-    if printf '%s' "$action" | grep -qiE '(^| )(git|gh)( |$)'; then
+    if printf '%s' "$action_raw" | grep -qiE '(^| )(git|gh)( |$)'; then
       log="${WORK_BASE}/$current_id/github-actions-log.md"
       [ -f "$log" ] || printf '# GitHub actions log\n\n' > "$log"
       printf -- '- [%s] %s | %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$tool_name" "$action" >> "$log"
@@ -140,9 +152,11 @@ if [ -f "$lib" ]; then
   source "$lib"
   # Truncate long input/output summaries to 200 chars each.
   input_summary="${action:0:200}"
+  # Output: first 4096 bytes, redact, then cut to 200 characters.
   output_summary=$(printf '%s' "$input" \
     | jq -r '.tool_response.output // .tool_response.stderr // ""' 2>/dev/null \
-    | head -c 200)
+    | head -c 4096 | redact_text)
+  output_summary="${output_summary:0:200}"
   append_event "" "$tool_name" "$input_summary" "$output_summary" \
     "$exit_code" "$token_count" ""
 fi
@@ -167,7 +181,7 @@ fi
 # ---------------------------------------------------------------------
 case "$tool_name" in
   Write|Edit)
-    case "$action" in
+    case "$action_raw" in
       "${REPO_ROOT}"/.claude/work/*/brief.md \
       | "${REPO_ROOT}"/.claude/work/*/questions.md \
       | "${REPO_ROOT}"/.claude/work/*/answers.md)
@@ -200,7 +214,7 @@ esac
 # repo root (excluded from git via .gitignore).
 # ---------------------------------------------------------------------
 if [ "$tool_name" = "Write" ] && [ -n "$action" ]; then
-  wpath="$action"
+  wpath="$action_raw"
   lint_log="${REPO_ROOT}/lint.md"
   # has_recent_read: check the event stream for a recent Read of this path.
   # This is a best-effort check: we look at the last 50 events in events.jsonl.
