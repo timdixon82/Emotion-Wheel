@@ -26,9 +26,9 @@ None.
 
 ## Notes
 
-- Released 1.11.0 (tag v1.11.0, live): emotion search by name and description, descriptions for all 114 emotions with a synced Show and read descriptions setting, renamed step headings, skip links, Record before Add detail (same entry), values clear after save. No saved data format change (schema 5). Work folder .claude/work/ux-redesign/ holds the brief, requirements and architecture.
-- Open: seven new tests (data-round-trip, clear-entry-form, step-headings, emotion-descriptions, emotion-search, descriptions-panel, record-before-detail) are not run by CI because ci.yml is protected. Q-EW62 needs Tim's approval to add them.
-- Open: Q-EW63, reword log, tally and filter labels still saying Inner, Middle and Outer circle with a display mapping. Phase 1 still shows the Note box in Add detail (as before); steps 2 and 3 always show and the Selected summary is not at the top (R4, R5 follow-ups).
-- Follow-ups: long "Use X to prepare" table row button labels; stale-entry guard on Save detail; clear Save detail timer on edit and Reset; Drive tag test order; meta description on the live page; delete untracked .playwright-mcp/ folder.
-- Team master, from a team-root session: command gate hardening (MCP repository scope, git -C realpath, commit on main), exact adm-zip and basic-ftp pins in the template; then re-sync this project.
+- Released 1.11.2 (tag v1.11.2, live, GitHub Releases for 1.11.0, 1.11.1 and 1.11.2 created). Search by name and description, descriptions for all 114 emotions, Capture settings at the top with the Show and read descriptions tickbox inside it, Main feeling, More specific feeling and Most specific feeling labels (display only, CSV too). No saved data format change (schema 5). Old file types checked by Carol in a real browser.
+- Unreleased on main: version query on every local script (PR 42), project map refresh (PR 41). Ships with the next release.
+- CI: npm test now runs all 17 test files; ci.yml untouched. Gitleaks ignores one public Drive picker browser key (.gitleaksignore). Tim checked its Google Cloud limits.
+- Open follow-ups: long "Use X to prepare" table row button labels; stale-entry guard on Save detail; clear Save detail timer on edit and Reset; Drive tag test order; Phase 1 still shows the Note box in Add detail; steps 2 and 3 always show and the Selected summary is not at the top (R4, R5).
+- Team master, from a team-root session: command gate hardening, exact adm-zip and basic-ftp pins in the template; then re-sync this project (template 1.15.1 applied, master 1.15.2).
 - Tim can clear merged local branches with scripts/tidy-branches.sh.

@@ -16,3 +16,7 @@ assets/google-drive-config.local.json
 
 # Local audit trail written by a team hook, not for the repository
 .claude/.status-rebuild.lock
+
+# Local test evidence, prototypes and tool scratch, not for the repository
+/outputs/
+/.playwright-mcp/
