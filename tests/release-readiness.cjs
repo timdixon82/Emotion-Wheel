@@ -21,6 +21,11 @@ assert.match(changelog, new RegExp(`^## ${version.replaceAll('.', '\\.')}\\n`, '
 for (const file of ['index.html', 'pages/about.html', 'pages/accessibility.html', 'pages/help.html', 'pages/licence.html', 'pages/privacy.html']) {
   const source = read(file);
   assert.match(source, new RegExp(`assets/version\\.js\\?v=${version.replaceAll('.', '\\.')}`), `${file} must request the current version script`);
+  // Any local script that carries a ?v= query must carry the current version.
+  // Scripts with no query at all are left alone (theme, google-drive, shared-dataset-list).
+  for (const tag of source.match(/<script\b[^>]*\ssrc="[^"]*assets\/[^"]*\?v=[^"]*"/g) || []) {
+    assert.ok(tag.includes(`?v=${version}"`), `${file}: local script query must be ?v=${version}: ${tag}`);
+  }
 }
 
 const updateNotice = app.match(/<section hidden id="dataUpgradeDialog"[\s\S]*?<\/section>\n  <p class="intro">/)?.[0] || '';
