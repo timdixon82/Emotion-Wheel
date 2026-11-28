@@ -15,7 +15,7 @@ const detailBody = handlerBody(/\nsaveDetailButton\.addEventListener\('click', \
 const undoBody = handlerBody(/\nundoRecordButton\.addEventListener\('click', \(\) => \{([\s\S]*?)\n\}\);/);
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-// 1. Markup order: Record, then Add detail with every optional question, then capture settings (collapsed).
+// 1. Markup order: Record, then Add detail with every optional question, capture settings first (collapsed).
 {
   const at = text => { const i = html.indexOf(text); assert.ok(i > 0, `${text} not found`); return i; };
   const record = at('id="recordButton"'), reset = at('id="resetButton"');
@@ -28,7 +28,8 @@ const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
     const position = at(`id="${id}"`);
     check(`${id} comes after Record, inside Add detail`, position > record && position > detailStart && position < detailEnd);
   }
-  check('capture settings come after Add detail', capture > detailEnd);
+  check('capture settings come first in the entry area, before the search and steps', capture < at('id="emotion-search"') && capture < steps);
+  check('show descriptions tickbox sits inside capture settings', at('id="showDescriptionsBox"') > capture && at('id="descriptionsStatus"') < html.indexOf('id="phaseOneButton"'));
   check('capture settings are collapsed by default', !/<details id="capture-settings"[^>]*\bopen\b/.test(html));
   check('capture settings summary shows the current phase', /captureModeSummary\.textContent = `Capture settings — \$\{modeLabels/.test(html));
   check('Add detail starts hidden', /<section id="addDetailSection"[^>]*\bhidden\b/.test(html));
