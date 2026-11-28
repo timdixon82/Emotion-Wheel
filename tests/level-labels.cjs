@@ -33,3 +33,15 @@ const levelLabel = v => labels[v] || v;
 assert.equal(levelLabel('Middle circle'), 'More specific feeling');
 assert.equal(levelLabel('Something else'), 'Something else');
 console.log('PASS: level display names mapped, stored strings unchanged.');
+
+// No old wording in visible text (alt text, option values and code keys are excluded).
+{
+  const pages = [['index.html', html]];
+  for (const f of fs.readdirSync(path.join(__dirname, '../pages')).filter(n => n.endsWith('.html'))) {
+    pages.push([`pages/${f}`, fs.readFileSync(path.join(__dirname, '../pages', f), 'utf8')]);
+  }
+  for (const [name, src] of pages) {
+    assert.ok(!/inner[- ]circle (categor|emotion)/i.test(src), `${name}: no old inner-circle wording`);
+    assert.ok(!/inner, middle,? and outer rings/i.test(src), `${name}: no old rings wording`);
+  }
+}

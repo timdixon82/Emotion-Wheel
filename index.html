@@ -1096,7 +1096,7 @@
       <summary>Emotions by tag</summary><div class="details-content">
       <h3>Emotions by tag</h3>
       <label>Choose tag <select id="analysisTag"><option value="">All tags</option></select></label>
-      <label>Emotion detail <select id="analysisDetail"><option value="inner">Inner-circle categories</option><option value="path">Recorded emotion paths</option></select></label>
+      <label>Emotion detail <select id="analysisDetail"><option value="inner">Main feeling categories</option><option value="path">Recorded emotion paths</option></select></label>
       <p id="tagEmotionSummary" class="help" aria-live="polite"></p>
       <ul id="tagEmotionChart" class="bar-list" aria-label="Emotions for selected tag"></ul>
       <section class="scroll-table" tabindex="0" aria-label="Emotions by tag data"><table><caption>Emotions for selected tag</caption><thead><tr><th scope="col">Emotion</th><th scope="col">Entries</th><th scope="col">Percentage of matching entries</th></tr></thead><tbody id="tagEmotionBody"></tbody></table></section>
@@ -1107,7 +1107,7 @@
       <h3>Emotions by bucket level</h3>
       <label>Filter by tag <select id="bucketAnalysisTag"><option value="">All tags</option></select></label>
       <p id="bucketEmotionSummary" class="help" aria-live="polite"></p>
-      <p class="help">Cell numbers show entry counts; darker cells mean more entries. The highest level is full. Select a cell to review matching logs. Detailed emotions are grouped under their inner-circle category.</p>
+      <p class="help">Cell numbers show entry counts; darker cells mean more entries. The highest level is full. Select a cell to review matching logs. Detailed emotions are grouped under their main feeling category.</p>
       <section class="scroll-table log-table" tabindex="0" aria-label="Emotion and bucket level heatmap. Scroll horizontally to see every level."><table><caption>Emotion counts at each bucket level</caption><thead id="bucketEmotionHead"></thead><tbody id="bucketEmotionBody"></tbody></table></section>
       </div>
     </details>
@@ -1173,13 +1173,13 @@
           Show
           <select id="timeMeasure">
             <option value="total">All emotion records</option>
-            <option value="inner">Inner-circle emotions</option>
+            <option value="inner">Main feelings</option>
           </select>
         </label>
         <label><input type="checkbox" id="includeEmptyPeriods" checked> Include periods with no entries</label>
       </div>
       <fieldset id="innerSeriesControls" class="series-controls" hidden>
-        <legend>Inner-circle emotions to show</legend>
+        <legend>Main feelings to show</legend>
         <div class="checkbox-grid">
           <label><input type="checkbox" id="showAllInnerSeries" checked> Show all</label>
           <label><input type="checkbox" class="inner-series" value="Anger" checked><span class="emotion-swatch" style="--emotion-colour:#7f1d1d" aria-hidden="true"></span> Anger</label>
@@ -3411,7 +3411,7 @@ function renderMetricCards(metrics) {
 
 function renderTimeTable(timeRows, timeSeries) {
   timeChartCaption.textContent = timeMeasure.value === 'inner'
-    ? 'Inner-circle emotion counts grouped by date'
+    ? 'Main feeling counts grouped by date'
     : 'Emotion records grouped by date';
   clearNode(timeChartHead);
   const headerRow = document.createElement('tr');
@@ -3495,9 +3495,9 @@ function renderCharts() {
   const emptyTimeRows = timeRows.filter(row => row.count === 0);
   const peak = [...timeRows].sort((first, second) => second.count - first.count)[0];
   const groupingLabel = timeGrouping.options[timeGrouping.selectedIndex].textContent.toLowerCase();
-  const measureLabel = timeMeasure.value === 'inner' ? 'inner-circle emotion counts' : 'emotion records';
+  const measureLabel = timeMeasure.value === 'inner' ? 'main feeling counts' : 'emotion records';
   timeChartSummary.textContent = timeMeasure.value === 'inner' && !timeSeries.length
-    ? 'Choose at least one inner-circle emotion to display.'
+    ? 'Choose at least one main feeling to display.'
     : timeRows.length
     ? `${chartEntries.length} ${measureLabel} in ${getChartPeriodLabel()}, across ${timeRows.length} ${groupingLabel} period${timeRows.length === 1 ? '' : 's'}: ${nonEmptyTimeRows.length} with entries${includeEmptyPeriods.checked ? ` and ${emptyTimeRows.length} with none` : ''}. ${peak.count ? `${peak.label} is the busiest period with ${peak.count}.` : ''}`
     : `No dates available for ${getChartPeriodLabel()}.`;
