@@ -4,7 +4,7 @@ Published versions and changes. The app version appears in its footer. Record sc
 
 ## Unreleased
 
-- Internal tidy: the Google Drive script now uses the same cache query as the other scripts, and the release check covers every local script tag. No saved data format changed.
+- Internal tidy: the Google Drive script now uses the same cache query as the other scripts, every local script now carries the same cache query, and the release check requires it on every local script tag. No saved data format changed.
 
 ## 1.11.2
 
