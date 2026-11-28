@@ -236,6 +236,9 @@
       .search-results mark { background: Mark; color: MarkText; forced-color-adjust: none; }
       .result-select[aria-pressed="true"] { border: 5px double ButtonText; }
     }
+    .desc-panel { min-height: 3.5rem; margin: 1rem 0 0; padding: .75rem 1rem; border: 2px solid var(--border); border-left-width: 8px; background: var(--panel); color: var(--text); }
+    .desc-panel[hidden] { display: none; }
+    .desc-panel:empty::before { content: "Move to a button to see its description here."; color: var(--muted); }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions, .field-row, .checkbox-grid, .radio-row {
       display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0;
@@ -260,6 +263,7 @@
     fieldset { border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
     legend { font-weight: 700; padding: 0 .25rem; }
     label { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; }
+    .descriptions-toggle { min-height: 44px; }
     .stacked-label { display: inline-flex; align-items: flex-start; flex-direction: column; gap: .25rem; min-width: min(100%, 14rem); }
     input[type="checkbox"], input[type="radio"] { width: 1.4rem; height: 1.4rem; flex: 0 0 auto; }
     .intensity-control {
@@ -700,15 +704,15 @@
     <details id="full-table">
       <summary>Emotion reference table</summary>
       <div class="details-content">
-        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The columns follow the rings of the emotion wheel: the inner circle is the main feeling, the middle circle is more specific and the outer circle is most specific. The round colour marker identifies the main feeling (inner-circle category); the written label carries the same information without relying on colour.</p>
+        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The columns follow the rings of the emotion wheel: the inner circle is the main feeling, the middle circle is more specific and the outer circle is most specific. The round colour marker identifies the main feeling (inner-circle category); the written label carries the same information without relying on colour. The Description column describes the most specific emotion in each row. It is for reading only and is not part of the shared or copied table.</p>
 
-        <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
+        <div class="scroll-table" tabindex="0" role="group" aria-labelledby="wheelTableCaption">
           <table>
-            <caption>All available emotion paths</caption>
-            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th></tr></thead>
+            <caption id="wheelTableCaption">All available emotion paths</caption>
+            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Description</th></tr></thead>
             <tbody id="wheelTableBody"></tbody>
           </table>
-        </section>
+        </div>
 <div class="actions">
           <button type="button" id="shareWheelButton">Share full table</button>
           <button type="button" id="copyWheelHtmlButton">Copy as HTML table</button>
@@ -740,21 +744,34 @@
     <p><button type="button" id="searchShowAll" hidden>Show all results</button></p>
   </section>
 
+  <div class="step">
+    <label class="descriptions-toggle"><input type="checkbox" id="showDescriptionsBox" aria-describedby="showDescriptionsHelp"> Show and read descriptions</label>
+    <p id="showDescriptionsHelp" class="help">Ticked, each step shows a description panel and screen readers read each description with its button.</p>
+    <p class="help">With the box clear, descriptions are hidden and not read. Search results always include descriptions, whatever this box says. The choice is remembered.</p>
+    <p id="descriptionsStatus" class="visually-hidden" role="status"></p>
+  </div>
+
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading" tabindex="-1">Step 1: Main feeling</h2>
     <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
+    <p id="innerPanel" class="desc-panel" aria-hidden="true" hidden></p>
+    <div id="innerDescs" class="visually-hidden" aria-hidden="true" hidden></div>
   </section>
 
   <section class="step" aria-labelledby="middle-heading">
     <h2 id="middle-heading">Step 2: More specific (optional)</h2>
     <p id="middleHelp">Choose a main feeling first.</p>
     <div id="middleButtons" class="button-grid" role="group" aria-labelledby="middle-heading" aria-describedby="middleHelp"></div>
+    <p id="middlePanel" class="desc-panel" aria-hidden="true" hidden></p>
+    <div id="middleDescs" class="visually-hidden" aria-hidden="true" hidden></div>
   </section>
 
   <section class="step" aria-labelledby="outer-heading">
     <h2 id="outer-heading">Step 3: Most specific (optional)</h2>
     <p id="outerHelp">Choose a more specific emotion first.</p>
     <div id="outerButtons" class="button-grid" role="group" aria-labelledby="outer-heading" aria-describedby="outerHelp"></div>
+    <p id="outerPanel" class="desc-panel" aria-hidden="true" hidden></p>
+    <div id="outerDescs" class="visually-hidden" aria-hidden="true" hidden></div>
   </section>
 
   <section class="status" aria-labelledby="current-selection-heading">
@@ -1527,6 +1544,13 @@ const selectionText = document.getElementById('selectionText');
 const liveStatus = document.getElementById('liveStatus');
 const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
+const showDescriptionsBox = document.getElementById('showDescriptionsBox');
+const descriptionsStatus = document.getElementById('descriptionsStatus');
+const descriptionSteps = ['inner', 'middle', 'outer'].map(name => ({
+  buttons: document.getElementById(`${name}Buttons`),
+  panel: document.getElementById(`${name}Panel`),
+  pool: document.getElementById(`${name}Descs`)
+}));
 const innerHeading = document.getElementById('inner-heading');
 const recordButton = document.getElementById('recordButton');
 const resetButton = document.getElementById('resetButton');
@@ -2014,6 +2038,7 @@ function makeButton(label, onClick, selected, category) {
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = label;
+  button.dataset.label = label;
   button.setAttribute('aria-pressed', selected ? 'true' : 'false');
   if (category && emotionColours[category]) {
     button.classList.add('emotion-category');
@@ -2021,6 +2046,65 @@ function makeButton(label, onClick, selected, category) {
   }
   button.addEventListener('click', onClick);
   return button;
+}
+
+// Descriptions are display only: looked up by full path key, never saved or exported.
+function getEmotionDescription(path) {
+  if (typeof EMOTION_DESCRIPTIONS !== 'object' || !EMOTION_DESCRIPTIONS) return '';
+  if (!Object.prototype.hasOwnProperty.call(EMOTION_DESCRIPTIONS, path)) return '';
+  const text = EMOTION_DESCRIPTIONS[path];
+  return typeof text === 'string' ? text : '';
+}
+
+function refreshStepPanel(level) {
+  const parts = [selectedInner, selectedMiddle, selectedOuter].slice(0, level);
+  descriptionSteps[level - 1].panel.textContent = parts.every(Boolean) ? getEmotionDescription(parts.join('|')) : '';
+}
+
+// Shows or hides the panels and the hidden description texts, and adds or removes
+// aria-describedby on every step button, to match the saved setting.
+function applyDescriptionSetting() {
+  const on = getShowDescriptions();
+  showDescriptionsBox.checked = on;
+  descriptionSteps.forEach(step => {
+    step.pool.hidden = !on;
+    step.panel.hidden = !on || !step.buttons.firstElementChild;
+    step.buttons.querySelectorAll('button[data-description-id]').forEach(button => {
+      if (on) button.setAttribute('aria-describedby', button.dataset.descriptionId);
+      else button.removeAttribute('aria-describedby');
+    });
+  });
+}
+
+// Builds the description texts and the panel behaviour for one step after its buttons are drawn.
+function decorateStep(level) {
+  const step = descriptionSteps[level - 1];
+  clearNode(step.pool);
+  const texts = new Map();
+  [...step.buttons.querySelectorAll('button')].forEach((button, index) => {
+    const path = [selectedInner, selectedMiddle].slice(0, level - 1).concat(button.dataset.label || '').join('|');
+    const text = getEmotionDescription(path);
+    texts.set(button, text);
+    // Back to the focused button's text if one has focus, otherwise the selection's.
+    // Moving the pointer from a button onto the panel itself leaves the text alone.
+    const restore = event => {
+      if (event && event.relatedTarget === step.panel) return;
+      if (texts.has(document.activeElement)) step.panel.textContent = texts.get(document.activeElement);
+      else refreshStepPanel(level);
+    };
+    button.addEventListener('focus', () => { step.panel.textContent = text; });
+    button.addEventListener('mouseenter', () => { step.panel.textContent = text; });
+    button.addEventListener('blur', restore);
+    button.addEventListener('mouseleave', restore);
+    if (!text) return;
+    const description = document.createElement('p');
+    description.id = `stepDescription-${level}-${index}`;
+    description.textContent = text;
+    step.pool.appendChild(description);
+    button.dataset.descriptionId = description.id;
+  });
+  refreshStepPanel(level);
+  applyDescriptionSetting();
 }
 
 function normalizeTags(tags) {
@@ -2289,12 +2373,14 @@ function renderInner() {
       focusFirstButton(middleButtons, recordButton);
     }, selectedInner === label, label));
   });
+  decorateStep(1);
 }
 
 function renderMiddle() {
   clearNode(middleButtons);
   if (!selectedInner) {
     middleHelp.textContent = 'Choose a main feeling first.';
+    decorateStep(2);
     return;
   }
   const options = unique(emotions.filter(row => row[0] === selectedInner).map(row => row[1]));
@@ -2307,12 +2393,14 @@ function renderMiddle() {
       focusFirstButton(outerButtons, recordButton);
     }, selectedMiddle === label, selectedInner));
   });
+  decorateStep(2);
 }
 
 function renderOuter() {
   clearNode(outerButtons);
   if (!selectedInner || !selectedMiddle) {
     outerHelp.textContent = 'Choose a more specific emotion first, or record the current selection.';
+    decorateStep(3);
     return;
   }
   const options = emotions
@@ -2326,6 +2414,7 @@ function renderOuter() {
       focusNextRecordingControl();
     }, selectedOuter === label, selectedInner));
   });
+  decorateStep(3);
 }
 
 function renderSelection() {
@@ -3566,6 +3655,9 @@ function renderFullEmotionTable() {
       td.appendChild(useButton);
       tr.appendChild(td);
     });
+    const descriptionCell = document.createElement('td');
+    descriptionCell.textContent = getEmotionDescription(row.join('|'));
+    tr.appendChild(descriptionCell);
     wheelTableBody.appendChild(tr);
   }
   labelTableCells(wheelTableBody);
@@ -4882,6 +4974,24 @@ initializeChartFilters();
 applyTheme(getInitialTheme());
 expectedIntensity.value = actualIntensity.value = String(Math.ceil(ratingScale / 2));
 renderAll();
+// The descriptions file loads after this script, so draw the steps and table again once the page has loaded.
+// It is skipped when focus is already on a step button, so the redraw never drops the user's focus.
+function redrawAfterLoad() {
+  if (descriptionSteps.some(step => step.buttons.contains(document.activeElement))) return;
+  renderInner(); renderMiddle(); renderOuter(); renderFullEmotionTable();
+}
+document.addEventListener('DOMContentLoaded', redrawAfterLoad);
+showDescriptionsBox.addEventListener('change', () => {
+  const on = showDescriptionsBox.checked;
+  try {
+    setShowDescriptions(on);
+    // The checkbox state is announced by the checkbox itself, so only a failure is announced here.
+    descriptionsStatus.textContent = '';
+  } catch (error) {
+    descriptionsStatus.textContent = `The setting could not be saved. ${error.message}`;
+  }
+  applyDescriptionSetting();
+});
 scheduleLoggingStreakRefresh();
 checkLocalDataSchema();
 </script>
