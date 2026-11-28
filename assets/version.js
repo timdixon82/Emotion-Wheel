@@ -1,5 +1,5 @@
 (function showApplicationVersion() {
-  const APP_VERSION = '1.11.1';
+  const APP_VERSION = '1.11.2';
 
   function renderVersion() {
     document.querySelectorAll('[data-app-version]').forEach(element => {
