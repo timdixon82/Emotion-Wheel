@@ -2,6 +2,12 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## Unreleased
+
+- The step headings now read Step 2: More specific feeling (optional) and Step 3: Most specific feeling (optional).
+- Added a short page description for search engines and link previews.
+- No saved data format changed.
+
 ## 1.11.1
 
 Released 28 November 2026.

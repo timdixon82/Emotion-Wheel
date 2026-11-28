@@ -7,8 +7,8 @@ const html = fs.readFileSync(path.join(__dirname, '../index.html'), 'utf8');
 
 const heading = id => html.match(new RegExp(`<h2 id="${id}"[^>]*>([^<]*)</h2>`))?.[1];
 assert.equal(heading('inner-heading'), 'Step 1: Main feeling');
-assert.equal(heading('middle-heading'), 'Step 2: More specific (optional)');
-assert.equal(heading('outer-heading'), 'Step 3: Most specific (optional)');
+assert.equal(heading('middle-heading'), 'Step 2: More specific feeling (optional)');
+assert.equal(heading('outer-heading'), 'Step 3: Most specific feeling (optional)');
 
 for (const old of ['Step 1: Inner circle', 'Step 2: Middle circle', 'Step 3: Outer circle']) {
   assert.ok(!html.includes(old), `old heading text gone: ${old}`);
