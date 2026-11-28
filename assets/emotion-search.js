@@ -129,10 +129,10 @@
   // Every path of the emotions rows, in table order: a parent, then its
   // children, depth first (as long as the rows are grouped, as they are).
   function buildEntries(rows) {
-    var entries = [], seen = {};
+    var entries = [], seen = new Set();
     function add(path, level) {
-      if (seen[path]) { return; }
-      seen[path] = true;
+      if (seen.has(path)) { return; }
+      seen.add(path);
       var parts = path.split('|');
       entries.push({ path: path, parts: parts, level: level, name: parts[parts.length - 1] });
     }

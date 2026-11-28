@@ -206,7 +206,7 @@
     .confirmation h2 { margin-top: 0; }
     .empty-action { margin-top: .75rem; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
-    #middle-heading:focus, #outer-heading:focus, #inner-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    #middle-heading:focus, #outer-heading:focus, #inner-heading:focus, #search-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     .search-field { display: block; }
     .search-field label { display: flex; }
     #searchInput { width: 100%; max-width: 40rem; min-height: 3rem; padding: .5rem; font: inherit; color: var(--text); background: var(--button); border: 2px solid var(--border); border-radius: .5rem; }
@@ -723,7 +723,7 @@
       <div class="search-field">
         <label for="searchInput">Find an emotion</label>
         <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Results update about a second after you stop typing.</p>
-        <input type="search" id="searchInput" autocomplete="off" aria-describedby="searchHelp">
+        <input type="search" id="searchInput" maxlength="200" autocomplete="off" aria-describedby="searchHelp">
         <button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips</button>
         <div id="searchTips" class="help" hidden>
           <p>Searching an emotion also lists its sub-items. Matching words are highlighted. When a description that contains your search is open, it starts with a sentence naming the matched words.</p>

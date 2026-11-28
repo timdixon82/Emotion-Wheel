@@ -312,7 +312,12 @@ check('live: highlight text equals the description for every description', live.
 // ---------------------------------------------------------------------
 const version = fs.readFileSync(path.join(root, 'assets/version.js'), 'utf8').match(/APP_VERSION = '([^']+)'/)[1];
 check('search form has role search and a name', /<form role="search" id="searchForm" aria-label="Find an emotion">/.test(html) && !/<form role="search"[^>]*aria-labelledby/.test(html));
-check('search input is type search with a label and described by help', /<label for="searchInput">Find an emotion<\/label>/.test(html) && /<input type="search" id="searchInput" autocomplete="off" aria-describedby="searchHelp">/.test(html) && /<p id="searchHelp" class="help">/.test(html));
+check('search input is type search with a label and described by help', /<label for="searchInput">Find an emotion<\/label>/.test(html) && /<input type="search" id="searchInput" maxlength="200" autocomplete="off" aria-describedby="searchHelp">/.test(html) && /<p id="searchHelp" class="help">/.test(html));
+check('search input has maxlength 200', /<input type="search" id="searchInput"[^>]*maxlength="200"/.test(html));
+check('search heading has the 4px focus ring', /#search-heading:focus[^{]*\{ outline: 4px solid var\(--focus\)/.test(html));
+const oddRows = [['constructor', 'a', 'b'], ['__proto__', 'c', 'd'], ['constructor', 'a', 'b']];
+const oddPaths = ES.buildEntries(oddRows).map(e => e.path);
+check('buildEntries keeps paths named constructor and __proto__, once each', oddPaths.length === 6 && oddPaths.includes('constructor') && oddPaths.includes('__proto__') && oddPaths.includes('__proto__|c|d'));
 const helpText = html.match(/<p id="searchHelp" class="help">([^<]*)<\/p>/)[1];
 check('the input description is one or two short sentences', helpText.split('. ').length <= 2 && helpText.split(/\s+/).length <= 30);
 check('Search tips is a collapsed disclosure button with the detail outside the description', /<button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips<\/button>/.test(html) && /<div id="searchTips" class="help" hidden>/.test(html) && /Down Arrow enters the results/.test(html.match(/<div id="searchTips"[\s\S]*?<\/div>/)[0]) && /\.search-tips-button \{ min-height: 2\.75rem/.test(html));
