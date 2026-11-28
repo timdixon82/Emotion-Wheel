@@ -6,7 +6,7 @@ The current version has one source of truth: `APP_VERSION` in `assets/version.js
 
 For every release:
 
-1. Update `APP_VERSION` in `assets/version.js`.
+1. Update `APP_VERSION` in `assets/version.js`, and change the `?v=` query on every local script tag in `index.html` and `pages/*.html` to match. The release readiness check fails if any local script is missed.
 2. Use a patch increase for fixes, a minor increase for backward-compatible features, or a major increase for breaking changes.
 3. Run the repository and accessibility checks, including `node tests/release-readiness.cjs`. This verifies the update notice, Help page, version-script cache references, changelog entry and schema-update safeguards for the version being released. The release-tag workflow also runs the record and capture-settings backwards-compatibility tests.
 4. Commit the version change with the release changes.
