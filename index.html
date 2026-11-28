@@ -617,6 +617,85 @@
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
     <p id="loggingStreak" class="logging-streak" hidden></p>
+    <details id="capture-settings" class="settings-panel">
+      <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
+      <div class="details-content">
+        <div class="settings-group" role="group" aria-labelledby="descriptionsGroupLabel">
+          <p id="descriptionsGroupLabel"><strong>Descriptions</strong></p>
+          <label class="descriptions-toggle"><input type="checkbox" id="showDescriptionsBox" aria-describedby="showDescriptionsHelp"> Show and read descriptions</label>
+          <p id="showDescriptionsHelp" class="help">Ticked, each step shows a description panel and screen readers read each description with its button.</p>
+          <p class="help">With the box clear, descriptions are hidden and not read. Search results always include descriptions, whatever this box says. The choice is remembered.</p>
+          <p id="descriptionsStatus" class="visually-hidden" role="status"></p>
+        </div>
+        <p class="help">Choose how much detail to record.</p>
+        <ul class="help">
+          <li><strong>Phase 1:</strong> Record just the emotion.</li>
+          <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
+          <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
+          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the values or character strengths that mattered in the moment.</li>
+          <li><strong>Custom:</strong> Choose which questions to include.</li>
+        </ul>
+        <div class="actions" role="group" aria-label="Choose how much detail to record">
+          <button type="button" id="phaseOneButton">Phase 1</button>
+          <button type="button" id="phaseTwoButton">Phase 2</button>
+          <button type="button" id="phaseThreeButton">Phase 3</button>
+          <button type="button" id="phaseFourButton">Phase 4</button>
+          <button type="button" id="customButton">Custom</button>
+        </div>
+        <div id="customSettingsPanel" class="optional-panel" hidden>
+          <fieldset>
+            <legend>Questions to include</legend>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" id="collectAppropriate"> Emotion is appropriate</label>
+              <label><input type="checkbox" id="collectExpectedIntensity"> Expected emotion level</label>
+              <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
+              <label><input type="checkbox" id="collectSensations"> How your body feels</label>
+              <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
+              <label><input type="checkbox" id="collectValues"> Values and character strengths</label>
+              <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
+          <h3 id="valuesSettingsHeading">Your main values and character strengths</h3>
+          <p id="valuesSettingsHelp" class="help">Choose one or more frameworks, then choose up to five items from each framework to show when you record an emotion. They are saved only in this browser with their framework and category for later reflection.</p>
+          <p class="help">Explore the frameworks before choosing: <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es personal values</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA character strengths</a>. Emotion Wheel does not connect to or share data with either site.</p>
+          <div id="valueFrameworkButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
+          <p id="valuesSelectionStatus" class="help" role="status"></p>
+          <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
+        </section>
+
+        <details id="advanced-settings" class="settings-panel">
+          <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
+          <div class="details-content">
+            <label for="ratingScale">Rating scale</label>
+            <select id="ratingScale" aria-describedby="ratingScaleHelp">
+              <option value="5">1–5</option>
+              <option value="10">1–10</option>
+            </select>
+            <p id="ratingScaleHelp" class="help">Choose ratings out of 5 or 10 for emotion strength and your emotional bucket. This applies whichever phase you use.</p>
+            <p class="help">If you have saved records, you’ll be asked to save a backup and confirm before their ratings are changed.</p>
+            <p id="ratingScaleStatus" role="status"></p>
+            <section hidden id="ratingScaleConfirmation" class="optional-panel" aria-labelledby="ratingScaleHeading" aria-describedby="ratingScaleWarning">
+              <h3 id="ratingScaleHeading" tabindex="-1">Change rating scale</h3>
+              <p id="ratingScaleWarning"></p>
+              <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
+              <p id="ratingScaleExample"></p>
+              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
+              <button type="button" id="downloadBeforeScaleChange">Download backup</button>
+              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
+              <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
+              <p id="ratingScaleConversionStatus" role="status"></p>
+              <div class="actions">
+                <button type="button" id="confirmScaleChange" disabled>Confirm and change scale</button>
+                <button type="button" id="cancelScaleChange">Cancel</button>
+              </div>
+            </section>
+          </div>
+        </details>
+      </div>
+    </details>
 
     <details id="visual-wheel" class="wheel-figure">
       <summary>View the visual emotion wheel</summary>
@@ -676,13 +755,6 @@
     <ul id="searchResults" class="search-results" role="list" aria-label="Matching emotions" hidden></ul>
     <p><button type="button" id="searchShowAll" hidden>Show all results</button></p>
   </section>
-
-  <div class="step">
-    <label class="descriptions-toggle"><input type="checkbox" id="showDescriptionsBox" aria-describedby="showDescriptionsHelp"> Show and read descriptions</label>
-    <p id="showDescriptionsHelp" class="help">Ticked, each step shows a description panel and screen readers read each description with its button.</p>
-    <p class="help">With the box clear, descriptions are hidden and not read. Search results always include descriptions, whatever this box says. The choice is remembered.</p>
-    <p id="descriptionsStatus" class="visually-hidden" role="status"></p>
-  </div>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading" tabindex="-1">Step 1: Main feeling</h2>
@@ -827,79 +899,6 @@
     </div>
     <p id="detailStatus" role="status"></p>
   </section>
-
-    <details id="capture-settings" class="settings-panel">
-      <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
-      <div class="details-content">
-        <p class="help">Choose how much detail to record.</p>
-        <ul class="help">
-          <li><strong>Phase 1:</strong> Record just the emotion.</li>
-          <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
-          <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
-          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the values or character strengths that mattered in the moment.</li>
-          <li><strong>Custom:</strong> Choose which questions to include.</li>
-        </ul>
-        <div class="actions" role="group" aria-label="Choose how much detail to record">
-          <button type="button" id="phaseOneButton">Phase 1</button>
-          <button type="button" id="phaseTwoButton">Phase 2</button>
-          <button type="button" id="phaseThreeButton">Phase 3</button>
-          <button type="button" id="phaseFourButton">Phase 4</button>
-          <button type="button" id="customButton">Custom</button>
-        </div>
-        <div id="customSettingsPanel" class="optional-panel" hidden>
-          <fieldset>
-            <legend>Questions to include</legend>
-            <div class="checkbox-grid">
-              <label><input type="checkbox" id="collectAppropriate"> Emotion is appropriate</label>
-              <label><input type="checkbox" id="collectExpectedIntensity"> Expected emotion level</label>
-              <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
-              <label><input type="checkbox" id="collectSensations"> How your body feels</label>
-              <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
-              <label><input type="checkbox" id="collectValues"> Values and character strengths</label>
-              <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
-            </div>
-          </fieldset>
-        </div>
-
-        <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
-          <h3 id="valuesSettingsHeading">Your main values and character strengths</h3>
-          <p id="valuesSettingsHelp" class="help">Choose one or more frameworks, then choose up to five items from each framework to show when you record an emotion. They are saved only in this browser with their framework and category for later reflection.</p>
-          <p class="help">Explore the frameworks before choosing: <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es personal values</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA character strengths</a>. Emotion Wheel does not connect to or share data with either site.</p>
-          <div id="valueFrameworkButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
-          <p id="valuesSelectionStatus" class="help" role="status"></p>
-          <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
-        </section>
-
-        <details id="advanced-settings" class="settings-panel">
-          <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
-          <div class="details-content">
-            <label for="ratingScale">Rating scale</label>
-            <select id="ratingScale" aria-describedby="ratingScaleHelp">
-              <option value="5">1–5</option>
-              <option value="10">1–10</option>
-            </select>
-            <p id="ratingScaleHelp" class="help">Choose ratings out of 5 or 10 for emotion strength and your emotional bucket. This applies whichever phase you use.</p>
-            <p class="help">If you have saved records, you’ll be asked to save a backup and confirm before their ratings are changed.</p>
-            <p id="ratingScaleStatus" role="status"></p>
-            <section hidden id="ratingScaleConfirmation" class="optional-panel" aria-labelledby="ratingScaleHeading" aria-describedby="ratingScaleWarning">
-              <h3 id="ratingScaleHeading" tabindex="-1">Change rating scale</h3>
-              <p id="ratingScaleWarning"></p>
-              <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
-              <p id="ratingScaleExample"></p>
-              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
-              <button type="button" id="downloadBeforeScaleChange">Download backup</button>
-              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
-              <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
-              <p id="ratingScaleConversionStatus" role="status"></p>
-              <div class="actions">
-                <button type="button" id="confirmScaleChange" disabled>Confirm and change scale</button>
-                <button type="button" id="cancelScaleChange">Cancel</button>
-              </div>
-            </section>
-          </div>
-        </details>
-      </div>
-    </details>
   </section>
 
   <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copyFallbackHeading" hidden tabindex="-1">
