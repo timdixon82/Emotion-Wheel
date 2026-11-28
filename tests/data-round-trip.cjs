@@ -13,12 +13,12 @@ const canon = value => JSON.stringify(value, (key, item) => item && typeof item 
 const withoutExportedAt = value => { const copy = clone(value); delete copy.exportedAt; return copy; };
 
 // Read the real code out of index.html, as tests/google-drive-sync.cjs does.
-const constant = name => (html.match(new RegExp(`^const ${name} = [\\s\\S]*?;$`, 'm')) || assert.fail(`const ${name} not found in index.html`))[0];
-const func = name => (html.match(new RegExp(`^function ${name}\\([\\s\\S]*?\\n}`, 'm')) || assert.fail(`function ${name} not found in index.html`))[0];
-const constants = ['storageKey', 'dataSchemaVersion', 'schemaVersionKey', 'settingsKey', 'defaultTags', 'valueFrameworks', 'valueCatalog', 'defaultSettings'].map(constant);
-const functions = ['parseLocalDataset', 'serializeDataset', 'dataSchemaMatches', 'normalizeSettings', 'normalizeTags', 'normalizeValues', 'valueKey',
+const constant = (name, src = html) => (src.match(new RegExp(`^const ${name} = [\\s\\S]*?;$`, 'm')) || assert.fail(`const ${name} not found in index.html`))[0];
+const func = (name, src = html) => (src.match(new RegExp(`^function ${name}\\([\\s\\S]*?\\n}`, 'm')) || assert.fail(`function ${name} not found in index.html`))[0];
+const constantNames = ['storageKey', 'dataSchemaVersion', 'schemaVersionKey', 'settingsKey', 'defaultTags', 'valueFrameworks', 'valueCatalog', 'defaultSettings'];
+const functionNames = ['parseLocalDataset', 'serializeDataset', 'dataSchemaMatches', 'normalizeSettings', 'normalizeTags', 'normalizeValues', 'valueKey',
   'isPhaseOneSettings', 'isPhaseTwoSettings', 'getAvailableTags', 'getIntensityComparison', 'getRecordedLevel', 'getSelectionLevel',
-  'ensureEntryIdentity', 'migrateLocalDataset', 'applyRecordingRatings', 'getRecordingAlignment', 'saveLog', 'loadRatingScale', 'normalizeLoadedEntry', 'getBackupEntriesFromText', 'getBackupSnapshot', 'applyDriveSyncSnapshot', 'loadSettings', 'saveSettings'].map(func);
+  'ensureEntryIdentity', 'migrateLocalDataset', 'applyRecordingRatings', 'getRecordingAlignment', 'saveLog', 'loadRatingScale', 'normalizeLoadedEntry', 'getBackupEntriesFromText', 'getBackupSnapshot', 'applyDriveSyncSnapshot', 'loadSettings', 'saveSettings', 'getShowDescriptions', 'setShowDescriptions'];
 const glue = `
 let ratingScale = 5, captureSettings = {}, logEntries = [], editingEntry = null, pendingRatingScaleChange = null;
 let selectedInner = null, selectedMiddle = null, selectedOuter = null;
@@ -29,7 +29,8 @@ function __get() { return { captureSettings, logEntries, ratingScale }; }
 function __select(inner, middle, outer) { selectedInner = inner; selectedMiddle = middle; selectedOuter = outer; }
 `;
 
-function makeApp() {
+function makeApp(src = html) {
+  const constants = constantNames.map(name => constant(name, src)), functions = functionNames.map(name => func(name, src));
   const store = new Map();
   const ctx = vm.createContext({
     crypto: require('node:crypto').webcrypto, Date, JSON,
@@ -298,6 +299,58 @@ console.log('PASS: newer schema and unsupported or mismatched scale are refused 
     const named = clone(nullSide); named.entries[1].outer = 'Ashamed';
     assert.equal(reconcile(nullSide, nullSide, named).entries[1].outer, 'Ashamed');
     console.log('PASS: null versus empty string is not an edit or conflict in Drive reconcile; real edits still conflict; stored values kept.');
+  }
+
+  // 5. showDescriptions: stored as true or absent, never false (addendum 1, section 5).
+  {
+    const withKey = clone(backupFixture); withKey.settings.showDescriptions = true;
+    const oldHtml = html.replace(/\n  \/\/ showDescriptions is stored only as true[\s\S]*?else delete normalized\.showDescriptions;/, '');
+    assert.notEqual(oldHtml, html, 'old-code simulation strips the new normalizeSettings rule');
+    const oldApp = makeApp(oldHtml);
+    // Old code keeps and re-saves the key with no other change.
+    const oldParsed = oldApp.ctx.getBackupEntriesFromText(JSON.stringify(withKey));
+    oldApp.ctx.__set(oldApp.ctx.normalizeSettings(clone(withKey.settings)), oldParsed.validEntries, oldParsed.ratingScale);
+    const oldSaved = JSON.parse(JSON.stringify(oldApp.ctx.getBackupSnapshot()));
+    assert.equal(oldSaved.settings.showDescriptions, true, 'old code keeps the key');
+    assert.equal(canon(withoutExportedAt(oldSaved)), canon(Object.assign(withoutExportedAt(withKey), { entries: withKey.entries.map(asNormalised) })), 'old code re-saves the file with no churn');
+    // New code reads the file the old code saved: identical.
+    assert.equal(canon(withoutExportedAt(backupRoundTrip(oldSaved))), canon(withoutExportedAt(oldSaved)), 'new code reads old-saved file unchanged');
+    // Old code applies a Drive snapshot with the key: stored settings keep it.
+    const driveWithKey = clone(driveFixture); driveWithKey.settings.showDescriptions = true;
+    for (const [label, application] of [['old', oldApp], ['new', makeApp()]]) {
+      application.store.set(application.keys.schema, '5'); application.store.set(application.keys.log, readFixture('local-log-schema5.json'));
+      const parsed = application.ctx.getBackupEntriesFromText(JSON.stringify(driveFixture));
+      application.ctx.__set(application.ctx.normalizeSettings(clone(driveFixture.settings)), parsed.validEntries, parsed.ratingScale);
+      const expectedLocal = JSON.parse(JSON.stringify(application.ctx.getBackupSnapshot()));
+      application.ctx.applyDriveSyncSnapshot(driveWithKey, expectedLocal);
+      assert.equal(JSON.parse(application.store.get(application.keys.settings)).showDescriptions, true, `${label} code stores the Drive settings key`);
+    }
+    // Absent, false and non-boolean values are stored as absent; only true is kept.
+    const { ctx: current } = makeApp();
+    for (const value of [undefined, false, 'true', 1, null, {}, []]) {
+      assert(!('showDescriptions' in current.normalizeSettings({ showDescriptions: value })), `${JSON.stringify(value)} is dropped`);
+    }
+    assert.equal(current.normalizeSettings({ showDescriptions: true }).showDescriptions, true);
+    // Helpers and a toggle round trip: on then off returns the stored settings byte-identical.
+    const app = makeApp();
+    app.store.set(app.keys.settings, JSON.stringify(backupFixture.settings));
+    app.store.set(app.keys.schema, '5'); app.store.set(app.keys.log, readFixture('local-log-schema5.json'));
+    app.ctx.__set(app.ctx.loadSettings(), [], 5);
+    const startText = app.store.get(app.keys.settings);
+    assert.equal(app.ctx.getShowDescriptions(), false, 'absent means off');
+    app.ctx.setShowDescriptions(true);
+    assert.equal(app.ctx.getShowDescriptions(), true);
+    assert.equal(JSON.parse(app.store.get(app.keys.settings)).showDescriptions, true);
+    assert(Object.keys(JSON.parse(app.store.get(app.keys.settings))).pop() === 'showDescriptions', 'key is added last');
+    assert.equal(app.ctx.loadSettings().showDescriptions, true, 'reload keeps the preference');
+    app.ctx.setShowDescriptions(false);
+    assert.equal(app.store.get(app.keys.settings), startText, 'toggle on then off is byte-identical');
+    app.ctx.setShowDescriptions('yes');
+    assert.equal(app.ctx.getShowDescriptions(), false, 'a non-boolean value never turns it on');
+    // No description text reaches any output.
+    app.ctx.setShowDescriptions(true);
+    assert(!/description/i.test(app.store.get(app.keys.settings).replace('showDescriptions', '')), 'no description text stored');
+    console.log('PASS: showDescriptions is stored as true or absent, and old and new code carry it unchanged.');
   }
 
   // 4. Stored level text. Heading renames must never touch these strings.

@@ -27,6 +27,18 @@
     const { exportedAt, driveSync, ...data } = snapshot;
     return { ...data, entries: [...snapshot.entries].sort((a, b) => String(a.id).localeCompare(String(b.id))) };
   }
+  // showDescriptions (true or absent) is merged last-writer-wins, apart from the rest of settings, so toggling it never raises a conflict.
+  const isObject = value => Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+  // A missing base is allowed; a missing or malformed local or remote settings block uses the unchanged whole-block path.
+  const settingsAreObjects = (base, left, right) => isObject(left) && isObject(right) && (base === undefined || isObject(base));
+  function mergeSettings(pick, base, left, right) {
+    const split = settings => { const { showDescriptions, ...rest } = settings || {}; return [rest, showDescriptions === true]; };
+    const [baseRest, baseFlag] = split(base), [leftRest, leftFlag] = split(left), [rightRest, rightFlag] = split(right);
+    // A missing base block merges the rest exactly as before: undefined, not an empty object.
+    const merged = pick(base === undefined ? undefined : baseRest, leftRest, rightRest, 'settings');
+    const flag = leftFlag === rightFlag ? leftFlag : leftFlag === baseFlag ? rightFlag : rightFlag === baseFlag ? leftFlag : leftFlag;
+    return flag ? { ...merged, showDescriptions: true } : merged;
+  }
   function reconcile(base, local, remote, options = {}) {
     const collect = options.collect;
     function pick(baseValue,localValue,remoteValue,name) {
@@ -78,7 +90,8 @@
     const merged = {};
     for (const key of new Set([...Object.keys(ancestor || {}), ...Object.keys(left), ...Object.keys(right)])) {
       if (key === 'entries' || key === 'tags') continue;
-      merged[key] = !['version','schemaVersion','ratingScale','settings'].includes(key) && left[key] === undefined ? right[key] : pick(ancestor?.[key], left[key], right[key], key);
+      merged[key] = key === 'settings' && settingsAreObjects(ancestor?.settings, left.settings, right.settings) ? mergeSettings(pick, ancestor?.settings, left.settings, right.settings) :
+        !['version','schemaVersion','ratingScale','settings'].includes(key) && left[key] === undefined ? right[key] : pick(ancestor?.[key], left[key], right[key], key);
     }
     merged.entries = entries.sort((a,b) => String(a.id).localeCompare(String(b.id)));
     merged.tags = pick(ancestor?.tags, left.tags || [], right.tags || [], 'the tag list');
