@@ -267,23 +267,37 @@ console.log('PASS: newer schema and unsupported or mismatched scale are refused 
     console.log('PASS: Drive merge of two different versions: local only, remote only, both same, both different, add and delete.');
   }
 
-  // 3c. Known issue, documented not fixed: the app writes null for an unused middle or outer, but normalizeLoadedEntry
-  // (backup load, Drive apply) turns null into an empty string. Reconcile compares exactly, so null and '' are different.
+  // 3c. The app writes null for an unused middle or outer, but normalizeLoadedEntry (backup load, Drive apply) turns null
+  // into an empty string. Reconcile compares null, undefined and '' in middle or outer as equal and never rewrites a stored value.
   {
     const nullSide = clone(driveFixture);                 // record 2 has outer: null (as the app writes it)
     const emptySide = clone(driveFixture); emptySide.entries[1].outer = '';   // same record after normalisation
     assert.equal(nullSide.entries[1].outer, null);
-    // With a base equal to one side, the other side's null or '' counts as an edit and silently wins. No conflict is raised.
+    // A null versus empty string difference is not an edit: no conflict, and the stored value already there is kept.
     const adopted = reconcile(nullSide, nullSide, emptySide);
-    assert.equal(adopted.entries[1].outer, '', 'CURRENT BEHAVIOUR: a null versus empty string difference is treated as a real remote edit');
-    // Both sides different from the base in this way is a conflict the user would see for a change they never made.
+    assert.equal(adopted.entries[1].outer, null, 'a null versus empty string difference is not a remote edit; the local stored value is kept');
     const base = clone(driveFixture); base.entries[1].comment = 'older';
-    const conflicting = () => reconcile(base, emptySide, nullSide);
-    assert.throws(conflicting, error => error.code === 'sync-conflict', 'CURRENT BEHAVIOUR: null on one side and empty string on the other, with a different base, is a spurious conflict');
-    // First sync with no base: same pair is a conflict too.
-    assert.throws(() => reconcile(null, emptySide, nullSide), error => error.code === 'sync-conflict', 'CURRENT BEHAVIOUR: no base, null versus empty string is a spurious conflict');
-    assert.deepEqual(getConflicts(null, emptySide, nullSide).map(item => item.key), ['record 00000000-0000-4000-8000-000000000002']);
-    console.log('PASS: null versus empty string reconcile behaviour pinned (it registers as an edit or conflict).');
+    assert.doesNotThrow(() => reconcile(base, emptySide, nullSide), 'null versus empty string with a different base is not a conflict');
+    assert.doesNotThrow(() => reconcile(null, emptySide, nullSide), 'no base: null versus empty string is not a conflict');
+    assert.deepEqual(getConflicts(null, emptySide, nullSide).map(item => item.key), []);
+    // The merged output keeps whichever stored value was already there (the local side when both are equal in meaning).
+    assert.equal(reconcile(base, emptySide, nullSide).entries[1].outer, '');
+    assert.equal(reconcile(base, nullSide, emptySide).entries[1].outer, null);
+    // Middle behaves the same way, and undefined counts as equal too.
+    const midNull = clone(driveFixture); midNull.entries[1].middle = null;
+    const midEmpty = clone(driveFixture); midEmpty.entries[1].middle = '';
+    assert.doesNotThrow(() => reconcile(null, midNull, midEmpty));
+    const outerUndef = clone(driveFixture); outerUndef.entries[1].outer = undefined;
+    assert.doesNotThrow(() => reconcile(null, outerUndef, emptySide));
+    // A genuine edit to a different field on both sides still conflicts, even with a null versus empty string difference.
+    const editA = clone(nullSide); editA.entries[1].comment = 'Mine';
+    const editB = clone(emptySide); editB.entries[1].comment = 'Theirs';
+    assert.throws(() => reconcile(nullSide, editA, editB), error => error.code === 'sync-conflict');
+    assert.deepEqual(getConflicts(nullSide, editA, editB).map(item => item.key), ['record 00000000-0000-4000-8000-000000000002']);
+    // A real change of the value (null to a name) is still an edit.
+    const named = clone(nullSide); named.entries[1].outer = 'Ashamed';
+    assert.equal(reconcile(nullSide, nullSide, named).entries[1].outer, 'Ashamed');
+    console.log('PASS: null versus empty string is not an edit or conflict in Drive reconcile; real edits still conflict; stored values kept.');
   }
 
   // 4. Stored level text. Heading renames must never touch these strings.

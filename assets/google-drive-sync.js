@@ -4,7 +4,8 @@
   const canonical = value => JSON.stringify(sort(value));
   function sort(value) {
     if (Array.isArray(value)) return value.map(sort);
-    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, sort(value[key])]));
+    // Comparison only: in a record, null, undefined and '' for middle or outer are equal. Stored values are never changed.
+    if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, ('inner' in value && (key === 'middle' || key === 'outer') && (value[key] === null || value[key] === undefined)) ? '' : sort(value[key])]));
     return value;
   }
   function conflict(message) { const error = new Error(message); error.code = 'sync-conflict'; throw error; }
