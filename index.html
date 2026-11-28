@@ -13,7 +13,7 @@
   <script src="assets/theme.js"></script>
   <script src="assets/version.js?v=1.10.0" defer></script>
   <script src="assets/google-drive.js" defer></script>
-  <script src="assets/google-drive-sync.js" defer></script>
+  <script src="assets/google-drive-sync.js?v=1.10.0" defer></script>
   <script src="assets/shared-dataset-list.js" defer></script>
   <script src="assets/google-drive-ui.js?v=1.7.0" defer></script>
   <script data-goatcounter="https://emotionwheel.goatcounter.com/count" async src="https://gc.zgo.at/count.js" integrity="sha384-2UjvVpptg4JlEVgJI2PdscrjOjPcil/4F1ZvIMJ81CShQnEDSlPI+l4PfogvTLYi" crossorigin="anonymous"></script>
@@ -109,6 +109,7 @@
       background: var(--bg); color: var(--text); border: 2px solid var(--focus);
       padding: .75rem 1rem; z-index: 10;
     }
+    #inner-heading:focus, #current-selection-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     .skip-link:focus { transform: translateY(0); outline: 4px solid var(--focus); outline-offset: 2px; }
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; color: var(--heading); }
@@ -1741,6 +1742,8 @@ function selectAppView(selectedButton, focusContent = false) {
     else view.button.removeAttribute('aria-current');
   });
   entryPanel.hidden = currentAppView !== 'entry';
+  // The Record skip link only makes sense when the Entry panel is showing.
+  document.getElementById('skipToRecord').hidden = currentAppView !== 'entry';
   reviewPanel.hidden = !['logs', 'charts'].includes(currentAppView);
   logsPanel.hidden = currentAppView !== 'logs';
   chartsPanel.hidden = currentAppView !== 'charts';
@@ -4590,7 +4593,15 @@ closeFallbackButton.addEventListener('click', () => {
 document.getElementById('skipToRecord').addEventListener('click', event => {
   event.preventDefault();
   // Record is disabled until an emotion is chosen, and a disabled button cannot take focus, so fall back to its heading.
-  (recordButton.disabled ? document.getElementById('current-selection-heading') : recordButton).focus();
+  if (!recordButton.disabled) { recordButton.focus(); return; }
+  document.getElementById('current-selection-heading').focus();
+  // Clear first so the same message is announced again if the link is used twice.
+  liveStatus.textContent = '';
+  setTimeout(() => {
+    liveStatus.textContent = getReviewDataset()
+      ? 'Record is unavailable while reviewing a shared dataset'
+      : 'Record is unavailable until you choose an emotion';
+  }, 50);
 });
 
 recordButton.addEventListener('click', () => {

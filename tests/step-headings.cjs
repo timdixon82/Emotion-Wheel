@@ -24,6 +24,20 @@ assert.ok(body.indexOf(links[1][0]) < body.indexOf('<header'), 'both skip links 
 for (const [, id] of links) assert.match(html, new RegExp(`id="${id}"`), `skip target #${id} exists`);
 assert.match(html, /<main id="main-content" tabindex="-1">/, 'main is programmatically focusable');
 
+// Record skip link is hidden outside the Entry view.
+assert.match(html, /getElementById\('skipToRecord'\)\.hidden = currentAppView !== 'entry'/, 'Record skip link hidden outside Entry view');
+
+// Disabled Record gives a polite status message, for both cases.
+assert.match(html, /<p id="liveStatus" aria-live="polite"/, 'status region is polite');
+assert.ok(html.includes('Record is unavailable until you choose an emotion'), 'no-selection message');
+assert.ok(html.includes('Record is unavailable while reviewing a shared dataset'), 'review dataset message');
+
+// Focused headings use the page focus ring.
+assert.match(html, /#inner-heading:focus, #current-selection-heading:focus \{ outline: 4px solid var\(--focus\)/, 'heading focus ring');
+
+// Drive sync script is cache-busted like version.js.
+assert.match(html, /assets\/google-drive-sync\.js\?v=\d+\.\d+\.\d+"/, 'sync script has version query');
+
 // Stored level strings in code are unchanged.
 for (const level of ["'Inner circle'", "'Middle circle'", "'Outer circle'"]) {
   assert.ok(html.includes(`return ${level};`), `stored level ${level} still returned by code`);
