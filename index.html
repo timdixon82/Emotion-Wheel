@@ -110,6 +110,7 @@
       padding: .75rem 1rem; z-index: 10;
     }
     #inner-heading:focus, #current-selection-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    #addDetailHeading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     .skip-link:focus { transform: translateY(0); outline: 4px solid var(--focus); outline-offset: 2px; }
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; color: var(--heading); }
@@ -254,12 +255,16 @@
       text-decoration: none; display: inline-flex; align-items: center;
     }
     button:hover, a.button:hover { background: var(--panel); }
-    button:focus, a.button:focus, input:focus, select:focus {
+    button:focus, a.button:focus, a:focus, input:focus, select:focus, textarea:focus, summary:focus {
       outline: 4px solid var(--focus); outline-offset: 2px;
     }
     button[aria-pressed="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
     button.danger { border-color: var(--danger); }
     button:disabled { opacity: .55; cursor: not-allowed; }
+    #recordButton[aria-disabled="true"] { opacity: .55; cursor: not-allowed; }
+    /* Selected step buttons show a tick and a thicker double border as well as aria-pressed, so colour is not the only cue. */
+    .button-grid button[aria-pressed="true"] { border-width: 4px; border-style: double; padding: calc(.75rem - 2px) calc(1rem - 2px); }
+    .button-grid button[aria-pressed="true"]::before { content: "\2713\00a0" / ""; }
     fieldset { border: 1px solid var(--border); border-radius: .5rem; padding: 1rem; margin: 1rem 0; }
     legend { font-weight: 700; padding: 0 .25rem; }
     label { display: inline-flex; align-items: center; gap: .5rem; min-height: 2.75rem; }
@@ -611,79 +616,7 @@
   <p class="intro">Record your emotions and explore patterns over time.</p>
 
   <section id="entryPanel" class="workspace-panel" aria-label="Entry" tabindex="-1">
-    <p id="loggingStreak" class="logging-streak" role="status" aria-live="polite" hidden></p>
-    <details id="capture-settings" class="settings-panel">
-      <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
-      <div class="details-content">
-        <p class="help">Choose how much detail to record.</p>
-        <ul class="help">
-          <li><strong>Phase 1:</strong> Record just the emotion.</li>
-          <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
-          <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
-          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the values or character strengths that mattered in the moment.</li>
-          <li><strong>Custom:</strong> Choose which questions to include.</li>
-        </ul>
-        <div class="actions" role="group" aria-label="Choose how much detail to record">
-          <button type="button" id="phaseOneButton">Phase 1</button>
-          <button type="button" id="phaseTwoButton">Phase 2</button>
-          <button type="button" id="phaseThreeButton">Phase 3</button>
-          <button type="button" id="phaseFourButton">Phase 4</button>
-          <button type="button" id="customButton">Custom</button>
-        </div>
-        <div id="customSettingsPanel" class="optional-panel" hidden>
-          <fieldset>
-            <legend>Questions to include</legend>
-            <div class="checkbox-grid">
-              <label><input type="checkbox" id="collectAppropriate"> Emotion is appropriate</label>
-              <label><input type="checkbox" id="collectExpectedIntensity"> Expected emotion level</label>
-              <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
-              <label><input type="checkbox" id="collectSensations"> How your body feels</label>
-              <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
-              <label><input type="checkbox" id="collectValues"> Values and character strengths</label>
-              <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
-            </div>
-          </fieldset>
-        </div>
-
-        <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
-          <h3 id="valuesSettingsHeading">Your main values and character strengths</h3>
-          <p id="valuesSettingsHelp" class="help">Choose one or more frameworks, then choose up to five items from each framework to show when you record an emotion. They are saved only in this browser with their framework and category for later reflection.</p>
-          <p class="help">Explore the frameworks before choosing: <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es personal values</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA character strengths</a>. Emotion Wheel does not connect to or share data with either site.</p>
-          <div id="valueFrameworkButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
-          <p id="valuesSelectionStatus" class="help" role="status" aria-live="polite"></p>
-          <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
-        </section>
-
-        <details id="advanced-settings" class="settings-panel">
-          <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
-          <div class="details-content">
-            <label for="ratingScale">Rating scale</label>
-            <select id="ratingScale" aria-describedby="ratingScaleHelp">
-              <option value="5">1–5</option>
-              <option value="10">1–10</option>
-            </select>
-            <p id="ratingScaleHelp" class="help">Choose ratings out of 5 or 10 for emotion strength and your emotional bucket. This applies whichever phase you use.</p>
-            <p class="help">If you have saved records, you’ll be asked to save a backup and confirm before their ratings are changed.</p>
-            <p id="ratingScaleStatus" role="status" aria-live="polite"></p>
-            <section hidden id="ratingScaleConfirmation" class="optional-panel" aria-labelledby="ratingScaleHeading" aria-describedby="ratingScaleWarning">
-              <h3 id="ratingScaleHeading" tabindex="-1">Change rating scale</h3>
-              <p id="ratingScaleWarning"></p>
-              <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
-              <p id="ratingScaleExample"></p>
-              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
-              <button type="button" id="downloadBeforeScaleChange">Download backup</button>
-              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
-              <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
-              <p id="ratingScaleConversionStatus" role="status" aria-live="polite"></p>
-              <div class="actions">
-                <button type="button" id="confirmScaleChange" disabled>Confirm and change scale</button>
-                <button type="button" id="cancelScaleChange">Cancel</button>
-              </div>
-            </section>
-          </div>
-        </details>
-      </div>
-    </details>
+    <p id="loggingStreak" class="logging-streak" hidden></p>
 
     <details id="visual-wheel" class="wheel-figure">
       <summary>View the visual emotion wheel</summary>
@@ -779,6 +712,29 @@
     <p id="selectionText" class="result">No emotion selected yet.</p>
     <p id="liveStatus" aria-live="polite" aria-atomic="true">Start by choosing a main feeling.</p>
 
+    <div class="actions entry-actions" role="group" aria-label="Entry actions">
+      <button type="button" id="recordButton" disabled>Record this emotion</button>
+      <button type="button" id="resetButton">Reset selection</button>
+    </div>
+  </section>
+
+  <section id="recordConfirmation" class="confirmation" aria-labelledby="recordConfirmationHeading" aria-describedby="recordConfirmationText recordedAlignment dailyLogCongratulations" tabindex="-1" hidden>
+    <h2 id="recordConfirmationHeading">Emotion recorded</h2>
+    <p id="recordConfirmationText">Your emotion was saved on this device.</p>
+    <p id="recordedAlignment" class="alignment" hidden></p>
+    <p id="dailyLogCongratulations" class="daily-log-congratulations" hidden></p>
+    <p><a href="#addDetailHeading" id="skipToAddDetail" class="button" hidden>Skip to Add detail</a></p>
+    <div class="actions">
+      <button type="button" id="undoRecordButton">Undo</button>
+      <button type="button" id="recordAgainButton">Record another like this</button>
+      <button type="button" id="newEntryButton">Start a new entry</button>
+    </div>
+  </section>
+
+  <section id="addDetailSection" class="status" aria-labelledby="addDetailHeading" hidden>
+    <h2 id="addDetailHeading" tabindex="-1">Add detail (optional)</h2>
+    <p id="addDetailIntro" class="help">These answers are saved with the emotion when you press Record this emotion.</p>
+
     <div id="appropriatePanel" class="optional-panel" hidden>
       <fieldset>
         <legend>Emotion is appropriate</legend>
@@ -813,8 +769,8 @@
             </div>
           </div>
         </div>
-        <p id="intensityAlignment" class="alignment" role="status" aria-live="polite" aria-atomic="true">Aligned</p>
-        <p id="intensityValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+        <p id="intensityAlignment" class="alignment" role="status" aria-atomic="true">Aligned</p>
+        <p id="intensityValueStatus" class="visually-hidden" role="status" aria-atomic="true"></p>
       </fieldset>
     </div>
 
@@ -835,7 +791,7 @@
         <label for="newTag">Create a tag</label>
         <input type="text" id="newTag" maxlength="60" placeholder="New tag name">
         <button type="button" id="addTagButton">Add and select tag</button>
-        <p id="tagStatus" role="status" aria-live="polite"></p>
+        <p id="tagStatus" role="status"></p>
       </fieldset>
     </div>
     <div id="valuesPanel" class="optional-panel" hidden>
@@ -855,7 +811,7 @@
           <output id="bucketLevelValue" class="intensity-value" for="bucketLevel">3 out of 5</output>
           <button type="button" id="increaseBucketLevel" aria-label="Increase emotion bucket level">+</button>
         </div>
-        <p id="bucketValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+        <p id="bucketValueStatus" class="visually-hidden" role="status" aria-atomic="true"></p>
       </fieldset>
     </div>
 
@@ -866,23 +822,84 @@
       <textarea id="entryComment" class="comment-input" maxlength="1000" aria-describedby="entryCommentHelp" placeholder="For example: I was preparing for an important meeting."></textarea>
     </section>
 
-    <div class="actions entry-actions" role="group" aria-label="Entry actions">
-      <button type="button" id="recordButton" disabled>Record this emotion</button>
-      <button type="button" id="resetButton">Reset selection</button>
+    <div class="actions" id="saveDetailActions" hidden>
+      <button type="button" id="saveDetailButton">Save detail</button>
     </div>
+    <p id="detailStatus" role="status"></p>
   </section>
 
-  <section id="recordConfirmation" class="confirmation" aria-labelledby="recordConfirmationHeading" aria-describedby="recordConfirmationText recordedAlignment dailyLogCongratulations" tabindex="-1" hidden>
-    <h2 id="recordConfirmationHeading">Emotion recorded</h2>
-    <p id="recordConfirmationText">Your emotion was saved on this device.</p>
-    <p id="recordedAlignment" class="alignment" hidden></p>
-    <p id="dailyLogCongratulations" class="daily-log-congratulations" hidden></p>
-    <div class="actions">
-      <button type="button" id="undoRecordButton">Undo</button>
-      <button type="button" id="recordAgainButton">Record another like this</button>
-      <button type="button" id="newEntryButton">Start a new entry</button>
-    </div>
-  </section>
+    <details id="capture-settings" class="settings-panel">
+      <summary id="captureModeSummary">Capture settings — Phase 1: Emotion only</summary>
+      <div class="details-content">
+        <p class="help">Choose how much detail to record.</p>
+        <ul class="help">
+          <li><strong>Phase 1:</strong> Record just the emotion.</li>
+          <li><strong>Phase 2:</strong> Also record how strong the emotion feels, whether it fits the situation and how your body feels.</li>
+          <li><strong>Phase 3:</strong> Everything in Phase 2, plus tags, such as Work or Family, and how full your emotional bucket feels.</li>
+          <li><strong>Phase 4:</strong> Everything in Phase 3, plus the values or character strengths that mattered in the moment.</li>
+          <li><strong>Custom:</strong> Choose which questions to include.</li>
+        </ul>
+        <div class="actions" role="group" aria-label="Choose how much detail to record">
+          <button type="button" id="phaseOneButton">Phase 1</button>
+          <button type="button" id="phaseTwoButton">Phase 2</button>
+          <button type="button" id="phaseThreeButton">Phase 3</button>
+          <button type="button" id="phaseFourButton">Phase 4</button>
+          <button type="button" id="customButton">Custom</button>
+        </div>
+        <div id="customSettingsPanel" class="optional-panel" hidden>
+          <fieldset>
+            <legend>Questions to include</legend>
+            <div class="checkbox-grid">
+              <label><input type="checkbox" id="collectAppropriate"> Emotion is appropriate</label>
+              <label><input type="checkbox" id="collectExpectedIntensity"> Expected emotion level</label>
+              <label><input type="checkbox" id="collectActualIntensity"> Actual emotion level</label>
+              <label><input type="checkbox" id="collectSensations"> How your body feels</label>
+              <label><input type="checkbox" id="collectTags"> Tags, such as Work or Family</label>
+              <label><input type="checkbox" id="collectValues"> Values and character strengths</label>
+              <label><input type="checkbox" id="collectBucketLevel"> How full your emotional bucket feels</label>
+            </div>
+          </fieldset>
+        </div>
+
+        <section id="valuesSettingsPanel" class="optional-panel" hidden aria-labelledby="valuesSettingsHeading">
+          <h3 id="valuesSettingsHeading">Your main values and character strengths</h3>
+          <p id="valuesSettingsHelp" class="help">Choose one or more frameworks, then choose up to five items from each framework to show when you record an emotion. They are saved only in this browser with their framework and category for later reflection.</p>
+          <p class="help">Explore the frameworks before choosing: <a href="https://personalvalu.es/" target="_blank" rel="noopener noreferrer">PersonalValu.es personal values</a> or <a href="https://www.viacharacter.org/character-strengths" target="_blank" rel="noopener noreferrer">VIA character strengths</a>. Emotion Wheel does not connect to or share data with either site.</p>
+          <div id="valueFrameworkButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
+          <p id="valuesSelectionStatus" class="help" role="status"></p>
+          <div id="valuesSettingsButtons" aria-describedby="valuesSettingsHelp valuesSelectionStatus"></div>
+        </section>
+
+        <details id="advanced-settings" class="settings-panel">
+          <summary id="advancedSettingsSummary">Advanced settings — ratings out of 5</summary>
+          <div class="details-content">
+            <label for="ratingScale">Rating scale</label>
+            <select id="ratingScale" aria-describedby="ratingScaleHelp">
+              <option value="5">1–5</option>
+              <option value="10">1–10</option>
+            </select>
+            <p id="ratingScaleHelp" class="help">Choose ratings out of 5 or 10 for emotion strength and your emotional bucket. This applies whichever phase you use.</p>
+            <p class="help">If you have saved records, you’ll be asked to save a backup and confirm before their ratings are changed.</p>
+            <p id="ratingScaleStatus" role="status"></p>
+            <section hidden id="ratingScaleConfirmation" class="optional-panel" aria-labelledby="ratingScaleHeading" aria-describedby="ratingScaleWarning">
+              <h3 id="ratingScaleHeading" tabindex="-1">Change rating scale</h3>
+              <p id="ratingScaleWarning"></p>
+              <p>This changes all saved emotion strength and bucket ratings. Anything you did not record stays Not recorded.</p>
+              <p id="ratingScaleExample"></p>
+              <p>Save an original backup to this device or Google Drive before changing your ratings.</p>
+              <button type="button" id="downloadBeforeScaleChange">Download backup</button>
+              <button type="button" id="driveBeforeScaleChange">Connect Google and back up</button>
+              <p><label><input type="checkbox" id="scaleBackupSaved" disabled> I have saved the backup</label></p>
+              <p id="ratingScaleConversionStatus" role="status"></p>
+              <div class="actions">
+                <button type="button" id="confirmScaleChange" disabled>Confirm and change scale</button>
+                <button type="button" id="cancelScaleChange">Cancel</button>
+              </div>
+            </section>
+          </div>
+        </details>
+      </div>
+    </details>
   </section>
 
   <section id="copyFallbackPanel" class="export-panel copy-panel" aria-labelledby="copyFallbackHeading" hidden tabindex="-1">
@@ -942,7 +959,7 @@
         </details>
       </div>
       <div class="actions"><button type="button" id="clearLogFilters">Clear filters</button></div>
-      <p id="logFilterStatus" class="help" role="status" aria-live="polite"></p>
+      <p id="logFilterStatus" class="help" role="status"></p>
     </fieldset>
 
     <details open>
@@ -1542,6 +1559,17 @@ const middleButtons = document.getElementById('middleButtons');
 const outerButtons = document.getElementById('outerButtons');
 const selectionText = document.getElementById('selectionText');
 const liveStatus = document.getElementById('liveStatus');
+const addDetailSection = document.getElementById('addDetailSection');
+const addDetailIntro = document.getElementById('addDetailIntro');
+const saveDetailActions = document.getElementById('saveDetailActions');
+const saveDetailButton = document.getElementById('saveDetailButton');
+const detailStatus = document.getElementById('detailStatus');
+const skipToAddDetail = document.getElementById('skipToAddDetail');
+// Set while Save detail redraws, so the redraw does not announce the selection status again.
+let keepLiveStatus = false;
+let liveStatusTimer;
+let detailStatusTimer;
+let closedDetailNote = '';
 const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
 const showDescriptionsBox = document.getElementById('showDescriptionsBox');
@@ -1763,6 +1791,8 @@ let pendingLoadMode = 'merge';
 let lastRecordedEntry = null;
 let deletedEntryForUndo = null;
 let editingEntry = null;
+// The saved entry that Add detail updates after Record. It is never the selection; a new selection ends it.
+let detailEntry = null;
 let currentAppView = 'entry';
 let pendingRatingScaleChange = null;
 
@@ -2347,6 +2377,8 @@ function focusFirstVisibleControl(panel) {
 }
 
 function focusNextRecordingControl(fallback = recordButton) {
+  // Add detail comes after Record, so focus goes to Record, not into the questions, unless an entry is being edited.
+  if (!editingEntry) return fallback.focus();
   if (focusFirstVisibleControl(appropriatePanel)) return;
   if (focusFirstVisibleControl(expectedIntensityPanel)) return;
   if (focusFirstVisibleControl(actualIntensityPanel)) return;
@@ -2366,6 +2398,7 @@ function renderInner() {
   clearNode(innerButtons);
   unique(emotions.map(row => row[0])).forEach(label => {
     innerButtons.appendChild(makeButton(label, () => {
+      closeAddDetail();
       selectedInner = label;
       selectedMiddle = null;
       selectedOuter = null;
@@ -2387,6 +2420,7 @@ function renderMiddle() {
   middleHelp.textContent = `${options.length} more specific emotions available for ${selectedInner}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     middleButtons.appendChild(makeButton(label, () => {
+      closeAddDetail();
       selectedMiddle = label;
       selectedOuter = null;
       renderAll();
@@ -2409,6 +2443,7 @@ function renderOuter() {
   outerHelp.textContent = `${options.length} most specific emotions available for ${selectedInner} then ${selectedMiddle}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     outerButtons.appendChild(makeButton(label, () => {
+      closeAddDetail();
       selectedOuter = label;
       renderAll();
       focusNextRecordingControl();
@@ -2417,10 +2452,31 @@ function renderOuter() {
   decorateStep(3);
 }
 
+// Every route that starts a new selection calls this first. Returns the note to add to the status.
+function closeAddDetail() {
+  if (!detailEntry) return '';
+  closedDetailNote = ` Add detail for ${getEntryPathLabel(detailEntry)} is closed.${hasUnsavedDetail() ? ' Unsaved details were discarded.' : ''}`;
+  detailEntry = null;
+  clearDetailFields();
+  renderSensations();
+  clearTimeout(detailStatusTimer);
+  detailStatus.textContent = '';
+  return closedDetailNote;
+}
+
 function renderSelection() {
-  recordButton.disabled = Boolean(getReviewDataset()) || !selectedInner;
+  // No emotion yet is aria-disabled, not disabled, so focus can stay on Record after it saves and clears the selection.
+  recordButton.disabled = Boolean(getReviewDataset());
+  recordButton.setAttribute('aria-disabled', selectedInner ? 'false' : 'true');
   recordButton.textContent = editingEntry ? 'Save changes' : 'Record this emotion';
-  if (getReviewDataset()) return;
+  if (getReviewDataset()) { renderAddDetail(); return; }
+  // Choosing an emotion starts a new entry, so details for the last saved entry are closed and not carried over.
+  if (selectedInner && detailEntry) closeAddDetail();
+  const closedNote = closedDetailNote;
+  closedDetailNote = '';
+  clearTimeout(liveStatusTimer);
+  renderAddDetail();
+  if (keepLiveStatus) return;
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -2428,14 +2484,50 @@ function renderSelection() {
   } else {
     const path = getSelectionPath().join(' then ');
     selectionText.textContent = `${path} (${getSelectionLevel()})`;
-    liveStatus.textContent = `Selected ${path}. You can record this emotion now or continue refining it.`;
+    liveStatus.textContent = `Selected ${path}. You can record this emotion now or continue refining it.${closedNote}`;
   }
+}
+
+// Add detail shows for an entry in progress (selected, or being edited) or for the entry just saved.
+function renderAddDetail() {
+  const reviewing = Boolean(getReviewDataset());
+  addDetailSection.hidden = reviewing || !(selectedInner || detailEntry);
+  saveDetailActions.hidden = !detailEntry;
+  skipToAddDetail.hidden = addDetailSection.hidden;
+  if (detailEntry) {
+    addDetailIntro.textContent = `These answers belong to the saved entry ${getEntryPathLabel(detailEntry)}. Save detail updates that entry. It does not create a second entry.`;
+  } else if (editingEntry) {
+    addDetailIntro.textContent = 'You are editing a saved entry. Save changes at Record updates it.';
+  } else {
+    addDetailIntro.textContent = 'These answers are saved with the emotion when you press Record this emotion. You can also record first and add detail afterwards.';
+  }
+}
+
+// True when the Add detail form holds answers that differ from the saved entry (or from the defaults when none is open).
+function hasUnsavedDetail() {
+  const middle = String(Math.ceil(ratingScale / 2));
+  const base = detailEntry || editingEntry || {};
+  const list = items => JSON.stringify([...items].map(item => (typeof item === 'string' ? item : item.name)).sort());
+  const form = [
+    document.querySelector('input[name="appropriate"]:checked')?.value || '', expectedIntensity.value, actualIntensity.value,
+    entryComment.value.trim(), bucketLevel.value, list(getSelectedTags()), list(getSelectedValues()), list(getSelectedSensations())
+  ];
+  const saved = [
+    base.appropriate || '', String(base.expectedIntensity || middle), String(base.actualIntensity || middle),
+    base.comment || '', base.bucketLevel ? String(base.bucketLevel) : '', list(base.tags || []), list(base.values || []), list(base.physicalSensations || [])
+  ];
+  return JSON.stringify(form) !== JSON.stringify(saved);
 }
 
 function clearEntryForm() {
   selectedInner = null;
   selectedMiddle = null;
   selectedOuter = null;
+  clearDetailFields();
+}
+
+// Clears every optional answer but not the selection.
+function clearDetailFields() {
   document.querySelectorAll('input[name="appropriate"]').forEach(input => {
     input.checked = false;
   });
@@ -2456,6 +2548,8 @@ function clearEntryForm() {
 function prepareEntry(entry, announcement, edit = false) {
   if (getReviewDataset()) return;
   clearEntryForm();
+  detailEntry = null;
+  detailStatus.textContent = '';
   editingEntry = edit ? entry : null;
   selectedInner = entry.inner;
   selectedMiddle = entry.middle || null;
@@ -2463,6 +2557,13 @@ function prepareEntry(entry, announcement, edit = false) {
   selectAppView(entryTab);
   recordConfirmation.hidden = true;
   renderAll();
+  loadEntryAnswers(entry);
+  liveStatus.textContent = announcement;
+  focusNextRecordingControl();
+}
+
+// Puts a saved entry's optional answers into the form.
+function loadEntryAnswers(entry) {
   const appropriateInput = [...document.querySelectorAll('input[name="appropriate"]')]
     .find(input => input.value === entry.appropriate);
   if (appropriateInput) appropriateInput.checked = true;
@@ -2479,21 +2580,23 @@ function prepareEntry(entry, announcement, edit = false) {
     input.checked = sensations.has(input.value);
   });
   renderIntensityAlignment();
-  liveStatus.textContent = announcement;
-  focusNextRecordingControl();
 }
 
 function startNewEntry() {
   selectAppView(entryTab);
   recordConfirmation.hidden = true;
   editingEntry = null;
+  detailEntry = null;
+  detailStatus.textContent = '';
   clearEntryForm();
   renderAll();
   innerButtons.querySelector('button')?.focus();
 }
 
 function getActiveSensationType() {
-  const path = [selectedOuter, selectedMiddle, selectedInner].filter(Boolean);
+  // Details for a saved entry use that entry's emotion, because the selection is empty after Record.
+  const source = detailEntry || { inner: selectedInner, middle: selectedMiddle, outer: selectedOuter };
+  const path = [source.outer, source.middle, source.inner].filter(Boolean);
   for (const label of path) {
     const type = sensationAliases[label] || label;
     if (sensationGuides[type]) return type;
@@ -3634,13 +3737,14 @@ function renderFullEmotionTable() {
   for (const row of emotions) {
     const tr = document.createElement('tr');
     const preparePath = () => {
+      const closedNote = closeAddDetail();
       editingEntry = null;
       selectedInner = row[0];
       selectedMiddle = row[1];
       selectedOuter = row[2];
       selectAppView(entryTab);
       renderAll();
-      liveStatus.textContent = `Prepared ${row.join(' then ')}. Add optional reflection details or a note, then record.`;
+      liveStatus.textContent = `Prepared ${row.join(' then ')}. Press Record this emotion, or add detail first.${closedNote}`;
       focusNextRecordingControl();
     };
     row.forEach((value, index) => {
@@ -4644,6 +4748,9 @@ undoRecordButton.addEventListener('click', () => {
     saveLog();
   }
   lastRecordedEntry = null;
+  detailEntry = null;
+  clearDetailFields();
+  detailStatus.textContent = '';
   recordConfirmation.hidden = true;
   renderAll();
   liveStatus.textContent = 'The last recorded emotion was removed.';
@@ -4753,36 +4860,31 @@ closeFallbackButton.addEventListener('click', () => {
 document.getElementById('skipToRecord').addEventListener('click', event => {
   event.preventDefault();
   // Record is disabled until an emotion is chosen, and a disabled button cannot take focus, so fall back to its heading.
-  if (!recordButton.disabled) { recordButton.focus(); return; }
-  document.getElementById('current-selection-heading').focus();
+  if (!recordButton.disabled) {
+    recordButton.focus();
+    if (selectedInner) return;
+  } else {
+    document.getElementById('current-selection-heading').focus();
+  }
   // Clear first so the same message is announced again if the link is used twice.
   liveStatus.textContent = '';
-  setTimeout(() => {
+  clearTimeout(liveStatusTimer);
+  liveStatusTimer = setTimeout(() => {
+    // A newer message or a new selection wins over this one.
+    if (liveStatus.textContent !== '' || selectedInner) return;
     liveStatus.textContent = getReviewDataset()
       ? 'Record is unavailable while reviewing a shared dataset'
       : 'Record is unavailable until you choose an emotion';
   }, 50);
 });
 
-recordButton.addEventListener('click', () => {
-  if (getReviewDataset()) return;
-  if (!selectedInner) return;
+skipToAddDetail.addEventListener('click', event => {
+  event.preventDefault();
+  document.getElementById('addDetailHeading').focus();
+});
 
-  const now = new Date();
-  const loggedTodayBeforeSave = getLoggingStreak(logEntries, now).loggedToday;
-  const previousEntry = editingEntry;
-  const entry = {
-    ...(previousEntry || {}),
-    id: previousEntry?.id || crypto.randomUUID(),
-    createdAt: previousEntry?.createdAt || previousEntry?.timestamp || now.toISOString(),
-    modifiedAt: now.toISOString(),
-    timestamp: previousEntry?.timestamp || now.toISOString(),
-    level: getSelectionLevel(),
-    inner: selectedInner,
-    middle: selectedMiddle,
-    outer: selectedOuter
-  };
-
+// Copies the optional answers in the form onto an entry. Record and Save detail both use it, so both write the same fields.
+function applyOptionalAnswers(entry, previousEntry) {
   if (captureSettings.collectAppropriate) {
     entry.appropriate = document.querySelector('input[name="appropriate"]:checked')?.value || '';
   }
@@ -4802,6 +4904,38 @@ recordButton.addEventListener('click', () => {
   } else {
     delete entry.comment;
   }
+}
+
+recordButton.addEventListener('click', () => {
+  if (getReviewDataset()) return;
+  if (!selectedInner) {
+    // Clear first so the same message is announced on every press.
+    liveStatus.textContent = '';
+    clearTimeout(liveStatusTimer);
+    liveStatusTimer = setTimeout(() => {
+      // A newer message or a new selection wins over this one.
+      if (liveStatus.textContent !== '' || selectedInner) return;
+      liveStatus.textContent = 'Choose an emotion first, then press Record this emotion.';
+    }, 50);
+    return;
+  }
+
+  const now = new Date();
+  const loggedTodayBeforeSave = getLoggingStreak(logEntries, now).loggedToday;
+  const previousEntry = editingEntry;
+  const entry = {
+    ...(previousEntry || {}),
+    id: previousEntry?.id || crypto.randomUUID(),
+    createdAt: previousEntry?.createdAt || previousEntry?.timestamp || now.toISOString(),
+    modifiedAt: now.toISOString(),
+    timestamp: previousEntry?.timestamp || now.toISOString(),
+    level: getSelectionLevel(),
+    inner: selectedInner,
+    middle: selectedMiddle,
+    outer: selectedOuter
+  };
+
+  applyOptionalAnswers(entry, previousEntry);
 
   const originalEntries = logEntries;
   logEntries = previousEntry ? logEntries.map(saved => saved === previousEntry ? entry : saved) : [...logEntries, entry];
@@ -4815,8 +4949,13 @@ recordButton.addEventListener('click', () => {
   lastRecordedEntry = entry;
   const recordedPath = getEntryPathLabel(entry);
   editingEntry = null;
+  // Add detail stays open for this saved entry. The steps are cleared, the questions show what was saved.
+  detailEntry = entry;
+  clearTimeout(detailStatusTimer);
+  detailStatus.textContent = '';
   clearEntryForm();
   renderAll();
+  loadEntryAnswers(entry);
   const recordedAlignment = document.getElementById('recordedAlignment');
   recordedAlignment.hidden = !(captureSettings.collectExpectedIntensity && captureSettings.collectActualIntensity);
   recordedAlignment.textContent = recordedAlignment.hidden ? '' : `Emotion levels: ${entry.intensityAlignment}.`;
@@ -4828,14 +4967,63 @@ recordButton.addEventListener('click', () => {
   recordConfirmationText.textContent = `${recordedPath} was ${previousEntry ? 'updated' : 'saved'} on this device.`;
   undoRecordButton.hidden = Boolean(previousEntry);
   recordConfirmation.hidden = false;
-  recordConfirmation.focus();
+  // Focus stays on Record. One polite status carries the whole message, including the levels and the streak shown on screen.
+  recordButton.focus();
+  liveStatus.textContent = [
+    `${recordConfirmationHeading.textContent}. ${recordConfirmationText.textContent}`,
+    'The selection is cleared. Add detail is available below.',
+    recordedAlignment.hidden ? '' : recordedAlignment.textContent,
+    congratulations.hidden ? '' : congratulations.textContent
+  ].filter(Boolean).join(' ');
+});
+
+// Add detail: saves the optional answers into the entry that Record just saved. Same id and createdAt, new modifiedAt.
+saveDetailButton.addEventListener('click', () => {
+  if (getReviewDataset() || !detailEntry) return;
+  clearTimeout(detailStatusTimer);
+  // Look the entry up by id, because a Drive sync or a scale change may have replaced the saved object.
+  const previousEntry = logEntries.find(saved => saved.id === detailEntry.id);
+  if (!previousEntry) {
+    detailStatus.textContent = 'This entry is no longer in your log, so detail was not saved.';
+    return;
+  }
+  const entry = { ...previousEntry, modifiedAt: new Date().toISOString() };
+  applyOptionalAnswers(entry, previousEntry);
+  const originalEntries = logEntries;
+  logEntries = logEntries.map(saved => saved === previousEntry ? entry : saved);
+  try {
+    saveLog();
+  } catch (error) {
+    logEntries = originalEntries;
+    detailStatus.textContent = `Detail could not be saved. ${error.message} Your answers are still here; try again when saving is available.`;
+    return;
+  }
+  if (lastRecordedEntry && lastRecordedEntry.id === entry.id) lastRecordedEntry = entry;
+  detailEntry = entry;
+  // Only detailStatus announces Save detail. The redraw must not rewrite liveStatus, or the old Record message is read again.
+  keepLiveStatus = true;
+  try { renderAll(); } finally { keepLiveStatus = false; }
+  loadEntryAnswers(entry);
+  const recordedAlignment = document.getElementById('recordedAlignment');
+  recordedAlignment.hidden = !(captureSettings.collectExpectedIntensity && captureSettings.collectActualIntensity);
+  recordedAlignment.textContent = recordedAlignment.hidden ? '' : `Emotion levels: ${entry.intensityAlignment}.`;
+  // Clear first, then set after a pause, so identical text on a second save is announced again.
+  const savedMessage = `Detail saved to ${getEntryPathLabel(entry)}.`;
+  detailStatus.textContent = '';
+  clearTimeout(detailStatusTimer);
+  detailStatusTimer = setTimeout(() => {
+    if (detailEntry === entry && detailStatus.textContent === '') detailStatus.textContent = savedMessage;
+  }, 50);
 });
 
 resetButton.addEventListener('click', () => {
+  const lostDetail = hasUnsavedDetail();
   editingEntry = null;
+  detailEntry = null;
+  detailStatus.textContent = '';
   clearEntryForm();
   renderAll();
-  focusEntryStart('Selection reset. Start again at Step 1: Main feeling.');
+  focusEntryStart(`Selection reset. Start again at Step 1: Main feeling.${lostDetail ? ' Unsaved details were discarded.' : ''}`);
 });
 
 shareTallyButton.addEventListener('click', () => {
@@ -5243,6 +5431,7 @@ checkLocalDataSchema();
   // control (which honours the capture settings of every phase). The page's own
   // status line announces the selection.
   function choose(r) {
+    closeAddDetail();
     selectedInner = r.parts[0];
     selectedMiddle = r.parts[1] || null;
     selectedOuter = r.parts[2] || null;
