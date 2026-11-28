@@ -4,6 +4,7 @@
   "private": true,
   "description": "Tooling manifest only. The app is static and has no build step. CI tools live in ci-tools/.",
   "scripts": {
-    "lint": "bash ci-tools/lint.sh"
+    "lint": "bash ci-tools/lint.sh",
+    "test": "node scripts/run-tests.cjs"
   }
 }
