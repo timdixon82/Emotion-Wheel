@@ -2,9 +2,14 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
-## Unreleased
+## 1.11.1
 
-- The levels are now called Main feeling, More specific feeling and Most specific feeling in the log, tally, filter, charts, reference table and CSV exports. The CSV column headings and the Recorded level values use the new names.
+Released 28 November 2026.
+
+- Capture settings are back at the top of the entry area, with the Show and read descriptions tickbox inside it.
+- The display names Main feeling, More specific feeling and Most specific feeling replace the circle names in the tables, filter, charts, About page, README and CSV export. In the CSV export the Recorded level values changed too.
+- npm test now runs every test file.
+- The secret scanner now ignores the public Drive picker browser key.
 - No saved data format changed. Records still store the old level names, so existing records, backups and sync data work as before.
 
 ## 1.11.0
