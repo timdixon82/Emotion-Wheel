@@ -110,6 +110,7 @@
       padding: .75rem 1rem; z-index: 10;
     }
     #inner-heading:focus, #current-selection-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    #addDetailHeading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
     .skip-link:focus { transform: translateY(0); outline: 4px solid var(--focus); outline-offset: 2px; }
     main { max-width: 980px; margin: 0 auto; padding: 1rem; }
     h1, h2, h3 { line-height: 1.2; color: var(--heading); }
@@ -254,7 +255,7 @@
       text-decoration: none; display: inline-flex; align-items: center;
     }
     button:hover, a.button:hover { background: var(--panel); }
-    button:focus, a.button:focus, input:focus, select:focus {
+    button:focus, a.button:focus, a:focus, input:focus, select:focus, textarea:focus, summary:focus {
       outline: 4px solid var(--focus); outline-offset: 2px;
     }
     button[aria-pressed="true"] { background: var(--selected); border-color: var(--focus); font-weight: 700; }
@@ -722,6 +723,7 @@
     <p id="recordConfirmationText">Your emotion was saved on this device.</p>
     <p id="recordedAlignment" class="alignment" hidden></p>
     <p id="dailyLogCongratulations" class="daily-log-congratulations" hidden></p>
+    <p><a href="#addDetailHeading" id="skipToAddDetail" class="button" hidden>Skip to Add detail</a></p>
     <div class="actions">
       <button type="button" id="undoRecordButton">Undo</button>
       <button type="button" id="recordAgainButton">Record another like this</button>
@@ -767,8 +769,8 @@
             </div>
           </div>
         </div>
-        <p id="intensityAlignment" class="alignment" role="status" aria-live="polite" aria-atomic="true">Aligned</p>
-        <p id="intensityValueStatus" class="visually-hidden" role="status" aria-live="polite" aria-atomic="true"></p>
+        <p id="intensityAlignment" class="alignment" role="status" aria-atomic="true">Aligned</p>
+        <p id="intensityValueStatus" class="visually-hidden" role="status" aria-atomic="true"></p>
       </fieldset>
     </div>
 
@@ -789,7 +791,7 @@
         <label for="newTag">Create a tag</label>
         <input type="text" id="newTag" maxlength="60" placeholder="New tag name">
         <button type="button" id="addTagButton">Add and select tag</button>
-        <p id="tagStatus" role="status" aria-live="polite"></p>
+        <p id="tagStatus" role="status"></p>
       </fieldset>
     </div>
     <div id="valuesPanel" class="optional-panel" hidden>
@@ -823,7 +825,7 @@
     <div class="actions" id="saveDetailActions" hidden>
       <button type="button" id="saveDetailButton">Save detail</button>
     </div>
-    <p id="detailStatus" role="status" aria-live="polite"></p>
+    <p id="detailStatus" role="status"></p>
   </section>
 
     <details id="capture-settings" class="settings-panel">
@@ -1562,6 +1564,9 @@ const addDetailIntro = document.getElementById('addDetailIntro');
 const saveDetailActions = document.getElementById('saveDetailActions');
 const saveDetailButton = document.getElementById('saveDetailButton');
 const detailStatus = document.getElementById('detailStatus');
+const skipToAddDetail = document.getElementById('skipToAddDetail');
+// Set while Save detail redraws, so the redraw does not announce the selection status again.
+let keepLiveStatus = false;
 const middleHelp = document.getElementById('middleHelp');
 const outerHelp = document.getElementById('outerHelp');
 const showDescriptionsBox = document.getElementById('showDescriptionsBox');
@@ -2450,13 +2455,14 @@ function renderSelection() {
   // Choosing an emotion starts a new entry, so details for the last saved entry are closed and not carried over.
   let closedNote = '';
   if (selectedInner && detailEntry) {
-    closedNote = ` Add detail for ${getEntryPathLabel(detailEntry)} is closed.`;
+    closedNote = ` Add detail for ${getEntryPathLabel(detailEntry)} is closed.${hasUnsavedDetail() ? ' Unsaved details were discarded.' : ''}`;
     detailEntry = null;
     clearDetailFields();
     renderSensations();
     detailStatus.textContent = '';
   }
   renderAddDetail();
+  if (keepLiveStatus) return;
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
@@ -2473,6 +2479,7 @@ function renderAddDetail() {
   const reviewing = Boolean(getReviewDataset());
   addDetailSection.hidden = reviewing || !(selectedInner || detailEntry);
   saveDetailActions.hidden = !detailEntry;
+  skipToAddDetail.hidden = addDetailSection.hidden;
   if (detailEntry) {
     addDetailIntro.textContent = `These answers belong to the saved entry ${getEntryPathLabel(detailEntry)}. Save detail updates that entry. It does not create a second entry.`;
   } else if (editingEntry) {
@@ -2480,6 +2487,22 @@ function renderAddDetail() {
   } else {
     addDetailIntro.textContent = 'These answers are saved with the emotion when you press Record this emotion. You can also record first and add detail afterwards.';
   }
+}
+
+// True when the Add detail form holds answers that differ from the saved entry (or from the defaults when none is open).
+function hasUnsavedDetail() {
+  const middle = String(Math.ceil(ratingScale / 2));
+  const base = detailEntry || editingEntry || {};
+  const list = items => JSON.stringify([...items].map(item => (typeof item === 'string' ? item : item.name)).sort());
+  const form = [
+    document.querySelector('input[name="appropriate"]:checked')?.value || '', expectedIntensity.value, actualIntensity.value,
+    entryComment.value.trim(), bucketLevel.value, list(getSelectedTags()), list(getSelectedValues()), list(getSelectedSensations())
+  ];
+  const saved = [
+    base.appropriate || '', String(base.expectedIntensity || middle), String(base.actualIntensity || middle),
+    base.comment || '', base.bucketLevel ? String(base.bucketLevel) : '', list(base.tags || []), list(base.values || []), list(base.physicalSensations || [])
+  ];
+  return JSON.stringify(form) !== JSON.stringify(saved);
 }
 
 function clearEntryForm() {
@@ -4837,6 +4860,11 @@ document.getElementById('skipToRecord').addEventListener('click', event => {
   }, 50);
 });
 
+skipToAddDetail.addEventListener('click', event => {
+  event.preventDefault();
+  document.getElementById('addDetailHeading').focus();
+});
+
 // Copies the optional answers in the form onto an entry. Record and Save detail both use it, so both write the same fields.
 function applyOptionalAnswers(entry, previousEntry) {
   if (captureSettings.collectAppropriate) {
@@ -4863,7 +4891,9 @@ function applyOptionalAnswers(entry, previousEntry) {
 recordButton.addEventListener('click', () => {
   if (getReviewDataset()) return;
   if (!selectedInner) {
-    liveStatus.textContent = 'Choose an emotion first, then press Record this emotion.';
+    // Clear first so the same message is announced on every press.
+    liveStatus.textContent = '';
+    setTimeout(() => { liveStatus.textContent = 'Choose an emotion first, then press Record this emotion.'; }, 50);
     return;
   }
 
@@ -4913,9 +4943,14 @@ recordButton.addEventListener('click', () => {
   recordConfirmationText.textContent = `${recordedPath} was ${previousEntry ? 'updated' : 'saved'} on this device.`;
   undoRecordButton.hidden = Boolean(previousEntry);
   recordConfirmation.hidden = false;
-  // Focus stays on Record. One polite status carries the whole message.
+  // Focus stays on Record. One polite status carries the whole message, including the levels and the streak shown on screen.
   recordButton.focus();
-  liveStatus.textContent = `${previousEntry ? 'Changes saved to' : 'Recorded'} ${recordedPath}. The selection is cleared. Add detail is available below.`;
+  liveStatus.textContent = [
+    `${recordConfirmationHeading.textContent}. ${recordConfirmationText.textContent}`,
+    'The selection is cleared. Add detail is available below.',
+    recordedAlignment.hidden ? '' : recordedAlignment.textContent,
+    congratulations.hidden ? '' : congratulations.textContent
+  ].filter(Boolean).join(' ');
 });
 
 // Add detail: saves the optional answers into the entry that Record just saved. Same id and createdAt, new modifiedAt.
@@ -4940,10 +4975,9 @@ saveDetailButton.addEventListener('click', () => {
   }
   if (lastRecordedEntry && lastRecordedEntry.id === entry.id) lastRecordedEntry = entry;
   detailEntry = entry;
-  // renderAll rewrites the selection status, which would be announced again, so put it back as it was.
-  const statusBefore = liveStatus.textContent;
-  renderAll();
-  liveStatus.textContent = statusBefore;
+  // Only detailStatus announces Save detail. The redraw must not rewrite liveStatus, or the old Record message is read again.
+  keepLiveStatus = true;
+  try { renderAll(); } finally { keepLiveStatus = false; }
   loadEntryAnswers(entry);
   const recordedAlignment = document.getElementById('recordedAlignment');
   recordedAlignment.hidden = !(captureSettings.collectExpectedIntensity && captureSettings.collectActualIntensity);
@@ -4952,12 +4986,13 @@ saveDetailButton.addEventListener('click', () => {
 });
 
 resetButton.addEventListener('click', () => {
+  const lostDetail = hasUnsavedDetail();
   editingEntry = null;
   detailEntry = null;
   detailStatus.textContent = '';
   clearEntryForm();
   renderAll();
-  focusEntryStart('Selection reset. Start again at Step 1: Main feeling.');
+  focusEntryStart(`Selection reset. Start again at Step 1: Main feeling.${lostDetail ? ' Unsaved details were discarded.' : ''}`);
 });
 
 shareTallyButton.addEventListener('click', () => {

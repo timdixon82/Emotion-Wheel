@@ -57,7 +57,7 @@ The rendered design and accessibility notes are in [pages/accessibility.html](pa
 - App navigation follows the normal keyboard Tab order, identifies the current section, and moves focus to the selected content.
 - On smaller screens, the Menu button exposes its expanded state and Escape closes the navigation and returns focus to the button.
 - Secondary Entry reference content uses native collapsed sections, while sections in Logs, Charts, and My Data expand whenever their tab opens. The optional entry note remains expanded.
-- Focus follows the visible entry sequence: emotion levels, optional reflection fields, the always-visible optional note, then Record. Reset returns focus to the Step 1 heading.
+- Record comes first. After Record, focus stays on Record and one status announces the saved emotion, the emotion levels and any streak. A "Skip to Add detail" link in the confirmation moves focus to the Add detail heading, and Save detail updates the same entry. Reset returns focus to the Step 1 heading and says when unsaved details were discarded.
 - Intensity uses labelled decrease and increase buttons with announced values, avoiding reliance on a screen-reader slider gesture.
 - Mobile recording uses the same Record control in an in-flow action area, avoiding overlays and duplicated controls for screen readers.
 - The wheel has a text-based selector and a full reference table; choosing any word in a table row prepares that complete emotion path.

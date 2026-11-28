@@ -62,7 +62,7 @@ function makeApp(phase) {
   const form = { appropriate: '', sensations: [], tags: [], values: [] };
   const state = { failSave: false, renders: 0, cleared: 0 };
   const ctx = vm.createContext({
-    Date, crypto: require('node:crypto').webcrypto,
+    Date, setTimeout, crypto: require('node:crypto').webcrypto,
     document: { getElementById: node, querySelector: () => (form.appropriate ? { value: form.appropriate } : null) },
     captureSettings: { ...ALL_OFF, ...PHASES[phase] }, ratingScale: 5, logEntries: [], editingEntry: null, detailEntry: null, lastRecordedEntry: null,
     selectedInner: null, selectedMiddle: null, selectedOuter: null,
@@ -161,11 +161,39 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
     const app = makeApp('phase2');
     app.ctx.clearEntryForm(); app.select('Fear', 'Anxious', 'Worried'); app.ctx.record();
     check('focus is put on Record, not on the confirmation', app.node('recordButton').focusCount === 1 && app.node('recordConfirmation').focusCount === 0);
-    check('one status says recorded, selection cleared and Add detail available', /^Recorded Fear then Anxious then Worried\. The selection is cleared\. Add detail is available below\.$/.test(app.node('liveStatus').textContent));
+    check('one status says recorded, selection cleared, Add detail available and the levels', app.node('liveStatus').textContent === 'Emotion recorded. Fear then Anxious then Worried was saved on this device. The selection is cleared. Add detail is available below. Emotion levels: Aligned.');
     check('the confirmation shows with Undo', app.node('recordConfirmation').hidden === false && app.node('recordConfirmationText').textContent === 'Fear then Anxious then Worried was saved on this device.');
     check('the daily streak message still runs after Record', /showDailyLogCongratulations\(loggedTodayBeforeSave, now\)/.test(recordBody));
     check('Save detail never runs the streak message', !/showDailyLogCongratulations/.test(detailBody));
-    check('Record is not given a second entry when pressed with nothing selected', (() => { app.ctx.record(); return app.ctx.logEntries.length === 1 && /Choose an emotion first/.test(app.node('liveStatus').textContent); })());
+    app.ctx.record(); await sleep(80);
+    check('Record is not given a second entry when pressed with nothing selected', app.ctx.logEntries.length === 1 && /Choose an emotion first/.test(app.node('liveStatus').textContent));
+    // Pressing Record again with nothing selected clears the status first, so the same text is announced every time.
+    const writes = [];
+    Object.defineProperty(app.node('liveStatus'), 'textContent', { get() { return this._t || ''; }, set(v) { this._t = v; writes.push(v); } });
+    app.ctx.record(); await sleep(80); app.ctx.record(); await sleep(80);
+    check('each disabled Record press clears then sets the same message', JSON.stringify(writes) === JSON.stringify(['', 'Choose an emotion first, then press Record this emotion.', '', 'Choose an emotion first, then press Record this emotion.']));
+    // The streak message joins the same single status.
+    const streak = makeApp('phase2');
+    streak.ctx.showDailyLogCongratulations = () => { const n = streak.node('dailyLogCongratulations'); n.hidden = false; n.textContent = 'Congratulations! Your streak is now 1 day.'; };
+    streak.ctx.clearEntryForm(); streak.select('Happy'); streak.ctx.record();
+    check('the streak text is in the same single status', /Emotion levels: Aligned\. Congratulations! Your streak is now 1 day\.$/.test(streak.node('liveStatus').textContent));
+    check('Phase 1 status has no levels text', (() => { const p = makeApp('phase1'); p.ctx.clearEntryForm(); p.select('Sad'); p.ctx.record(); return p.node('liveStatus').textContent === 'Emotion recorded. Sad was saved on this device. The selection is cleared. Add detail is available below.'; })());
+  }
+
+  // 4b. Save detail announces once, through detailStatus only, and never rewrites the live status.
+  {
+    const app = makeApp('phase2');
+    app.ctx.clearEntryForm(); app.select('Happy'); app.ctx.record();
+    const writes = [];
+    for (const name of ['liveStatus', 'detailStatus']) {
+      const target = app.node(name); let t = target.textContent;
+      Object.defineProperty(target, 'textContent', { get() { return t; }, set(v) { t = v; writes.push(`${name}:${v}`); } });
+    }
+    // renderAll in the page runs renderSelection, which writes liveStatus unless keepLiveStatus is set.
+    app.ctx.renderAll = () => { if (!app.ctx.keepLiveStatus) app.node('liveStatus').textContent = 'Start by choosing a main feeling.'; };
+    await sleep(5); fill(app, ANSWERS[0]); app.ctx.saveDetail();
+    check('Save detail writes the status once, in detailStatus', writes.length === 1 && writes[0] === 'detailStatus:Detail saved to Happy.');
+    check('keepLiveStatus is released after the redraw', app.ctx.keepLiveStatus === false);
   }
 
   // 5. Undo removes only the just-recorded entry, also after Add detail replaced the saved object.
@@ -198,14 +226,15 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
 
   // 7. Which entry the details belong to, and a new entry carries nothing over.
   {
-    const spy = { cleared: 0, sensations: 0, hidden: null };
+    const spy = { cleared: 0, sensations: 0, hidden: null, unsaved: false };
     const ctx = vm.createContext({
       selectedInner: null, selectedMiddle: null, selectedOuter: null, editingEntry: null, detailEntry: null,
       recordButton: { disabled: false, textContent: '', attrs: {}, setAttribute(k, v) { this.attrs[k] = v; } },
       addDetailSection: { hidden: true }, saveDetailActions: { hidden: true }, addDetailIntro: { textContent: '' }, detailStatus: { textContent: 'old' },
       selectionText: { textContent: '' }, liveStatus: { textContent: '' }, getReviewDataset: () => null,
       getSelectionPath: () => [ctx.selectedInner, ctx.selectedMiddle, ctx.selectedOuter].filter(Boolean), getSelectionLevel: () => 'Inner circle',
-      clearDetailFields() { spy.cleared++; }, renderSensations() { spy.sensations++; }
+      clearDetailFields() { spy.cleared++; }, renderSensations() { spy.sensations++; },
+      skipToAddDetail: { hidden: true }, keepLiveStatus: false, hasUnsavedDetail: () => spy.unsaved
     });
     for (const name of ['getEntryPathLabel', 'renderAddDetail', 'renderSelection']) vm.runInContext(func(name), ctx);
     ctx.renderSelection();
@@ -217,8 +246,48 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
     ctx.selectedInner = 'Happy'; ctx.renderSelection();
     check('choosing a new emotion closes the old details and clears the answers', ctx.detailEntry === null && spy.cleared === 1 && spy.sensations === 1 && ctx.detailStatus.textContent === '' && ctx.saveDetailActions.hidden);
     check('the status says the old Add detail is closed', /Add detail for Fear then Anxious is closed/.test(ctx.liveStatus.textContent));
+    check('no unsaved answers: the status does not mention discarding', !/discarded/.test(ctx.liveStatus.textContent));
+    check('the Skip to Add detail link follows the Add detail section', ctx.skipToAddDetail.hidden === ctx.addDetailSection.hidden);
+    ctx.selectedInner = null; ctx.detailEntry = { id: 'y', inner: 'Fear', middle: null, outer: null }; ctx.renderSelection();
+    check('the Skip to Add detail link is visible when Add detail is open', ctx.skipToAddDetail.hidden === false);
+    spy.unsaved = true; ctx.selectedInner = 'Sad'; ctx.renderSelection();
+    check('unsaved answers: the status names the discard once', (ctx.liveStatus.textContent.match(/Unsaved details were discarded\./g) || []).length === 1);
+    spy.unsaved = false;
+    ctx.liveStatus.textContent = 'kept'; ctx.keepLiveStatus = true; ctx.detailEntry = null; ctx.selectedInner = null; ctx.renderSelection(); ctx.keepLiveStatus = false;
+    check('keepLiveStatus stops renderSelection writing the live status', ctx.liveStatus.textContent === 'kept');
     check('Reset, Start a new entry and Edit all end the details', [/resetButton\.addEventListener\('click'[\s\S]*?detailEntry = null;[\s\S]*?\n\}\);/, /function startNewEntry\(\) \{[\s\S]*?detailEntry = null;/, /function prepareEntry\([\s\S]*?detailEntry = null;/].every(pattern => pattern.test(html)));
     check('Record handler binds Add detail after renderAll and loads the saved answers', /detailEntry = entry;[\s\S]*?clearEntryForm\(\);\s*renderAll\(\);\s*loadEntryAnswers\(entry\);/.test(recordBody));
+  }
+
+  // 7b. hasUnsavedDetail compares the form with the saved entry, and Reset names a discard.
+  {
+    const form = { appropriate: '', tags: [], values: [], sensations: [] };
+    const ctx = vm.createContext({
+      ratingScale: 5, detailEntry: null, editingEntry: null,
+      document: { querySelector: () => (form.appropriate ? { value: form.appropriate } : null) },
+      expectedIntensity: { value: '3' }, actualIntensity: { value: '3' }, bucketLevel: { value: '' }, entryComment: { value: '' },
+      getSelectedTags: () => form.tags, getSelectedValues: () => form.values, getSelectedSensations: () => form.sensations
+    });
+    vm.runInContext(func('hasUnsavedDetail'), ctx);
+    check('untouched form is not unsaved', ctx.hasUnsavedDetail() === false);
+    form.tags = ['Work'];
+    check('a tag with no open entry is unsaved', ctx.hasUnsavedDetail() === true);
+    ctx.detailEntry = { tags: ['Work'] };
+    check('answers equal to the saved entry are not unsaved', ctx.hasUnsavedDetail() === false);
+    ctx.entryComment.value = '  note ';
+    check('a new note is unsaved', ctx.hasUnsavedDetail() === true);
+    ctx.detailEntry = { tags: ['Work'], comment: 'note' };
+    check('a trimmed note equal to the saved note is not unsaved', ctx.hasUnsavedDetail() === false);
+    check('Reset names discarded details once', /Selection reset\. Start again at Step 1: Main feeling\.\$\{lostDetail \? ' Unsaved details were discarded\.' : ''\}/.test(html) && /const lostDetail = hasUnsavedDetail\(\);\s*editingEntry = null;/.test(html));
+  }
+
+  // 7c. Skip to Add detail link, focus rules and live-region cleanup.
+  {
+    check('Skip to Add detail link sits in the confirmation and targets the Add detail heading', /<a href="#addDetailHeading" id="skipToAddDetail" class="button" hidden>Skip to Add detail<\/a>/.test(html));
+    check('its click handler focuses the heading', /skipToAddDetail\.addEventListener\('click', event => \{\s*event\.preventDefault\(\);\s*document\.getElementById\('addDetailHeading'\)\.focus\(\);/.test(html));
+    check('Add detail heading is focusable with a 4px focus outline', /id="addDetailHeading" tabindex="-1"/.test(html) && /#addDetailHeading:focus \{ outline: 4px solid var\(--focus\)/.test(html) || /#addDetailHeading:focus[^{]*\{ outline: 4px solid var\(--focus\)/.test(html));
+    check('links, textareas and summaries get the 4px focus outline', /a:focus, input:focus, select:focus, textarea:focus, summary:focus \{\s*outline: 4px solid var\(--focus\)/.test(html));
+    for (const id of ['intensityAlignment', 'intensityValueStatus', 'tagStatus', 'detailStatus']) check(`${id} has role status without a redundant aria-live`, new RegExp(`id="${id}"[^>]*role="status"(?![^>]*aria-live)`).test(html));
   }
 
   // 8. Step buttons that are selected show more than colour.
