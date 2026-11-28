@@ -1,0 +1,37 @@
+[
+  {
+    "timestamp": "2024-03-01T09:00:00.000Z",
+    "level": "Outer circle",
+    "inner": "Fear",
+    "middle": "Anxious",
+    "outer": "Worried",
+    "appropriate": "Yes",
+    "expectedIntensity": 7,
+    "actualIntensity": 9,
+    "intensityAlignment": "Not aligned",
+    "physicalSensations": [
+      "Hot",
+      "Eyes wide"
+    ],
+    "comment": "Fake legacy note one.",
+    "legacyExtra": "kept"
+  },
+  {
+    "timestamp": "2024-03-02T18:30:00.000Z",
+    "level": "Middle circle",
+    "inner": "Happy",
+    "middle": "Proud",
+    "outer": null,
+    "appropriate": "No",
+    "expectedIntensity": 10,
+    "actualIntensity": 10,
+    "intensityAlignment": "Aligned"
+  },
+  {
+    "timestamp": "2024-03-03T07:15:00.000Z",
+    "level": "Inner circle",
+    "inner": "Sad",
+    "middle": null,
+    "outer": null
+  }
+]

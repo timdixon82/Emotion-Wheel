@@ -1,0 +1,69 @@
+{
+  "version": 3,
+  "schemaVersion": 4,
+  "ratingScale": 10,
+  "exportedAt": "2025-01-01T10:00:00.000Z",
+  "tags": [
+    "Work",
+    "Family"
+  ],
+  "entries": [
+    {
+      "id": "00000000-0000-4000-8000-000000000140",
+      "createdAt": "2024-03-01T09:00:00.000Z",
+      "modifiedAt": "2024-03-01T09:00:00.000Z",
+      "timestamp": "2024-03-01T09:00:00.000Z",
+      "level": "Outer circle",
+      "inner": "Fear",
+      "middle": "Anxious",
+      "outer": "Worried",
+      "appropriate": "Yes",
+      "expectedIntensity": 7,
+      "actualIntensity": 9,
+      "intensityAlignment": "Not aligned",
+      "physicalSensations": [
+        "Hot",
+        "Eyes wide"
+      ],
+      "comment": "Fake legacy note one.",
+      "legacyExtra": "kept",
+      "tags": [
+        "Work"
+      ],
+      "values": [
+        {
+          "name": "Honesty",
+          "theme": "Connection",
+          "framework": "personalvalues",
+          "frameworkLabel": "Personal values"
+        }
+      ],
+      "bucketLevel": 8,
+      "sensationGuide": "Anxiety"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000141",
+      "createdAt": "2024-03-02T18:30:00.000Z",
+      "modifiedAt": "2024-03-02T18:30:00.000Z",
+      "timestamp": "2024-03-02T18:30:00.000Z",
+      "level": "Middle circle",
+      "inner": "Happy",
+      "middle": "Proud",
+      "outer": null,
+      "appropriate": "No",
+      "expectedIntensity": 10,
+      "actualIntensity": 10,
+      "intensityAlignment": "Aligned"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000142",
+      "createdAt": "2024-03-03T07:15:00.000Z",
+      "modifiedAt": "2024-03-03T07:15:00.000Z",
+      "timestamp": "2024-03-03T07:15:00.000Z",
+      "level": "Inner circle",
+      "inner": "Sad",
+      "middle": null,
+      "outer": null
+    }
+  ]
+}
