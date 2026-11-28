@@ -34,7 +34,7 @@ check('the describedby text is short (two sentences or fewer, under 30 words)', 
 check('the scrolling table wrapper is a labelled group, not a region', /<div class="scroll-table" tabindex="0" role="group" aria-labelledby="wheelTableCaption">/.test(html) && /<caption id="wheelTableCaption">/.test(html));
 check('success is not announced, only an error is', /setShowDescriptions\(on\);\s*\/\/[^\n]*\n\s*descriptionsStatus\.textContent = '';/.test(html) && /could not be saved/.test(html) && !/Descriptions on\./.test(html));
 check('the lookup uses the stored data label, not textContent', !/button\.textContent/.test(func('decorateStep')) && /dataset\.label/.test(func('decorateStep')));
-check('the full table has four column headers including Description', /<th scope="col">Inner circle<\/th><th scope="col">Middle circle<\/th><th scope="col">Outer circle<\/th><th scope="col">Description<\/th>/.test(html) && /<caption id="wheelTableCaption">All available emotion paths<\/caption>/.test(html));
+check('the full table has four column headers including Description', /<th scope="col">Main feeling<\/th><th scope="col">More specific feeling<\/th><th scope="col">Most specific feeling<\/th><th scope="col">Description<\/th>/.test(html) && /<caption id="wheelTableCaption">All available emotion paths<\/caption>/.test(html));
 
 // ---- Code hygiene ----
 const panelCode = [func('getEmotionDescription'), func('refreshStepPanel'), func('applyDescriptionSetting'), func('decorateStep'), func('renderFullEmotionTable')].join('\n');

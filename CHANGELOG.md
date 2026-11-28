@@ -2,6 +2,11 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## Unreleased
+
+- The levels are now called Main feeling, More specific feeling and Most specific feeling in the log, tally, filter, charts, reference table and CSV exports. The CSV column headings and the Recorded level values use the new names.
+- No saved data format changed. Records still store the old level names, so existing records, backups and sync data work as before.
+
 ## 1.11.0
 
 Released 28 November 2026.

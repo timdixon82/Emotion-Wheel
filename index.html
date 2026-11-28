@@ -637,12 +637,12 @@
     <details id="full-table">
       <summary>Emotion reference table</summary>
       <div class="details-content">
-        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The columns follow the rings of the emotion wheel: the inner circle is the main feeling, the middle circle is more specific and the outer circle is most specific. The round colour marker identifies the main feeling (inner-circle category); the written label carries the same information without relying on colour. The Description column describes the most specific emotion in each row. It is for reading only and is not part of the shared or copied table.</p>
+        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The columns follow the rings of the emotion wheel: the first column is the main feeling, the second is a more specific feeling and the third is the most specific feeling. The round colour marker identifies the main feeling; the written label carries the same information without relying on colour. The Description column describes the most specific emotion in each row. It is for reading only and is not part of the shared or copied table.</p>
 
         <div class="scroll-table" tabindex="0" role="group" aria-labelledby="wheelTableCaption">
           <table>
             <caption id="wheelTableCaption">All available emotion paths</caption>
-            <thead><tr><th scope="col">Inner circle</th><th scope="col">Middle circle</th><th scope="col">Outer circle</th><th scope="col">Description</th></tr></thead>
+            <thead><tr><th scope="col">Main feeling</th><th scope="col">More specific feeling</th><th scope="col">Most specific feeling</th><th scope="col">Description</th></tr></thead>
             <tbody id="wheelTableBody"></tbody>
           </table>
         </div>
@@ -945,7 +945,7 @@
           Recorded level
           <select id="logLevelFilter">
             <option value="">All levels</option>
-            <option>Inner circle</option><option>Middle circle</option><option>Outer circle</option>
+            <option value="Inner circle">Main feeling</option><option value="Middle circle">More specific feeling</option><option value="Outer circle">Most specific feeling</option>
           </select>
         </label>
         <label>Recorded emotion path <select id="logPathFilter"><option value="">All paths</option></select></label>
@@ -973,9 +973,9 @@
         <thead>
           <tr>
             <th scope="col">Recorded level</th>
-            <th scope="col">Inner circle</th>
-            <th scope="col">Middle circle</th>
-            <th scope="col">Outer circle</th>
+            <th scope="col">Main feeling</th>
+            <th scope="col">More specific feeling</th>
+            <th scope="col">Most specific feeling</th>
             <th scope="col">Times felt</th>
             <th scope="col">Last recorded</th>
           </tr>
@@ -1004,9 +1004,9 @@
           <tr>
             <th scope="col">Date and time</th>
             <th scope="col">Recorded level</th>
-            <th scope="col">Inner circle</th>
-            <th scope="col">Middle circle</th>
-            <th scope="col">Outer circle</th>
+            <th scope="col">Main feeling</th>
+            <th scope="col">More specific feeling</th>
+            <th scope="col">Most specific feeling</th>
             <th scope="col">Appropriate</th>
             <th scope="col" id="logExpectedHeading">Expected intensity</th>
             <th scope="col" id="logActualHeading">Actual intensity</th>
@@ -2046,6 +2046,12 @@ function displayValue(value) {
   return value === null || value === undefined || value === '' ? 'Not recorded' : String(value);
 }
 
+// Display-only names. Stored level strings stay as the keys, so saved records, backups and sync data are unchanged.
+function levelLabel(value) {
+  const labels = { 'Inner circle': 'Main feeling', 'Middle circle': 'More specific feeling', 'Outer circle': 'Most specific feeling' };
+  return labels[value] || value;
+}
+
 function getRecordedLevel(entry) {
   if (entry.level) return entry.level;
   if (entry.outer) return 'Outer circle';
@@ -2483,7 +2489,7 @@ function renderSelection() {
     liveStatus.textContent = 'Start by choosing a main feeling.';
   } else {
     const path = getSelectionPath().join(' then ');
-    selectionText.textContent = `${path} (${getSelectionLevel()})`;
+    selectionText.textContent = `${path} (${levelLabel(getSelectionLevel())})`;
     liveStatus.textContent = `Selected ${path}. You can record this emotion now or continue refining it.${closedNote}`;
   }
 }
@@ -2864,10 +2870,10 @@ function getTally(entries = logEntries) {
 
 function getTallyRows(entries = logEntries) {
   const rows = [
-    ['Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Times felt', 'Last recorded']
+    ['Recorded level', 'Main feeling', 'More specific feeling', 'Most specific feeling', 'Times felt', 'Last recorded']
   ];
   for (const item of getTally(entries)) {
-    rows.push([item.level, item.inner, displayValue(item.middle), displayValue(item.outer), item.count, formatDateTime(item.lastRecorded)]);
+    rows.push([levelLabel(item.level), item.inner, displayValue(item.middle), displayValue(item.outer), item.count, formatDateTime(item.lastRecorded)]);
   }
   return rows;
 }
@@ -2948,7 +2954,7 @@ function sortCountRows(rows) {
 }
 
 function getLevelCounts(entries = logEntries) {
-  return countValues(entries.map(getRecordedLevel), ['Inner circle', 'Middle circle', 'Outer circle']);
+  return countValues(entries.map(getRecordedLevel), ['Inner circle', 'Middle circle', 'Outer circle']).map(row => ({ ...row, label: levelLabel(row.label) }));
 }
 
 function startOfPeriod(date, grouping) {
@@ -3560,12 +3566,12 @@ function getContextCounts(entries, field) {
 
 function getLogRows(entries = logEntries, scale = ratingScale) {
   const rows = [
-    ['Date and time', 'Recorded level', 'Inner circle', 'Middle circle', 'Outer circle', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', 'Values involved', `Emotion bucket level (1–${scale})`, 'Note']
+    ['Date and time', 'Recorded level', 'Main feeling', 'More specific feeling', 'Most specific feeling', 'Appropriate', `Expected intensity (1–${scale})`, `Actual intensity (1–${scale})`, 'Alignment', 'Physical sensations', 'Tags', 'Values involved', `Emotion bucket level (1–${scale})`, 'Note']
   ];
   for (const entry of entries) {
     rows.push([
       formatDateTime(entry.timestamp),
-      getRecordedLevel(entry),
+      levelLabel(getRecordedLevel(entry)),
       entry.inner,
       displayValue(entry.middle),
       displayValue(entry.outer),
@@ -3585,7 +3591,7 @@ function getLogRows(entries = logEntries, scale = ratingScale) {
 
 function getWheelRows() {
   return [
-    ['Inner circle', 'Middle circle', 'Outer circle'],
+    ['Main feeling', 'More specific feeling', 'Most specific feeling'],
     ...emotions
   ];
 }
@@ -3645,7 +3651,7 @@ function renderLog() {
   } else {
     for (const item of tally) {
       const tr = document.createElement('tr');
-      [item.level, item.inner, displayValue(item.middle), displayValue(item.outer), String(item.count), formatDateTime(item.lastRecorded)].forEach((value, index) => {
+      [levelLabel(item.level), item.inner, displayValue(item.middle), displayValue(item.outer), String(item.count), formatDateTime(item.lastRecorded)].forEach((value, index) => {
         const td = document.createElement('td');
         if (index === 1) appendEmotionCellContent(td, value);
         else td.textContent = value;
@@ -3664,7 +3670,7 @@ function renderLog() {
       const tr = document.createElement('tr');
       [
         formatDateTime(entry.timestamp),
-        getRecordedLevel(entry),
+        levelLabel(getRecordedLevel(entry)),
         entry.inner,
         displayValue(entry.middle),
         displayValue(entry.outer),
