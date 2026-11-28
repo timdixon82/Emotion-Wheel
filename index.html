@@ -718,12 +718,12 @@
 
   <section id="emotion-search" class="step" aria-labelledby="search-heading">
     <h2 id="search-heading">Find an emotion by name or description</h2>
-    <!-- [html-validate-disable-next wcag/h32 -- results update as you type and Enter searches at once, so a submit button would add a Tab stop] -->
     <form role="search" id="searchForm" aria-label="Find an emotion">
       <div class="search-field">
         <label for="searchInput">Find an emotion</label>
-        <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Results update about a second after you stop typing.</p>
+        <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Results update after you stop typing, or press Search.</p>
         <input type="search" id="searchInput" maxlength="200" autocomplete="off" aria-describedby="searchHelp">
+        <button type="submit" id="searchSubmit" class="search-tips-button">Search</button>
         <button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips</button>
         <div id="searchTips" class="help" hidden>
           <p>Searching an emotion also lists its sub-items. Matching words are highlighted. When a description that contains your search is open, it starts with a sentence naming the matched words.</p>
@@ -737,7 +737,7 @@
     <p class="search-skip-row"><a href="#inner-heading" id="searchSkip" hidden>Skip results</a></p>
     <!-- [html-validate-disable-next no-redundant-role -- keeps list semantics in VoiceOver when list-style is none] -->
     <ul id="searchResults" class="search-results" role="list" aria-label="Matching emotions" hidden></ul>
-    <p><button type="button" id="searchShowAll" hidden></button></p>
+    <p><button type="button" id="searchShowAll" hidden>Show all results</button></p>
   </section>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
@@ -4890,6 +4890,7 @@ checkLocalDataSchema();
   const input = $('searchInput');
   const list = $('searchResults');
   const showAllButton = $('searchShowAll');
+  const submitButton = $('searchSubmit');
   const skipLink = $('searchSkip');
   const emptyNote = $('searchEmpty');
   const TYPING_DELAY = 800;
@@ -5216,8 +5217,9 @@ checkLocalDataSchema();
   // and says why, and any earlier search is cleared.
   function applyReviewMode() {
     const reviewing = Boolean(getReviewDataset());
-    const hadFocus = reviewing && document.activeElement === input;
+    const hadFocus = reviewing && (document.activeElement === input || document.activeElement === submitButton);
     input.disabled = reviewing;
+    submitButton.disabled = reviewing;
     input.setAttribute('aria-describedby', reviewing ? 'searchHelp searchReviewNote' : 'searchHelp');
     $('searchReviewNote').hidden = !reviewing;
     if (reviewing) clearSearch();
