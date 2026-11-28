@@ -2,6 +2,10 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## Unreleased
+
+- Internal tidy: the Google Drive script now uses the same cache query as the other scripts, and the release check covers every local script tag. No saved data format changed.
+
 ## 1.11.2
 
 Released 28 November 2026.
