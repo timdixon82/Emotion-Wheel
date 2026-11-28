@@ -462,6 +462,7 @@
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to main content</a>
+<a class="skip-link" href="#recordButton" id="skipToRecord">Skip to Record this emotion</a>
 <header class="app-header">
   <div class="app-header-inner">
     <div class="app-brand">
@@ -668,7 +669,7 @@
     <details id="full-table">
       <summary>Emotion reference table</summary>
       <div class="details-content">
-        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The round colour marker identifies the inner-circle emotion category; the written label carries the same information without relying on colour.</p>
+        <p class="help">Choose any emotion word in a row to prepare that complete path as a new entry. The columns follow the rings of the emotion wheel: the inner circle is the main feeling, the middle circle is more specific and the outer circle is most specific. The round colour marker identifies the main feeling (inner-circle category); the written label carries the same information without relying on colour.</p>
 
         <section class="scroll-table" tabindex="0" aria-label="All available emotion paths">
           <table>
@@ -685,26 +686,26 @@
     </details>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
-    <h2 id="inner-heading" tabindex="-1">Step 1: Inner circle</h2>
+    <h2 id="inner-heading" tabindex="-1">Step 1: Main feeling</h2>
     <div id="innerButtons" class="button-grid" role="group" aria-labelledby="inner-heading"></div>
   </section>
 
   <section class="step" aria-labelledby="middle-heading">
-    <h2 id="middle-heading">Step 2: Middle circle</h2>
-    <p id="middleHelp">Choose an inner-circle emotion first.</p>
+    <h2 id="middle-heading">Step 2: More specific (optional)</h2>
+    <p id="middleHelp">Choose a main feeling first.</p>
     <div id="middleButtons" class="button-grid" role="group" aria-labelledby="middle-heading" aria-describedby="middleHelp"></div>
   </section>
 
   <section class="step" aria-labelledby="outer-heading">
-    <h2 id="outer-heading">Step 3: Outer circle</h2>
-    <p id="outerHelp">Choose a middle-circle emotion first.</p>
+    <h2 id="outer-heading">Step 3: Most specific (optional)</h2>
+    <p id="outerHelp">Choose a more specific emotion first.</p>
     <div id="outerButtons" class="button-grid" role="group" aria-labelledby="outer-heading" aria-describedby="outerHelp"></div>
   </section>
 
   <section class="status" aria-labelledby="current-selection-heading">
-    <h2 id="current-selection-heading">Review and record</h2>
+    <h2 id="current-selection-heading" tabindex="-1">Review and record</h2>
     <p id="selectionText" class="result">No emotion selected yet.</p>
-    <p id="liveStatus" aria-live="polite" aria-atomic="true">Start by choosing an inner-circle emotion.</p>
+    <p id="liveStatus" aria-live="polite" aria-atomic="true">Start by choosing a main feeling.</p>
 
     <div id="appropriatePanel" class="optional-panel" hidden>
       <fieldset>
@@ -2222,11 +2223,11 @@ function renderInner() {
 function renderMiddle() {
   clearNode(middleButtons);
   if (!selectedInner) {
-    middleHelp.textContent = 'Choose an inner-circle emotion first.';
+    middleHelp.textContent = 'Choose a main feeling first.';
     return;
   }
   const options = unique(emotions.filter(row => row[0] === selectedInner).map(row => row[1]));
-  middleHelp.textContent = `${options.length} middle-circle emotions available for ${selectedInner}. You can record now, or refine the emotion.`;
+  middleHelp.textContent = `${options.length} more specific emotions available for ${selectedInner}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     middleButtons.appendChild(makeButton(label, () => {
       selectedMiddle = label;
@@ -2240,13 +2241,13 @@ function renderMiddle() {
 function renderOuter() {
   clearNode(outerButtons);
   if (!selectedInner || !selectedMiddle) {
-    outerHelp.textContent = 'Choose a middle-circle emotion first, or record the current selection.';
+    outerHelp.textContent = 'Choose a more specific emotion first, or record the current selection.';
     return;
   }
   const options = emotions
     .filter(row => row[0] === selectedInner && row[1] === selectedMiddle)
     .map(row => row[2]);
-  outerHelp.textContent = `${options.length} outer-circle emotions available for ${selectedInner} then ${selectedMiddle}. You can record now, or refine the emotion.`;
+  outerHelp.textContent = `${options.length} most specific emotions available for ${selectedInner} then ${selectedMiddle}. You can record now, or refine the emotion.`;
   options.forEach(label => {
     outerButtons.appendChild(makeButton(label, () => {
       selectedOuter = label;
@@ -2263,7 +2264,7 @@ function renderSelection() {
 
   if (!selectedInner) {
     selectionText.textContent = 'No emotion selected yet.';
-    liveStatus.textContent = 'Start by choosing an inner-circle emotion.';
+    liveStatus.textContent = 'Start by choosing a main feeling.';
   } else {
     const path = getSelectionPath().join(' then ');
     selectionText.textContent = `${path} (${getSelectionLevel()})`;
@@ -4586,6 +4587,12 @@ closeFallbackButton.addEventListener('click', () => {
   copyFallbackPanel.hidden = true;
 });
 
+document.getElementById('skipToRecord').addEventListener('click', event => {
+  event.preventDefault();
+  // Record is disabled until an emotion is chosen, and a disabled button cannot take focus, so fall back to its heading.
+  (recordButton.disabled ? document.getElementById('current-selection-heading') : recordButton).focus();
+});
+
 recordButton.addEventListener('click', () => {
   if (getReviewDataset()) return;
   if (!selectedInner) return;
@@ -4657,7 +4664,7 @@ resetButton.addEventListener('click', () => {
   editingEntry = null;
   clearEntryForm();
   renderAll();
-  focusEntryStart('Selection reset. Start again at Step 1: Inner circle.');
+  focusEntryStart('Selection reset. Start again at Step 1: Main feeling.');
 });
 
 shareTallyButton.addEventListener('click', () => {
