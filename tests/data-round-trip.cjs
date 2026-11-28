@@ -18,9 +18,9 @@ const func = (name, src = html) => (src.match(new RegExp(`^function ${name}\\([\
 const constantNames = ['storageKey', 'dataSchemaVersion', 'schemaVersionKey', 'settingsKey', 'defaultTags', 'valueFrameworks', 'valueCatalog', 'defaultSettings'];
 const functionNames = ['parseLocalDataset', 'serializeDataset', 'dataSchemaMatches', 'normalizeSettings', 'normalizeTags', 'normalizeValues', 'valueKey',
   'isPhaseOneSettings', 'isPhaseTwoSettings', 'getAvailableTags', 'getIntensityComparison', 'getRecordedLevel', 'getSelectionLevel',
-  'ensureEntryIdentity', 'migrateLocalDataset', 'applyRecordingRatings', 'getRecordingAlignment', 'saveLog', 'loadRatingScale', 'normalizeLoadedEntry', 'getBackupEntriesFromText', 'getBackupSnapshot', 'applyDriveSyncSnapshot', 'loadSettings', 'saveSettings', 'getShowDescriptions', 'setShowDescriptions'];
+  'ensureEntryIdentity', 'migrateLocalDataset', 'applyRecordingRatings', 'applyOptionalAnswers', 'getRecordingAlignment', 'saveLog', 'loadRatingScale', 'normalizeLoadedEntry', 'getBackupEntriesFromText', 'getBackupSnapshot', 'applyDriveSyncSnapshot', 'loadSettings', 'saveSettings', 'getShowDescriptions', 'setShowDescriptions'];
 const glue = `
-let ratingScale = 5, captureSettings = {}, logEntries = [], editingEntry = null, pendingRatingScaleChange = null;
+let ratingScale = 5, captureSettings = {}, logEntries = [], editingEntry = null, detailEntry = null, pendingRatingScaleChange = null;
 let selectedInner = null, selectedMiddle = null, selectedOuter = null;
 function adoptRatingScale(value) { ratingScale = value; }
 function renderAll() {}
@@ -180,6 +180,7 @@ console.log('PASS: newer schema and unsupported or mismatched scale are refused 
       var getSelectedTags = () => ${JSON.stringify(TAGS)}, getSelectedValues = () => ${JSON.stringify(VALUES)};
       var liveStatus = {}, recordConfirmation = { focus() {} }, recordConfirmationHeading = {}, recordConfirmationText = {}, undoRecordButton = {}, lastRecordedEntry = null;
       var clearEntryForm = () => {}, getEntryPathLabel = () => '', showDailyLogCongratulations = () => {};
+      var recordButton = { focus() {} }, detailStatus = {}, loadEntryAnswers = () => {};
       captureSettings = { collectAppropriate: true, collectExpectedIntensity: true, collectActualIntensity: true, collectSensations: true, collectTags: true, collectValues: true, collectBucketLevel: true };
       logEntries = ${JSON.stringify(existing)}; ratingScale = ${scale};
       function __record() {${handler}}

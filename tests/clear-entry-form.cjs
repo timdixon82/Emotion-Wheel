@@ -21,6 +21,8 @@ const context = vm.createContext({
   tagsButtons: group(tags), valuesButtons: group(values), sensationsButtons: group(sensations),
   renderBucketLevel() { bucketRendered++; }
 });
+// clearEntryForm clears the selection, then calls clearDetailFields for every optional answer (split out when Add detail moved after Record).
+vm.runInContext(html.match(/function clearDetailFields\(\) \{[\s\S]*?\n}/)[0], context);
 vm.runInContext(html.match(/function clearEntryForm\(\) \{[\s\S]*?\n}/)[0], context);
 context.clearEntryForm();
 
@@ -40,11 +42,12 @@ assert.ok(sensations.every(input => !input.checked), 'sensations cleared');
 assert.ok(values.every(input => !input.checked), 'values cleared');
 
 // All three paths must call clearEntryForm and then redraw.
-const recordHandler = html.match(/lastRecordedEntry = entry;[\s\S]*?recordConfirmation\.focus\(\);/)[0];
+const recordHandler = html.match(/lastRecordedEntry = entry;[\s\S]*?recordButton\.focus\(\);/)[0];
 assert.match(recordHandler, /clearEntryForm\(\);\s*renderAll\(\);/, 'Record clears then redraws');
 assert.match(html.match(/resetButton\.addEventListener\('click'[\s\S]*?\n}\);/)[0], /clearEntryForm\(\);\s*renderAll\(\);/, 'Reset clears then redraws');
 assert.match(html.match(/function startNewEntry\(\) \{[\s\S]*?\n}/)[0], /clearEntryForm\(\);\s*renderAll\(\);/, 'Start a new entry clears then redraws');
 
 // Edit mode still loads saved values after clearing.
-assert.match(html.match(/function prepareEntry\([\s\S]*?\n}/)[0], /clearEntryForm\(\);[\s\S]*renderValues\(entry\.values \|\| \[\]\);/, 'edit mode loads saved values');
+assert.match(html.match(/function prepareEntry\([\s\S]*?\n}/)[0], /clearEntryForm\(\);[\s\S]*loadEntryAnswers\(entry\);/, 'edit mode loads saved answers');
+assert.match(html.match(/function loadEntryAnswers\([\s\S]*?\n}/)[0], /renderValues\(entry\.values \|\| \[\]\);/, 'saved values are loaded');
 console.log('clear-entry-form tests passed');

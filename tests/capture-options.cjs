@@ -24,6 +24,7 @@ const context = vm.createContext({
   recordConfirmation: node('confirmation'), recordConfirmationHeading: node('heading'),
   recordConfirmationText: node('confirmationText'), undoRecordButton: node('undo'),
   lastRecordedEntry: null, getReviewDataset: () => null,
+  detailEntry: null, detailStatus: node('detailStatus'), loadEntryAnswers() {}, recordButton: node('recordButton'),
   getSelectionLevel: () => 'Inner circle', getEntryPathLabel: entry => entry.inner,
   saveLog() { if (failSave) throw new Error('Storage full'); stored.set('records', JSON.stringify(context.logEntries)); },
   clearEntryForm() { context.selectedInner = null; context.entryComment.value = ''; },
@@ -31,7 +32,7 @@ const context = vm.createContext({
 });
 vm.runInContext(html.match(/const valueFrameworks = \[[\s\S]*?const valueCatalog = [^\n]*;\n/)[0], context);
 vm.runInContext(html.match(/const defaultSettings = \{[\s\S]*?\n};/)[0], context);
-for (const name of ['normalizeTags', 'valueKey', 'normalizeValues', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
+for (const name of ['normalizeTags', 'valueKey', 'normalizeValues', 'normalizeSettings', 'isPhaseOneSettings', 'isPhaseTwoSettings', 'getIntensityComparison', 'getRecordingAlignment', 'applyRecordingRatings', 'applyOptionalAnswers', 'getLoggingStreak', 'getLocalLoggingDate', 'showDailyLogCongratulations']) {
   vm.runInContext(html.match(new RegExp(`function ${name}\\([\\s\\S]*?\\n}`))[0], context);
 }
 const normalize = settings => context.normalizeSettings(settings);
