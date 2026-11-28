@@ -311,8 +311,11 @@ check('live: highlight text equals the description for every description', live.
 // The real index.html: markup, scripts and wiring.
 // ---------------------------------------------------------------------
 const version = fs.readFileSync(path.join(root, 'assets/version.js'), 'utf8').match(/APP_VERSION = '([^']+)'/)[1];
-check('search form has role search and a name', /<form role="search" id="searchForm" aria-labelledby="search-heading">/.test(html));
+check('search form has role search and a name', /<form role="search" id="searchForm" aria-label="Find an emotion">/.test(html) && !/<form role="search"[^>]*aria-labelledby/.test(html));
 check('search input is type search with a label and described by help', /<label for="searchInput">Find an emotion<\/label>/.test(html) && /<input type="search" id="searchInput" autocomplete="off" aria-describedby="searchHelp">/.test(html) && /<p id="searchHelp" class="help">/.test(html));
+const helpText = html.match(/<p id="searchHelp" class="help">([^<]*)<\/p>/)[1];
+check('the input description is one or two short sentences', helpText.split('. ').length <= 2 && helpText.split(/\s+/).length <= 30);
+check('Search tips is a collapsed disclosure button with the detail outside the description', /<button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips<\/button>/.test(html) && /<div id="searchTips" class="help" hidden>/.test(html) && /Down Arrow enters the results/.test(html.match(/<div id="searchTips"[\s\S]*?<\/div>/)[0]) && /\.search-tips-button \{ min-height: 2\.75rem/.test(html));
 check('search sits above Step 1', html.indexOf('id="emotion-search"') !== -1 && html.indexOf('id="emotion-search"') < html.indexOf('id="emotion-selector"'));
 check('status region, results list, Show all and Skip results exist', /<p id="searchStatus" class="visually-hidden" role="status"><\/p>/.test(html) && /<ul id="searchResults" class="search-results" role="list" aria-label="Matching emotions" hidden>/.test(html) && /<button type="button" id="searchShowAll" hidden>/.test(html) && /<a href="#inner-heading" id="searchSkip" hidden>Skip results<\/a>/.test(html));
 check('the minimum length paragraph is hidden until needed', /<p id="searchEmpty" class="help" hidden><\/p>/.test(html));
@@ -440,5 +443,47 @@ ctx.review = null;
 doc.fire('reviewdatasetchange');
 check('leaving review dataset mode turns search back on', !input.disabled && nodes.searchReviewNote.hidden);
 
+// Search tips disclosure.
+const tipsBtn = nodes.searchTipsButton;
+tipsBtn.fire('click');
+check('Search tips opens: aria-expanded true and panel shown', tipsBtn.getAttribute('aria-expanded') === 'true' && !nodes.searchTips.hidden);
+tipsBtn.fire('click');
+check('Search tips closes again', tipsBtn.getAttribute('aria-expanded') === 'false' && nodes.searchTips.hidden);
+
+// Review mode with focus in the input: note is described, focus moves, note is announced once.
+check('outside review mode the input is described by the hint only', input.getAttribute('aria-describedby') === 'searchHelp');
+doc.activeElement = input;
+ctx.review = { label: 'shared' };
+doc.fire('reviewdatasetchange');
+check('review mode adds the note to the input description', input.getAttribute('aria-describedby') === 'searchHelp searchReviewNote');
+check('review mode moves focus off the disabled input to the search heading', ctx.focused === nodes['search-heading'] && nodes['search-heading'].getAttribute('tabindex') === '-1');
+ctx.review = null;
+doc.fire('reviewdatasetchange');
+check('leaving review mode restores the description', input.getAttribute('aria-describedby') === 'searchHelp');
+doc.activeElement = null;
+
+// Typing timer: submit and list focus or keys cancel a pending debounce.
+(async () => {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const rebuilds = () => { let n = 0; const orig = list.replaceChildren; list.replaceChildren = function () { n++; return orig.apply(this, arguments); }; return { get n() { return n; }, stop() { list.replaceChildren = orig; } }; };
+  let spy = rebuilds();
+  input.value = 'anger'; input.fire('input'); form.fire('submit');
+  await wait(1000);
+  check('submit cancels the typing timer so the list is built once', spy.n === 1);
+  spy.stop();
+
+  type('anger');
+  input.value = 'fe'; input.fire('input');
+  spy = rebuilds();
+  list.fire('focusin');
+  await wait(1000);
+  check('focus in the results cancels a pending rebuild', spy.n === 0);
+  input.value = 'fe'; input.fire('input');
+  list.fire('keydown', { key: 'ArrowDown', target: { closest: () => null, classList: { contains: () => false } } });
+  await wait(1000);
+  check('a key in the results cancels a pending rebuild', spy.n === 0);
+  spy.stop();
+
 console.log(`emotion-search: ok (${checks} checks)`);
 setTimeout(() => process.exit(0), 0);
+})();

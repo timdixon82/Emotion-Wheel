@@ -210,6 +210,7 @@
     .search-field { display: block; }
     .search-field label { display: flex; }
     #searchInput { width: 100%; max-width: 40rem; min-height: 3rem; padding: .5rem; font: inherit; color: var(--text); background: var(--button); border: 2px solid var(--border); border-radius: .5rem; }
+    .search-tips-button { min-height: 2.75rem; min-width: 2.75rem; margin-top: .5rem; }
     .search-skip-row { margin: .5rem 0 0; }
     .search-skip-row a { display: inline-block; min-height: 2.75rem; padding: .6rem .25rem; color: var(--heading); font-weight: 700; }
     .search-results { list-style: none; padding: 0; margin: 1rem 0 0; max-width: 44rem; }
@@ -718,11 +719,16 @@
   <section id="emotion-search" class="step" aria-labelledby="search-heading">
     <h2 id="search-heading">Find an emotion by name or description</h2>
     <!-- [html-validate-disable-next wcag/h32 -- results update as you type and Enter searches at once, so a submit button would add a Tab stop] -->
-    <form role="search" id="searchForm" aria-labelledby="search-heading">
+    <form role="search" id="searchForm" aria-label="Find an emotion">
       <div class="search-field">
         <label for="searchInput">Find an emotion</label>
-        <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Searching an emotion also lists its sub-items. Matching words are highlighted. When a description that contains your search is open, it starts with a sentence naming the matched words. Results update about a second after you stop typing. Tab moves through each result and its Description button, and a Skip results link comes before the list. Arrow keys are an optional extra: Down Arrow enters the results, Up Arrow and Down Arrow move between them, Right Arrow goes to a result's Description button, and Left Arrow comes back. Escape closes an open tip first, then clears the search.</p>
+        <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Results update about a second after you stop typing.</p>
         <input type="search" id="searchInput" autocomplete="off" aria-describedby="searchHelp">
+        <button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips</button>
+        <div id="searchTips" class="help" hidden>
+          <p>Searching an emotion also lists its sub-items. Matching words are highlighted. When a description that contains your search is open, it starts with a sentence naming the matched words.</p>
+          <p>Tab moves through each result and its Description button, and a Skip results link comes before the list. Arrow keys are an optional extra: Down Arrow enters the results, Up Arrow and Down Arrow move between them, Right Arrow goes to a result's Description button, and Left Arrow comes back. Escape closes an open tip first, then clears the search.</p>
+        </div>
       </div>
     </form>
     <p id="searchReviewNote" class="help" hidden>Search is unavailable while you view shared data. Record is unavailable too.</p>
@@ -5132,7 +5138,15 @@ checkLocalDataSchema();
     clearTimeout(timer);
     timer = setTimeout(() => runSearch(input.value), TYPING_DELAY);
   });
-  form.addEventListener('submit', ev => { ev.preventDefault(); runSearch(input.value); });
+  form.addEventListener('submit', ev => { ev.preventDefault(); clearTimeout(timer); runSearch(input.value); });
+
+  // Search tips: a collapsed disclosure, kept out of the input's description.
+  const tipsButton = $('searchTipsButton');
+  tipsButton.addEventListener('click', () => {
+    const open = tipsButton.getAttribute('aria-expanded') !== 'true';
+    tipsButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('searchTips').hidden = !open;
+  });
 
   // Escape closes an open hover or focus tip first, wherever focus is. Capture
   // phase, so it goes before the search box or results handlers.
@@ -5161,7 +5175,10 @@ checkLocalDataSchema();
   });
 
   // Optional arrow keys inside the results. Tab reaches every control without them.
+  // A pending typing timer must not rebuild the list under the user's focus.
+  list.addEventListener('focusin', () => clearTimeout(timer));
   list.addEventListener('keydown', ev => {
+    clearTimeout(timer);
     const sel = selects();
     const li = ev.target.closest('li');
     const isToggle = ev.target.classList.contains('desc-toggle');
@@ -5199,9 +5216,16 @@ checkLocalDataSchema();
   // and says why, and any earlier search is cleared.
   function applyReviewMode() {
     const reviewing = Boolean(getReviewDataset());
+    const hadFocus = reviewing && document.activeElement === input;
     input.disabled = reviewing;
+    input.setAttribute('aria-describedby', reviewing ? 'searchHelp searchReviewNote' : 'searchHelp');
     $('searchReviewNote').hidden = !reviewing;
     if (reviewing) clearSearch();
+    if (hadFocus) {
+      // A disabled input loses focus, so move it to the heading and say why once.
+      focusHeading('search-heading');
+      announce('searchStatus', $('searchReviewNote').textContent);
+    }
   }
   document.addEventListener('reviewdatasetchange', applyReviewMode);
   applyReviewMode();
