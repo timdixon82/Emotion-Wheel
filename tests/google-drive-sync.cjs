@@ -76,6 +76,61 @@ ctx.applyDriveSyncSnapshot(remote,base);
 assert.equal(ctx.logEntries.length,3); assert.equal(ctx.logEntries[0].extra.kept,true);
 console.log('PASS: real local-apply code rejects active/stale edits, retains a recovery snapshot, rolls back a failed write and applies validated remote changes.');
 
+// showDescriptions: last-writer-wins, split out of the settings block (addendum 1, sections 2 and 5).
+{
+  const fs = require('node:fs'), path = require('node:path');
+  const source = fs.readFileSync(path.join(__dirname, '../assets/google-drive-sync.js'), 'utf8');
+  const strip = "key === 'settings' && settingsAreObjects(ancestor?.settings, left.settings, right.settings) ? mergeSettings(pick, ancestor?.settings, left.settings, right.settings) :";
+  assert(source.includes(strip), 'the settings split is present in reconcile');
+  const oldModule = { exports: {} }; new Function('module', source.replace(strip, ''))(oldModule);
+  const oldReconcile = oldModule.exports.reconcile;
+  const withSettings = (data, settings) => { const copy = structuredClone(data); copy.settings = settings; return copy; };
+  const plain = { captureMode: 'phase1', collectTags: false };
+  const on = { ...plain, showDescriptions: true };
+  const baseA = withSettings(base, plain), noKey = withSettings(base, plain), withKey = withSettings(base, on);
+  // (a) A toggles on, B unchanged: A wins, no conflict, both directions.
+  assert.deepEqual(reconcile(baseA, withKey, noKey).settings, on);
+  assert.deepEqual(reconcile(baseA, noKey, withKey).settings, on);
+  assert.deepEqual(getConflicts(baseA, withKey, noKey), []);
+  // (b) A toggles on, B changes another setting: merged has both, no conflict. The old reconcile conflicts (known).
+  const changed = withSettings(base, { ...plain, collectTags: true });
+  assert.deepEqual(reconcile(baseA, withKey, changed).settings, { ...plain, collectTags: true, showDescriptions: true });
+  assert.deepEqual(reconcile(baseA, changed, withKey).settings, { ...plain, collectTags: true, showDescriptions: true });
+  assert.deepEqual(getConflicts(baseA, withKey, changed), []);
+  assert.throws(() => oldReconcile(baseA, withKey, changed), /settings/, 'old reconcile conflicts here (recorded as known)');
+  // (c) A on then off, B unchanged: no change. Base with the key on, A removes it, B unchanged: off.
+  assert.deepEqual(reconcile(baseA, noKey, noKey).settings, plain);
+  assert.deepEqual(reconcile(withKey, noKey, withKey).settings, plain, 'turned off on one device, kept off');
+  assert(!('showDescriptions' in reconcile(withKey, noKey, withKey).settings), 'off is stored as absent');
+  // Two devices flipping opposite ways from an on base: one off, one other setting changed. Still no conflict.
+  assert.deepEqual(getConflicts(withKey, noKey, withSettings(base, { ...on, collectTags: true })), []);
+  assert.deepEqual(reconcile(withKey, noKey, withSettings(base, { ...on, collectTags: true })).settings, { ...plain, collectTags: true });
+  // (d) Both toggle on: no change.
+  assert.deepEqual(reconcile(baseA, withKey, withKey).settings, on);
+  assert.deepEqual(getConflicts(baseA, withKey, withKey), []);
+  // (e) Both change another setting differently: still a conflict, with or without the key.
+  const mineSettings = withSettings(base, { ...plain, captureMode: 'phase2', showDescriptions: true }), theirSettings = withSettings(base, { ...plain, captureMode: 'phase3' });
+  assert.throws(() => reconcile(baseA, mineSettings, theirSettings), error => error.code === 'sync-conflict');
+  assert.deepEqual(getConflicts(baseA, mineSettings, theirSettings).map(item => item.key), ['settings']);
+  assert.equal(reconcile(baseA, mineSettings, theirSettings, { choices: { settings: 'remote' } }).settings.captureMode, 'phase3');
+  assert.equal(reconcile(baseA, mineSettings, theirSettings, { choices: { settings: 'remote' } }).settings.showDescriptions, true, 'the key is not part of the conflict');
+  // (f) Base missing, local with key, remote without: no key-only conflict.
+  assert.deepEqual(reconcile(null, withKey, noKey).settings, on);
+  assert.deepEqual(reconcile(null, noKey, withKey).settings, on);
+  // (g) Settings missing or malformed: behaviour unchanged from the old code.
+  const missing = structuredClone(base); delete missing.settings;
+  for (const [b, l, r] of [[baseA, missing, noKey], [baseA, withKey, missing], [missing, missing, missing], [baseA, withSettings(base, 'bad'), noKey], [baseA, withSettings(base, [1]), withSettings(base, [1])], [baseA, withSettings(base, null), withSettings(base, null)]]) {
+    const run = fn => { try { return { value: fn(b, l, r) }; } catch (error) { return { error: error.message }; } };
+    assert.deepEqual(run(reconcile), run(oldReconcile), 'malformed or missing settings behave as before');
+  }
+  // Inputs are not changed, and no description text is produced.
+  const snapshotBefore = canonical([baseA, withKey, changed]);
+  const out = reconcile(baseA, withKey, changed);
+  assert.equal(canonical([baseA, withKey, changed]), snapshotBefore, 'settings merge leaves inputs unchanged');
+  assert(!/description/i.test(JSON.stringify(out).replace(/showDescriptions/g, '')), 'no description text in the merged output');
+  console.log('PASS: showDescriptions merges last-writer-wins without conflict; other settings merge as before.');
+}
+
 (async()=>{
   const {prepareSchemas}=require('../assets/google-drive-sync.js');
   const old=snapshot([record('one')]);old.schemaVersion=1;delete old.entries[0].id;

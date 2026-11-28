@@ -1963,7 +1963,21 @@ function normalizeSettings(settings) {
   const selectedFrameworks = Array.isArray(settings.selectedValueFrameworks) ? settings.selectedValueFrameworks : [];
   normalized.selectedValueFrameworks = [...new Set([...selectedFrameworks, ...normalized.selectedValues.map(value => value.framework)])].filter(id => valueFrameworks.some(framework => framework.id === id));
   delete normalized.personalValues;
+  // showDescriptions is stored only as true; absent means off, so files stay identical when it is off.
+  if (settings.showDescriptions === true) normalized.showDescriptions = true;
+  else delete normalized.showDescriptions;
   return normalized;
+}
+
+function getShowDescriptions() {
+  return captureSettings.showDescriptions === true;
+}
+
+function setShowDescriptions(on) {
+  // Assign to add (lands last) and delete to remove; never rebuild the object (key order is compared).
+  if (on === true) captureSettings.showDescriptions = true;
+  else delete captureSettings.showDescriptions;
+  saveSettings();
 }
 
 function formatDateTime(isoString) {
