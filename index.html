@@ -206,6 +206,36 @@
     .confirmation h2 { margin-top: 0; }
     .empty-action { margin-top: .75rem; }
     .step { margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--border); border-radius: .5rem; }
+    #middle-heading:focus, #outer-heading:focus, #inner-heading:focus, #search-heading:focus { outline: 4px solid var(--focus); outline-offset: 2px; }
+    .search-field { display: block; }
+    .search-field label { display: flex; }
+    #searchInput { width: 100%; max-width: 40rem; min-height: 3rem; padding: .5rem; font: inherit; color: var(--text); background: var(--button); border: 2px solid var(--border); border-radius: .5rem; }
+    .search-tips-button { min-height: 2.75rem; min-width: 2.75rem; margin-top: .5rem; }
+    .search-skip-row { margin: .5rem 0 0; }
+    .search-skip-row a { display: inline-block; min-height: 2.75rem; padding: .6rem .25rem; color: var(--heading); font-weight: 700; }
+    .search-results { list-style: none; padding: 0; margin: 1rem 0 0; max-width: 44rem; }
+    .search-results li { margin-bottom: .35rem; }
+    .search-results li.level-middle { margin-left: 1rem; }
+    .search-results li.level-outer { margin-left: 2rem; }
+    .result-row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: stretch; }
+    .result-select { flex: 1 1 10rem; min-width: 10rem; overflow-wrap: anywhere; }
+    .result-select .tick { display: none; }
+    .result-select[aria-pressed="true"] { border: 5px double var(--text); }
+    .result-select[aria-pressed="true"] .tick { display: inline; }
+    .desc-toggle { flex: none; min-width: 2.75rem; }
+    .desc-toggle::before { content: "+ " / ""; font-weight: 700; }
+    .desc-toggle[aria-expanded="true"]::before { content: "- " / ""; }
+    .desc-toggle[aria-expanded="true"] { border: 5px double var(--text); }
+    .result-desc, .result-tip { margin: .25rem 0 .25rem .5rem; padding: .25rem .75rem; max-width: 40rem; overflow-wrap: anywhere; }
+    .result-desc { border-left: 6px solid var(--border); }
+    .result-tip { padding: .5rem .75rem; background: var(--panel); color: var(--text); border: 2px solid var(--border); border-radius: .5rem; }
+    .result-desc p { margin: 0; }
+    .result-desc .match-note { color: var(--muted); font-style: italic; margin: 0 0 .35rem; }
+    .search-results mark { background: var(--text); color: var(--bg); font-weight: 700; text-decoration: underline 3px; text-underline-offset: 3px; padding: 0 .15em; }
+    @media (forced-colors: active) {
+      .search-results mark { background: Mark; color: MarkText; forced-color-adjust: none; }
+      .result-select[aria-pressed="true"] { border: 5px double ButtonText; }
+    }
     .button-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: .75rem; }
     .actions, .field-row, .checkbox-grid, .radio-row {
       display: flex; flex-wrap: wrap; gap: .75rem; margin: .75rem 0;
@@ -685,6 +715,30 @@
         </div>
       </div>
     </details>
+
+  <section id="emotion-search" class="step" aria-labelledby="search-heading">
+    <h2 id="search-heading">Find an emotion by name or description</h2>
+    <form role="search" id="searchForm" aria-label="Find an emotion">
+      <div class="search-field">
+        <label for="searchInput">Find an emotion</label>
+        <p id="searchHelp" class="help">Type part of an emotion name, or a word from its description. Results update after you stop typing, or press Search.</p>
+        <input type="search" id="searchInput" maxlength="200" autocomplete="off" aria-describedby="searchHelp">
+        <button type="submit" id="searchSubmit" class="search-tips-button">Search</button>
+        <button type="button" id="searchTipsButton" class="search-tips-button" aria-expanded="false" aria-controls="searchTips">Search tips</button>
+        <div id="searchTips" class="help" hidden>
+          <p>Searching an emotion also lists its sub-items. Matching words are highlighted. When a description that contains your search is open, it starts with a sentence naming the matched words.</p>
+          <p>Tab moves through each result and its Description button, and a Skip results link comes before the list. Arrow keys are an optional extra: Down Arrow enters the results, Up Arrow and Down Arrow move between them, Right Arrow goes to a result's Description button, and Left Arrow comes back. Escape closes an open tip first, then clears the search.</p>
+        </div>
+      </div>
+    </form>
+    <p id="searchReviewNote" class="help" hidden>Search is unavailable while you view shared data. Record is unavailable too.</p>
+    <p id="searchStatus" class="visually-hidden" role="status"></p>
+    <p id="searchEmpty" class="help" hidden></p>
+    <p class="search-skip-row"><a href="#inner-heading" id="searchSkip" hidden>Skip results</a></p>
+    <!-- [html-validate-disable-next no-redundant-role -- keeps list semantics in VoiceOver when list-style is none] -->
+    <ul id="searchResults" class="search-results" role="list" aria-label="Matching emotions" hidden></ul>
+    <p><button type="button" id="searchShowAll" hidden>Show all results</button></p>
+  </section>
 
   <section id="emotion-selector" class="step" aria-labelledby="inner-heading">
     <h2 id="inner-heading" tabindex="-1">Step 1: Main feeling</h2>
@@ -4816,6 +4870,368 @@ expectedIntensity.value = actualIntensity.value = String(Math.ceil(ratingScale /
 renderAll();
 scheduleLoggingStreakRefresh();
 checkLocalDataSchema();
+</script>
+<script src="assets/emotion-descriptions.js?v=1.10.0"></script>
+<script src="assets/emotion-search.js?v=1.10.0"></script>
+<script>
+// Emotion search (display only). Reads the emotions array and the descriptions.
+// It sets selectedInner, selectedMiddle and selectedOuter exactly as the step
+// buttons do. Search text, results and descriptions are never stored.
+(function () {
+  'use strict';
+  const ES = window.EmotionSearch;
+  const form = document.getElementById('searchForm');
+  if (!ES || !form) return;
+
+  const entries = ES.buildEntries(emotions);
+  const descriptions = typeof EMOTION_DESCRIPTIONS === 'object' && EMOTION_DESCRIPTIONS ? EMOTION_DESCRIPTIONS : {};
+  const describe = path => ES.getDescription(descriptions, path);
+  const $ = id => document.getElementById(id);
+  const input = $('searchInput');
+  const list = $('searchResults');
+  const showAllButton = $('searchShowAll');
+  const submitButton = $('searchSubmit');
+  const skipLink = $('searchSkip');
+  const emptyNote = $('searchEmpty');
+  const TYPING_DELAY = 800;
+  const AFTER_SHOW_ALL_DELAY = 400;
+
+  let showAllActive = false;
+  let timer = null;
+  let lastQuery = '';
+  let expandedOverride = {}; // path -> true or false, set by the user for the current query
+
+  // Clears first, then sets after a short delay, so the same text twice in a
+  // row is still announced and focus changes finish first.
+  function announce(id, text, delay) {
+    const el = $(id);
+    clearTimeout(el._t);
+    el.textContent = '';
+    el._t = setTimeout(() => { el.textContent = text; }, delay || 200);
+  }
+  function clearStatus(id) {
+    const el = $(id);
+    clearTimeout(el._t);
+    el.textContent = '';
+  }
+
+  function currentPath() {
+    return [selectedInner, selectedMiddle, selectedOuter].filter(Boolean).join('|');
+  }
+
+  function makeTick() {
+    const tick = document.createElement('span');
+    tick.className = 'tick';
+    tick.setAttribute('aria-hidden', 'true');
+    tick.textContent = '✓ ';
+    return tick;
+  }
+
+  function makeMark(text) {
+    const mark = document.createElement('mark');
+    mark.textContent = text;
+    return mark;
+  }
+
+  // Adds the text to parent with matched words marked (DOM nodes, never innerHTML).
+  // Returns the typed words that matched.
+  function addHighlighted(parent, text, nq) {
+    const result = ES.highlight(text, nq);
+    result.segments.forEach(seg => {
+      parent.appendChild(seg.mark ? makeMark(seg.text) : document.createTextNode(seg.text));
+    });
+    return result.words;
+  }
+
+  // "Anger > Mad > Furious". The separator is hidden from the accessibility tree
+  // and the button carries an aria-label with the path joined by commas.
+  function buildPath(r, nq) {
+    const wrap = document.createElement('span');
+    r.parts.forEach((part, idx) => {
+      if (idx > 0) {
+        const sep = document.createElement('span');
+        sep.setAttribute('aria-hidden', 'true');
+        sep.textContent = ' > ';
+        wrap.appendChild(sep);
+      }
+      const level = idx === 0 ? 'inner' : idx === 1 ? 'middle' : 'outer';
+      if (ES.nameMatches({ name: part, level }, nq)) wrap.appendChild(makeMark(part));
+      else wrap.appendChild(document.createTextNode(part));
+    });
+    return wrap;
+  }
+
+  function closeTip(li) {
+    const tip = li.querySelector('.result-tip');
+    if (tip) tip.hidden = true;
+    li._tipOpen = false;
+  }
+  function openTip(li) {
+    const tip = li.querySelector('.result-tip');
+    if (!tip || li._dismissed || li.querySelector('.desc-toggle').getAttribute('aria-expanded') === 'true') return;
+    tip.hidden = false;
+    li._tipOpen = true;
+  }
+
+  function buildResult(r, nq, current, total) {
+    const text = describe(r.path);
+    const li = document.createElement('li');
+    li.className = 'level-' + r.level;
+    const row = document.createElement('div');
+    row.className = 'result-row';
+
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'result-select';
+    b.setAttribute('data-path', r.path);
+    b.setAttribute('aria-pressed', r.path === current ? 'true' : 'false');
+    b.appendChild(makeTick());
+    b.appendChild(buildPath(r, nq));
+    b.setAttribute('aria-label', ES.pathLabel(r.parts));
+    b.addEventListener('click', () => choose(r));
+    row.appendChild(b);
+    li.appendChild(row);
+    if (!text) return li; // no description: still searchable and selectable by name
+
+    const expanded = Object.prototype.hasOwnProperty.call(expandedOverride, r.path) ? expandedOverride[r.path] : ES.autoOpen(r.descMatch, total);
+    const id = 'rdesc-' + r.path.replace(/[^A-Za-z0-9]/g, '-');
+    const t = document.createElement('button');
+    t.type = 'button';
+    t.className = 'desc-toggle';
+    t.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+    t.setAttribute('aria-controls', id);
+    t.appendChild(document.createTextNode('Description'));
+    const ctx = document.createElement('span');
+    ctx.className = 'visually-hidden';
+    ctx.textContent = ' for ' + ES.pathLabel(r.parts); // full path, so the name is unique
+    t.appendChild(ctx);
+
+    const d = document.createElement('div');
+    d.className = 'result-desc';
+    d.id = id;
+    d.hidden = !expanded;
+    const p = document.createElement('p');
+    let words = [];
+    if (r.descMatch) words = addHighlighted(p, text, nq);
+    else p.textContent = text;
+    if (r.descMatch) {
+      const note = document.createElement('p');
+      note.className = 'match-note';
+      note.textContent = ES.matchSentence(words);
+      d.appendChild(note);
+    }
+    d.appendChild(p);
+
+    // Extra route: hover or keyboard focus shows the same text in a tip. It is
+    // hidden from the accessibility tree because the Description button is the
+    // real route. It sits in the flow so it never covers a result, stays while
+    // the pointer is over it, and Escape closes it (WCAG 1.4.13).
+    const tip = document.createElement('div');
+    tip.className = 'result-tip';
+    tip.setAttribute('aria-hidden', 'true');
+    tip.hidden = true;
+    tip.textContent = text;
+
+    t.addEventListener('click', () => {
+      const now = t.getAttribute('aria-expanded') !== 'true';
+      t.setAttribute('aria-expanded', now ? 'true' : 'false');
+      d.hidden = !now;
+      expandedOverride[r.path] = now;
+      closeTip(li);
+    });
+    li.addEventListener('mouseenter', () => openTip(li));
+    li.addEventListener('mouseleave', () => { li._dismissed = false; closeTip(li); });
+    b.addEventListener('focus', () => openTip(li));
+    t.addEventListener('focus', () => closeTip(li));
+    li.addEventListener('focusout', ev => {
+      if (!li.contains(ev.relatedTarget)) { li._dismissed = false; closeTip(li); }
+    });
+
+    row.appendChild(t);
+    li.appendChild(d);
+    li.appendChild(tip);
+    return li;
+  }
+
+  function runSearch(q, showAll, silent) {
+    showAllActive = Boolean(showAll);
+    const nq = ES.norm(q);
+    if (nq !== lastQuery) { expandedOverride = {}; lastQuery = nq; }
+    list.replaceChildren();
+    list.hidden = true;
+    showAllButton.hidden = true;
+    skipLink.hidden = true;
+    emptyNote.hidden = true;
+    emptyNote.textContent = '';
+    if (getReviewDataset()) return;
+    if (!nq) {
+      if (!silent) clearStatus('searchStatus');
+      return;
+    }
+    const hint = ES.queryHint(nq);
+    if (hint) {
+      emptyNote.textContent = hint;
+      emptyNote.hidden = false;
+      if (!silent) announce('searchStatus', hint);
+      return;
+    }
+    const matches = ES.findMatches(entries, descriptions, nq);
+    const total = matches.length;
+    if (!total) {
+      const msg = `No emotions found for '${q.trim()}'. Check the spelling, or browse the steps below.`;
+      emptyNote.textContent = msg;
+      emptyNote.hidden = false;
+      if (!silent) announce('searchStatus', msg);
+      return;
+    }
+    const shown = showAll ? matches : matches.slice(0, ES.MAX_SHOWN);
+    const current = currentPath();
+    shown.forEach(r => list.appendChild(buildResult(r, nq, current, total)));
+    list.hidden = false;
+    skipLink.hidden = false;
+    if (!showAll && total > ES.MAX_SHOWN) {
+      showAllButton.textContent = `Show all ${total} results`;
+      showAllButton.hidden = false;
+    }
+    if (!silent) announce('searchStatus', ES.statusText(total, shown.length));
+  }
+
+  // Clears the text, the results and the count status. Used by Escape, Record,
+  // Reset and review dataset mode.
+  function clearSearch() {
+    clearTimeout(timer);
+    input.value = '';
+    showAllActive = false;
+    runSearch('', false, true);
+    clearStatus('searchStatus');
+  }
+
+  const selects = () => Array.from(list.querySelectorAll('.result-select'));
+
+  function focusHeading(id) {
+    const h = $(id);
+    h.setAttribute('tabindex', '-1');
+    h.focus();
+  }
+
+  // Sets the same state as the step buttons, then renders the same way. Focus
+  // goes to the next place: Step 2 or Step 3 heading, or the next recording
+  // control (which honours the capture settings of every phase). The page's own
+  // status line announces the selection.
+  function choose(r) {
+    selectedInner = r.parts[0];
+    selectedMiddle = r.parts[1] || null;
+    selectedOuter = r.parts[2] || null;
+    renderAll();
+    if (r.level === 'outer') focusNextRecordingControl();
+    else if (r.level === 'middle') focusHeading('outer-heading');
+    else focusHeading('middle-heading');
+  }
+
+  // The selection can change from other routes (step buttons, edit, undo,
+  // Record). Keep the pressed state of listed results in step with it.
+  new MutationObserver(() => {
+    const current = currentPath();
+    selects().forEach(b => b.setAttribute('aria-pressed', b.getAttribute('data-path') === current ? 'true' : 'false'));
+  }).observe(selectionText, { childList: true, characterData: true, subtree: true });
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => runSearch(input.value), TYPING_DELAY);
+  });
+  form.addEventListener('submit', ev => { ev.preventDefault(); clearTimeout(timer); runSearch(input.value); });
+
+  // Search tips: a collapsed disclosure, kept out of the input's description.
+  const tipsButton = $('searchTipsButton');
+  tipsButton.addEventListener('click', () => {
+    const open = tipsButton.getAttribute('aria-expanded') !== 'true';
+    tipsButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+    $('searchTips').hidden = !open;
+  });
+
+  // Escape closes an open hover or focus tip first, wherever focus is. Capture
+  // phase, so it goes before the search box or results handlers.
+  function closeOpenTips() {
+    let closed = false;
+    list.querySelectorAll('li').forEach(li => {
+      if (li._tipOpen) { li._dismissed = true; closeTip(li); closed = true; }
+    });
+    return closed;
+  }
+  document.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape' && closeOpenTips()) { ev.preventDefault(); ev.stopPropagation(); }
+  }, true);
+
+  function escapeClear() {
+    const had = Boolean(input.value);
+    clearSearch();
+    if (had) announce('searchStatus', 'Search cleared', 100);
+  }
+  input.addEventListener('keydown', ev => {
+    if (ev.key === 'Escape') { ev.preventDefault(); escapeClear(); }
+    if (ev.key === 'ArrowDown') {
+      const first = selects()[0];
+      if (first) { ev.preventDefault(); first.focus(); }
+    }
+  });
+
+  // Optional arrow keys inside the results. Tab reaches every control without them.
+  // A pending typing timer must not rebuild the list under the user's focus.
+  list.addEventListener('focusin', () => clearTimeout(timer));
+  list.addEventListener('keydown', ev => {
+    clearTimeout(timer);
+    const sel = selects();
+    const li = ev.target.closest('li');
+    const isToggle = ev.target.classList.contains('desc-toggle');
+    const i = sel.indexOf(isToggle && li ? li.querySelector('.result-select') : ev.target);
+    if (i === -1) return;
+    if (ev.key === 'Escape') { ev.preventDefault(); escapeClear(); input.focus(); return; }
+    if (ev.key === 'ArrowDown' && i < sel.length - 1) { ev.preventDefault(); sel[i + 1].focus(); }
+    if (ev.key === 'ArrowUp') { ev.preventDefault(); if (i === 0) input.focus(); else sel[i - 1].focus(); }
+    if (ev.key === 'ArrowRight' && !isToggle) {
+      const toggle = li.querySelector('.desc-toggle');
+      if (toggle) { ev.preventDefault(); toggle.focus(); }
+    }
+    if (ev.key === 'ArrowLeft' && isToggle) { ev.preventDefault(); sel[i].focus(); }
+  });
+
+  showAllButton.addEventListener('click', () => {
+    runSearch(input.value, true, true);
+    const sel = selects();
+    if (sel[ES.MAX_SHOWN]) sel[ES.MAX_SHOWN].focus(); else if (sel[0]) sel[0].focus();
+    // The status waits so the focus move is read first.
+    announce('searchStatus', ES.statusText(sel.length, sel.length), AFTER_SHOW_ALL_DELAY);
+  });
+
+  skipLink.addEventListener('click', ev => {
+    ev.preventDefault();
+    if (!showAllButton.hidden) showAllButton.focus(); else focusHeading('inner-heading');
+  });
+
+  // Record and Reset clear the search. A failed save keeps the selection, so
+  // the search stays too.
+  recordButton.addEventListener('click', () => { if (!selectedInner) clearSearch(); });
+  resetButton.addEventListener('click', clearSearch);
+
+  // Review dataset mode: Entry is read only, as Record is. Search is turned off
+  // and says why, and any earlier search is cleared.
+  function applyReviewMode() {
+    const reviewing = Boolean(getReviewDataset());
+    const hadFocus = reviewing && (document.activeElement === input || document.activeElement === submitButton);
+    input.disabled = reviewing;
+    submitButton.disabled = reviewing;
+    input.setAttribute('aria-describedby', reviewing ? 'searchHelp searchReviewNote' : 'searchHelp');
+    $('searchReviewNote').hidden = !reviewing;
+    if (reviewing) clearSearch();
+    if (hadFocus) {
+      // A disabled input loses focus, so move it to the heading and say why once.
+      focusHeading('search-heading');
+      announce('searchStatus', $('searchReviewNote').textContent);
+    }
+  }
+  document.addEventListener('reviewdatasetchange', applyReviewMode);
+  applyReviewMode();
+}());
 </script>
 </body>
 </html>
