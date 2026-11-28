@@ -6,14 +6,14 @@ Open `index.html` in a modern browser, or use the GitHub Pages site once publish
 
 ## What it does
 
-- Record an emotion from the inner, middle, or outer level of the wheel. You never need to complete every level before recording.
+- Record an emotion from the main, more specific, or most specific level of the wheel. You never need to complete every level before recording.
 - Start with Phase 1 for simple habit-building, move to Phase 2 for guided reflection, Phase 3 for context and bucket level, or use Custom to choose the fields that suit you.
 - Add an optional private note to each entry, such as what happened, a thought, or useful context.
 - See the active capture mode without opening settings, and use the compact mobile recording action without adding a duplicate screen-reader control.
 - Move directly between Entry, Review Logs, Review Charts, My Data, Share My Data, Data Shared with Me, and Help using responsive app navigation that collapses into a menu on smaller screens.
 - Review logs, tallies, charts, and a line chart of records over time.
 - Move through chart periods by day, week, or month. Zero-entry periods can be included to show gaps in the pattern.
-- Compare inner-circle emotion trends and choose which colour-coded series to display.
+- Compare main feeling trends and choose which colour-coded series to display.
 - Correct entries, use an existing entry as the start of a new one, or delete with an immediate undo option.
 - Share an image captured from the chart currently displayed on screen through the device's native share sheet when supported, with clipboard and download fallbacks.
 - Save, load, merge, replace, share, export, and clear your local data.
