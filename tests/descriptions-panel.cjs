@@ -19,16 +19,22 @@ const func = name => (html.match(new RegExp(`^function ${name}\\([\\s\\S]*?\\n}`
 
 // ---- Markup in index.html ----
 const box = html.match(/<input type="checkbox" id="showDescriptionsBox"[^>]*>/);
-check('the checkbox exists, is not ticked in the source and has a label', !!box && !/checked/.test(box[0]) && /<label><input type="checkbox" id="showDescriptionsBox"[^>]*> Show and read descriptions<\/label>/.test(html));
+check('the checkbox exists, is not ticked in the source and has a label', !!box && !/checked/.test(box[0]) && /<label class="descriptions-toggle"><input type="checkbox" id="showDescriptionsBox"[^>]*> Show and read descriptions<\/label>/.test(html));
 check('the checkbox is described by its help text', /aria-describedby="showDescriptionsHelp"/.test(box[0]) && /id="showDescriptionsHelp"/.test(html));
 check('the change is announced in a polite status region', /<p id="descriptionsStatus" class="visually-hidden" role="status"><\/p>/.test(html));
 for (const name of ['inner', 'middle', 'outer']) {
   check(`${name}: panel is hidden from screen readers and starts hidden`, new RegExp(`<p id="${name}Panel" class="desc-panel" aria-hidden="true" hidden></p>`).test(html));
-  check(`${name}: description texts container starts hidden`, new RegExp(`<div id="${name}Descs" class="visually-hidden" hidden></div>`).test(html));
+  check(`${name}: description texts container starts hidden and is aria-hidden (aria-describedby still resolves)`, new RegExp(`<div id="${name}Descs" class="visually-hidden" aria-hidden="true" hidden></div>`).test(html));
 }
 check('the panel sits below its step buttons', html.indexOf('id="innerButtons"') < html.indexOf('id="innerPanel"') && html.indexOf('id="outerButtons"') < html.indexOf('id="outerPanel"'));
 check('the checkbox label has a target of at least 44 pixels (label min-height 2.75rem)', /label \{ display: inline-flex; align-items: center; gap: \.5rem; min-height: 2\.75rem; \}/.test(html));
-check('the full table has four column headers including Description', /<th scope="col">Inner circle<\/th><th scope="col">Middle circle<\/th><th scope="col">Outer circle<\/th><th scope="col">Description<\/th>/.test(html) && /<caption>All available emotion paths<\/caption>/.test(html));
+check('the label is at least 44 pixels high', /\.descriptions-toggle \{ min-height: 44px; \}/.test(html));
+const helpText = html.match(/<p id="showDescriptionsHelp"[^>]*>([^<]*)<\/p>/)[1];
+check('the describedby text is short (two sentences or fewer, under 30 words)', helpText.split(/\s+/).length < 30 && (helpText.match(/\./g) || []).length <= 2);
+check('the scrolling table wrapper is a labelled group, not a region', /<div class="scroll-table" tabindex="0" role="group" aria-labelledby="wheelTableCaption">/.test(html) && /<caption id="wheelTableCaption">/.test(html));
+check('success is not announced, only an error is', /setShowDescriptions\(on\);\s*\/\/[^\n]*\n\s*descriptionsStatus\.textContent = '';/.test(html) && /could not be saved/.test(html) && !/Descriptions on\./.test(html));
+check('the lookup uses the stored data label, not textContent', !/button\.textContent/.test(func('decorateStep')) && /dataset\.label/.test(func('decorateStep')));
+check('the full table has four column headers including Description', /<th scope="col">Inner circle<\/th><th scope="col">Middle circle<\/th><th scope="col">Outer circle<\/th><th scope="col">Description<\/th>/.test(html) && /<caption id="wheelTableCaption">All available emotion paths<\/caption>/.test(html));
 
 // ---- Code hygiene ----
 const panelCode = [func('getEmotionDescription'), func('refreshStepPanel'), func('applyDescriptionSetting'), func('decorateStep'), func('renderFullEmotionTable')].join('\n');
@@ -44,6 +50,7 @@ class El {
     this.tagName = tag; this.id = id || ''; this.children = []; this.attrs = {}; this.listeners = {}; this.hidden = false;
     this.own = ''; this.dataset = {}; this.parent = null; this.checked = false;
   }
+  contains(n) { return n === this || this.children.some(c => c.contains(n)); }
   get firstChild() { return this.children[0] || null; }
   get firstElementChild() { return this.children[0] || null; }
   removeChild(c) { this.children.splice(this.children.indexOf(c), 1); return c; }
@@ -72,14 +79,14 @@ const showDescriptionsBox = document.getElementById('showDescriptionsBox');
 function __select(a, b, c) { selectedInner = a; selectedMiddle = b; selectedOuter = c; }
 function __draw(level, labels) {
   const g = descriptionSteps[level - 1].buttons; clearNode(g);
-  labels.forEach(l => { const b = document.createElement('button'); b.textContent = l; g.appendChild(b); });
+  labels.forEach(l => { const b = document.createElement('button'); b.textContent = l; b.dataset.label = l; g.appendChild(b); });
   decorateStep(level);
 }
 `;
 const saved = [];
 documentStub.createElement = tag => new El(tag);
 const ctx = vm.createContext({ document: documentStub, Object, JSON, Array, __saved: saved, EMOTION_DESCRIPTIONS: D });
-vm.runInContext([stepGlue, func('getEmotionDescription'), func('refreshStepPanel'), func('applyDescriptionSetting'), func('decorateStep'), func('getShowDescriptions'), func('setShowDescriptions')].join('\n'), ctx);
+vm.runInContext([stepGlue, func('getEmotionDescription'), func('refreshStepPanel'), func('applyDescriptionSetting'), func('decorateStep'), func('redrawAfterLoad'), func('getShowDescriptions'), func('setShowDescriptions')].join('\n'), ctx);
 const panel = n => nodes[`${n}Panel`], pool = n => nodes[`${n}Descs`], group = n => nodes[`${n}Buttons`];
 const buttons = n => group(n).children;
 
@@ -112,7 +119,19 @@ check('mouse leave restores the selected description (none)', panel('inner').tex
 ctx.__select('Fear', null, null); ctx.__draw(1, ['Anger', 'Fear']);
 check('the selected button\'s description shows when nothing is focused', panel('inner').textContent === D['Fear']);
 documentStub.activeElement = buttons('inner')[0]; buttons('inner')[0].fire('mouseleave');
-check('mouse leave keeps the panel when the button still has focus', panel('inner').textContent === D['Fear']);
+check('mouse leave shows the focused button text when the button still has focus', panel('inner').textContent === D['Anger']);
+
+// Hovering another button then leaving restores the focused button's text, not a blank panel.
+ctx.__select(null, null, null); ctx.__draw(1, ['Anger', 'Fear']);
+const [a2, f2] = buttons('inner');
+documentStub.activeElement = a2; a2.fire('focus'); f2.fire('mouseenter');
+check('hover over another button shows its text', panel('inner').textContent === D['Fear']);
+f2.fire('mouseleave');
+check('leaving that button restores the focused button text, not the placeholder', panel('inner').textContent === D['Anger']);
+f2.fire('mouseenter'); f2.listeners.mouseleave.forEach(f => f({ relatedTarget: panel('inner') }));
+check('moving from a button onto the panel leaves the text alone', panel('inner').textContent === D['Fear']);
+documentStub.activeElement = null; a2.fire('blur');
+check('blur with nothing focused falls back to the selection (none)', panel('inner').textContent === '');
 
 // Deeper steps use full path keys, never bare names (Abandoned and Inferior exist twice).
 ctx.__select('Sad', 'Lonely', null); ctx.__draw(2, ['Guilty', 'Lonely']); ctx.__draw(3, ['Isolated', 'Abandoned']);
@@ -143,6 +162,25 @@ check('inherited and unknown keys give an empty string', lookups.every(v => v ==
 const noData = vm.createContext({ document: documentStub, Object });
 vm.runInContext(func('getEmotionDescription'), noData);
 check('without the data file the lookup returns an empty string', vm.runInContext('getEmotionDescription("Anger")', noData) === '');
+
+// ---- The redraw after the page has loaded ----
+ctx.__select('Sad', null, null);
+const draws = { table: 0 };
+const redrawLabels = ['Anger', 'Fear'];
+ctx.renderInner = () => { ctx.__draw(1, redrawLabels); };
+ctx.renderMiddle = () => {}; ctx.renderOuter = () => {};
+ctx.renderFullEmotionTable = () => { draws.table++; };
+documentStub.activeElement = null;
+const before = buttons('inner').slice();
+ctx.redrawAfterLoad();
+const idsOk = new Set(pool('inner').children.map(p => p.id)).size === pool('inner').children.length;
+check('redraw: selection is kept', vm.runInContext('selectedInner', ctx) === 'Sad' && draws.table === 1);
+check('redraw: description ids are not duplicated', idsOk && pool('inner').children.length === 2 && buttons('inner').length === 2);
+check('redraw: listeners are not doubled (new buttons, one listener each)', buttons('inner').every(b => !before.includes(b) && ['focus', 'blur', 'mouseenter', 'mouseleave'].every(t => b.listeners[t].length === 1)));
+documentStub.activeElement = buttons('inner')[0];
+ctx.redrawAfterLoad();
+check('redraw: skipped while focus is inside a step', draws.table === 1 && buttons('inner')[0] === documentStub.activeElement);
+documentStub.activeElement = null;
 
 // ---- The full table ----
 const tableSource = func('renderFullEmotionTable');
