@@ -1,0 +1,141 @@
+{
+  "version": 3,
+  "schemaVersion": 5,
+  "ratingScale": 5,
+  "settings": {
+    "captureMode": "custom",
+    "collectAppropriate": true,
+    "collectIntensity": true,
+    "collectExpectedIntensity": true,
+    "collectActualIntensity": true,
+    "collectSensations": true,
+    "collectTags": true,
+    "collectValues": true,
+    "collectBucketLevel": true,
+    "includeAllSensations": false,
+    "selectedValues": [
+      {
+        "name": "Honesty",
+        "theme": "Connection",
+        "framework": "personalvalues",
+        "frameworkLabel": "Personal values"
+      },
+      {
+        "name": "Kindness",
+        "theme": "Humanity",
+        "framework": "via",
+        "frameworkLabel": "VIA character strengths"
+      }
+    ],
+    "selectedValueFrameworks": [
+      "personalvalues",
+      "via"
+    ],
+    "tags": [
+      "Fictional project"
+    ]
+  },
+  "exportedAt": "2026-01-09T10:00:00.000Z",
+  "tags": [
+    "Work",
+    "Family",
+    "Relationship",
+    "Friends",
+    "Health",
+    "Sleep",
+    "Money",
+    "Home",
+    "Exercise",
+    "Social",
+    "Study",
+    "Travel",
+    "Caring responsibilities",
+    "Fictional project"
+  ],
+  "entries": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "createdAt": "2026-01-05T09:00:00.000Z",
+      "modifiedAt": "2026-01-05T09:10:00.000Z",
+      "timestamp": "2026-01-05T09:00:00.000Z",
+      "level": "Outer circle",
+      "inner": "Fear",
+      "middle": "Anxious",
+      "outer": "Worried",
+      "appropriate": "Yes",
+      "expectedIntensity": 3,
+      "actualIntensity": 4,
+      "intensityAlignment": "Not aligned",
+      "physicalSensations": [
+        "Hot",
+        "Eyes wide"
+      ],
+      "sensationGuide": "Anxiety",
+      "tags": [
+        "Work",
+        "Sleep",
+        "Fictional project"
+      ],
+      "values": [
+        {
+          "name": "Honesty",
+          "theme": "Connection",
+          "framework": "personalvalues",
+          "frameworkLabel": "Personal values"
+        },
+        {
+          "name": "Kindness",
+          "theme": "Humanity",
+          "framework": "via",
+          "frameworkLabel": "VIA character strengths"
+        }
+      ],
+      "bucketLevel": 4,
+      "comment": "Fake test note: a made-up worry about a made-up deadline."
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "createdAt": "2026-01-06T18:30:00.000Z",
+      "modifiedAt": "2026-01-06T18:30:00.000Z",
+      "timestamp": "2026-01-06T18:30:00.000Z",
+      "level": "Middle circle",
+      "inner": "Happy",
+      "middle": "Proud",
+      "outer": null,
+      "appropriate": "No",
+      "expectedIntensity": 2,
+      "actualIntensity": 2,
+      "intensityAlignment": "Aligned",
+      "tags": [
+        "Family"
+      ],
+      "bucketLevel": 1
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "createdAt": "2026-01-07T07:15:00.000Z",
+      "modifiedAt": "2026-01-07T07:15:00.000Z",
+      "timestamp": "2026-01-07T07:15:00.000Z",
+      "level": "Inner circle",
+      "inner": "Sad",
+      "middle": null,
+      "outer": null
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "createdAt": "2026-01-08T12:00:00.000Z",
+      "modifiedAt": "2026-01-08T12:05:00.000Z",
+      "timestamp": "2026-01-08T12:00:00.000Z",
+      "level": "Outer circle",
+      "inner": "Happy",
+      "middle": "Joyful",
+      "outer": "Ecstatic",
+      "appropriate": "",
+      "physicalSensations": [],
+      "sensationGuide": null,
+      "tags": [],
+      "values": [],
+      "comment": "Fake test note: an empty-lists entry."
+    }
+  ]
+}
