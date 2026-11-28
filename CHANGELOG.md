@@ -2,6 +2,20 @@
 
 Published versions and changes. The app version appears in its footer. Record schema and backup format have their own versions; an app update does not necessarily change your data format.
 
+## 1.11.0
+
+Released 28 November 2026.
+
+- You can search for an emotion by name or description. Search also shows related emotions.
+- Every emotion now has a description. A new Show and read descriptions setting turns them on and off, and it syncs between your devices.
+- The step headings are now Main feeling, More specific and Most specific.
+- Skip links let you jump straight to the main parts of the page.
+- Record now comes before the optional questions. A new Add detail section updates the same entry after you record it.
+- The reference table has a new Description column.
+- Fix: selected values now clear after you save.
+- Fix: Drive sync no longer treats a blank and an empty middle or outer emotion as an edit.
+- No saved data format changed. Existing records, backups and sync data work as before.
+
 ## 1.10.0
 
 Released 1 November 2026.
