@@ -62,7 +62,7 @@ function makeApp(phase) {
   const form = { appropriate: '', sensations: [], tags: [], values: [] };
   const state = { failSave: false, renders: 0, cleared: 0 };
   const ctx = vm.createContext({
-    Date, setTimeout, crypto: require('node:crypto').webcrypto,
+    Date, setTimeout, clearTimeout, detailStatusTimer: undefined, liveStatusTimer: undefined, crypto: require('node:crypto').webcrypto,
     document: { getElementById: node, querySelector: () => (form.appropriate ? { value: form.appropriate } : null) },
     captureSettings: { ...ALL_OFF, ...PHASES[phase] }, ratingScale: 5, logEntries: [], editingEntry: null, detailEntry: null, lastRecordedEntry: null,
     selectedInner: null, selectedMiddle: null, selectedOuter: null,
@@ -191,9 +191,29 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
     }
     // renderAll in the page runs renderSelection, which writes liveStatus unless keepLiveStatus is set.
     app.ctx.renderAll = () => { if (!app.ctx.keepLiveStatus) app.node('liveStatus').textContent = 'Start by choosing a main feeling.'; };
-    await sleep(5); fill(app, ANSWERS[0]); app.ctx.saveDetail();
-    check('Save detail writes the status once, in detailStatus', writes.length === 1 && writes[0] === 'detailStatus:Detail saved to Happy.');
+    await sleep(5); fill(app, ANSWERS[0]); app.ctx.saveDetail(); await sleep(80);
+    check('Save detail clears detailStatus then sets the message, and never touches liveStatus', JSON.stringify(writes) === JSON.stringify(['detailStatus:', 'detailStatus:Detail saved to Happy.']));
+    // A second save with identical text still fires a change: clear, then set again.
+    writes.length = 0; app.ctx.saveDetail(); await sleep(80);
+    check('a second identical Save detail clears then sets the same text again', JSON.stringify(writes) === JSON.stringify(['detailStatus:', 'detailStatus:Detail saved to Happy.']));
+    // Closing Add detail before the timer fires cancels the late message.
+    writes.length = 0; app.ctx.saveDetail(); app.ctx.detailEntry = null; await sleep(80);
+    check('a late Save detail message is dropped once Add detail is closed', JSON.stringify(writes) === JSON.stringify(['detailStatus:']));
     check('keepLiveStatus is released after the redraw', app.ctx.keepLiveStatus === false);
+  }
+
+  // 4c. A pending "choose an emotion first" message never overwrites a newer message.
+  {
+    const app = makeApp('phase1');
+    app.ctx.clearEntryForm(); app.ctx.record();
+    app.ctx.selectedInner = 'Happy'; app.node('liveStatus').textContent = 'Selected Happy. You can record this emotion now or continue refining it.';
+    await sleep(80);
+    check('a newer Selected message is kept', /^Selected Happy/.test(app.node('liveStatus').textContent));
+    app.ctx.selectedInner = null; app.node('liveStatus').textContent = ''; app.ctx.record(); app.ctx.selectedInner = 'Sad';
+    await sleep(80);
+    check('the disabled-Record message is not written once an emotion is selected', app.node('liveStatus').textContent === '');
+    check('the skip link applies the same state check and timer id', /clearTimeout\(liveStatusTimer\);\s*liveStatusTimer = setTimeout\(\(\) => \{[^}]*liveStatus\.textContent !== '' \|\| selectedInner\) return;[\s\S]*?Record is unavailable until/.test(html));
+    check('every new selection clears the pending timer', /function renderSelection\(\) \{[\s\S]*?clearTimeout\(liveStatusTimer\);/.test(html));
   }
 
   // 5. Undo removes only the just-recorded entry, also after Add detail replaced the saved object.
@@ -234,9 +254,9 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
       selectionText: { textContent: '' }, liveStatus: { textContent: '' }, getReviewDataset: () => null,
       getSelectionPath: () => [ctx.selectedInner, ctx.selectedMiddle, ctx.selectedOuter].filter(Boolean), getSelectionLevel: () => 'Inner circle',
       clearDetailFields() { spy.cleared++; }, renderSensations() { spy.sensations++; },
-      skipToAddDetail: { hidden: true }, keepLiveStatus: false, hasUnsavedDetail: () => spy.unsaved
+      skipToAddDetail: { hidden: true }, keepLiveStatus: false, hasUnsavedDetail: () => spy.unsaved, clearTimeout, closedDetailNote: '', liveStatusTimer: undefined, detailStatusTimer: undefined
     });
-    for (const name of ['getEntryPathLabel', 'renderAddDetail', 'renderSelection']) vm.runInContext(func(name), ctx);
+    for (const name of ['getEntryPathLabel', 'renderAddDetail', 'closeAddDetail', 'renderSelection']) vm.runInContext(func(name), ctx);
     ctx.renderSelection();
     check('nothing selected and no saved entry: Add detail is hidden and Record is aria-disabled', ctx.addDetailSection.hidden && ctx.recordButton.attrs['aria-disabled'] === 'true' && ctx.recordButton.disabled === false);
     ctx.selectedInner = 'Sad'; ctx.renderSelection();
@@ -257,6 +277,28 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
     check('keepLiveStatus stops renderSelection writing the live status', ctx.liveStatus.textContent === 'kept');
     check('Reset, Start a new entry and Edit all end the details', [/resetButton\.addEventListener\('click'[\s\S]*?detailEntry = null;[\s\S]*?\n\}\);/, /function startNewEntry\(\) \{[\s\S]*?detailEntry = null;/, /function prepareEntry\([\s\S]*?detailEntry = null;/].every(pattern => pattern.test(html)));
     check('Record handler binds Add detail after renderAll and loads the saved answers', /detailEntry = entry;[\s\S]*?clearEntryForm\(\);\s*renderAll\(\);\s*loadEntryAnswers\(entry\);/.test(recordBody));
+  }
+
+  // 7a. Every route that starts a new selection closes Add detail first.
+  {
+    check('inner step button closes Add detail before selecting', /makeButton\(label, \(\) => \{\s*closeAddDetail\(\);\s*selectedInner = label;/.test(html));
+    check('middle step button closes Add detail before selecting', /makeButton\(label, \(\) => \{\s*closeAddDetail\(\);\s*selectedMiddle = label;/.test(html));
+    check('outer step button closes Add detail before selecting', /makeButton\(label, \(\) => \{\s*closeAddDetail\(\);\s*selectedOuter = label;/.test(html));
+    check('search result closes Add detail before selecting', /function choose\(r\) \{\s*closeAddDetail\(\);\s*selectedInner = r\.parts\[0\];/.test(html));
+    check('reference table row closes Add detail and keeps the note in its message', /const preparePath = \(\) => \{\s*const closedNote = closeAddDetail\(\);/.test(html) && html.includes('or add detail first.${closedNote}`;'));
+    const spy = { unsaved: false };
+    const ctx = vm.createContext({
+      detailEntry: null, detailStatus: { textContent: '' }, closedDetailNote: '', detailStatusTimer: undefined, clearTimeout,
+      clearDetailFields() {}, renderSensations() {}, hasUnsavedDetail: () => spy.unsaved
+    });
+    for (const name of ['getEntryPathLabel', 'closeAddDetail']) vm.runInContext(func(name), ctx);
+    // The shared function: same discard rule as choosing an inner emotion, and it clears the pending Save detail message.
+    spy.unsaved = true; ctx.detailEntry = { id: 'z', inner: 'Fear', middle: 'Anxious', outer: null }; ctx.detailStatus.textContent = 'old';
+    const note = ctx.closeAddDetail();
+    check('closeAddDetail returns the closed note with the discard rule and clears the entry and status', ctx.detailEntry === null && ctx.detailStatus.textContent === '' && note === ' Add detail for Fear then Anxious is closed. Unsaved details were discarded.');
+    spy.unsaved = false; ctx.detailEntry = { id: 'z', inner: 'Fear', middle: null, outer: null };
+    check('with nothing unsaved the note omits the discard text', ctx.closeAddDetail() === ' Add detail for Fear is closed.');
+    check('with no entry open it does nothing', ctx.closeAddDetail() === '');
   }
 
   // 7b. hasUnsavedDetail compares the form with the saved entry, and Reset names a discard.
@@ -287,6 +329,8 @@ const normalise = entry => JSON.stringify({ ...entry, id: 'ID', createdAt: 'T', 
     check('its click handler focuses the heading', /skipToAddDetail\.addEventListener\('click', event => \{\s*event\.preventDefault\(\);\s*document\.getElementById\('addDetailHeading'\)\.focus\(\);/.test(html));
     check('Add detail heading is focusable with a 4px focus outline', /id="addDetailHeading" tabindex="-1"/.test(html) && /#addDetailHeading:focus \{ outline: 4px solid var\(--focus\)/.test(html) || /#addDetailHeading:focus[^{]*\{ outline: 4px solid var\(--focus\)/.test(html));
     check('links, textareas and summaries get the 4px focus outline', /a:focus, input:focus, select:focus, textarea:focus, summary:focus \{\s*outline: 4px solid var\(--focus\)/.test(html));
+    check('loggingStreak is plain text, not a live region', /<p id="loggingStreak"[^>]*>/.test(html) && !/<p id="loggingStreak"[^>]*(role=|aria-live)/.test(html));
+    for (const id of ['bucketValueStatus', 'valuesSelectionStatus', 'ratingScaleStatus', 'ratingScaleConversionStatus', 'logFilterStatus']) check(`${id} relies on role status alone`, new RegExp(`id="${id}"[^>]*role="status"`).test(html) && !new RegExp(`id="${id}"[^>]*aria-live`).test(html));
     for (const id of ['intensityAlignment', 'intensityValueStatus', 'tagStatus', 'detailStatus']) check(`${id} has role status without a redundant aria-live`, new RegExp(`id="${id}"[^>]*role="status"(?![^>]*aria-live)`).test(html));
   }
 

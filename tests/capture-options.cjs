@@ -14,7 +14,7 @@ const stored = new Map();
 let failSave = false;
 let renderCount = 0;
 const context = vm.createContext({
-  Date, crypto: require('node:crypto').webcrypto,
+  Date, clearTimeout, setTimeout, detailStatusTimer: undefined, liveStatusTimer: undefined, crypto: require('node:crypto').webcrypto,
   document: { getElementById: node, querySelector: () => ({ value: 'No' }) },
   localStorage: { getItem: key => stored.get(key) || null, setItem: (key, value) => stored.set(key, value) },
   dailyLogCongratulationsKey: 'daily', lastCongratulatedDay: '', editingEntry: null,

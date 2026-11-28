@@ -384,7 +384,7 @@ const ctx = vm.createContext({
   emotions, selectedInner: null, selectedMiddle: null, selectedOuter: null,
   selectionText: new El('p'), recordButton: nodes.recordButton = new El('button'), resetButton: nodes.resetButton = new El('button'),
   getReviewDataset: () => ctx.review, review: null,
-  renderAll() { log.renderAll++; }, focusNextRecordingControl() { log.nextControl++; }, focused: null
+  closeAddDetail() { return ""; }, renderAll() { log.renderAll++; }, focusNextRecordingControl() { log.nextControl++; }, focused: null
 });
 vm.runInContext('var window = this;', ctx);
 vm.runInContext(fs.readFileSync(path.join(root, 'assets/emotion-descriptions.js'), 'utf8'), ctx);

@@ -33,7 +33,7 @@ function makeApp(src = html) {
   const constants = constantNames.map(name => constant(name, src)), functions = functionNames.map(name => func(name, src));
   const store = new Map();
   const ctx = vm.createContext({
-    crypto: require('node:crypto').webcrypto, Date, JSON,
+    clearTimeout, setTimeout, detailStatusTimer: undefined, liveStatusTimer: undefined, crypto: require('node:crypto').webcrypto, Date, JSON,
     localStorage: { getItem: key => store.get(key) ?? null, setItem: (key, value) => store.set(key, String(value)), removeItem: key => store.delete(key) }
   });
   vm.runInContext([...constants, ...functions, glue].join('\n'), ctx);
